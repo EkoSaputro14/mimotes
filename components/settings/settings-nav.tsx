@@ -6,11 +6,13 @@ import {
   User,
   Brain,
   LayoutGrid,
+  Lock,
+  Bell,
+  Key,
   Puzzle,
   Settings,
   CreditCard,
   Shield,
-  Lock,
 } from "lucide-react";
 
 interface NavItem {
@@ -39,6 +41,16 @@ const NAV_ITEMS: NavItem[] = [
     label: "Keamanan",
     href: "/settings/security",
     icon: <Lock className="h-4 w-4" />,
+  },
+  {
+    label: "Notifikasi",
+    href: "/settings/notifications",
+    icon: <Bell className="h-4 w-4" />,
+  },
+  {
+    label: "API Keys",
+    href: "/settings/api-keys",
+    icon: <Key className="h-4 w-4" />,
   },
   {
     label: "MCP",
@@ -82,7 +94,7 @@ export default function SettingsNav() {
         <div className="px-4 py-5 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Settings</h2>
         </div>
-        <ul className="flex-1 p-2 space-y-1" role="list">
+        <ul className="flex-1 p-2 space-y-1 overflow-y-auto" role="list">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href);
             return (

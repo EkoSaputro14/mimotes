@@ -1,8 +1,7 @@
 import SettingsLayout from "@/components/settings/settings-layout";
-import BillingDashboard from "@/components/workspace/billing-dashboard";
-import UsageOverview from "@/components/workspace/usage-overview";
+import ApiKeysSettings from "@/components/settings/api-keys-settings";
 
-export default function BillingPage() {
+export default function ApiKeysSettingsPage() {
   return (
     <SettingsLayout>
       <a
@@ -11,9 +10,8 @@ export default function BillingPage() {
       >
         Lewati ke konten
       </a>
-      <div id="main-content" className="space-y-8" tabIndex={-1}>
-        <BillingDashboard />
-        <UsageOverview />
+      <div id="main-content" tabIndex={-1}>
+        <ApiKeysSettings />
       </div>
     </SettingsLayout>
   );

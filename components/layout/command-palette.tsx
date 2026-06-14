@@ -23,6 +23,10 @@ import {
   FileCode,
   Users,
   Command,
+  User,
+  Lock,
+  Bell,
+  Key,
 } from "lucide-react";
 
 import {
@@ -189,9 +193,25 @@ export default function CommandPalette({
 
         {/* Settings & Integrations */}
         <CommandGroup heading="Settings">
+          <CommandItem onSelect={() => navigate("/settings/account")}>
+            <User className="size-4" />
+            Account Settings
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/settings/security")}>
+            <Lock className="size-4" />
+            Security Settings
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/settings/notifications")}>
+            <Bell className="size-4" />
+            Notification Settings
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/settings/api-keys")}>
+            <Key className="size-4" />
+            API Keys
+          </CommandItem>
           <CommandItem onSelect={() => navigate("/settings")}>
             <Settings className="size-4" />
-            General Settings
+            AI Settings
           </CommandItem>
           <CommandItem onSelect={() => navigate("/settings/widget")}>
             <Puzzle className="size-4" />
