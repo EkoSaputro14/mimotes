@@ -40,6 +40,14 @@ export default function DashboardShellClient({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* E1: Skip-to-content for keyboard/screen-reader navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Lewati ke konten
+      </a>
+
       {/* Command Palette — global Cmd+K */}
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
 
@@ -66,7 +74,7 @@ export default function DashboardShellClient({
         />
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main id="main-content" className="p-4 sm:p-6 lg:p-8">
           <div className={cn("mx-auto", maxWidthClasses[maxWidth])}>
             {children}
           </div>
