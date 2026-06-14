@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText } from "lucide-react";
+import Link from "next/link";
+import { MoveRight, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ProductShowcase() {
@@ -22,56 +23,34 @@ export default function ProductShowcase() {
             <span className="ml-2 text-xs text-muted-foreground">MimoNotes</span>
           </div>
 
-          {/* App layout */}
-          <div className="flex min-h-[350px] sm:min-h-[420px]">
-            {/* Sidebar */}
-            <div className="hidden w-52 shrink-0 border-r border-border bg-card p-4 sm:block">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Documents
-              </div>
-              {[
-                "Employee Handbook.pdf",
-                "Q4 Financial Report.docx",
-                "API Documentation.md",
-                "Onboarding Guide.pdf",
-              ].map((doc) => (
-                <div
-                  key={doc}
-                  className="mb-1 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground"
-                >
-                  <FileText className="size-3.5 shrink-0" />
-                  <span className="truncate">{doc}</span>
+          {/* Real screenshot */}
+          <div className="relative">
+            <img
+              src="/images/landing-showcase.png"
+              alt="MimoNotes chat interface showing a question about vacation policy with source citation from Employee Handbook"
+              className="w-full h-auto"
+              loading="eager"
+            />
+
+            {/* Citation highlight overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-6 pt-12">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex max-w-md items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 shadow-lg shadow-primary/10"
+              >
+                <FileText className="size-4 shrink-0 text-primary" />
+                <div>
+                  <span className="text-sm font-medium text-foreground">
+                    Source: Employee Handbook.pdf
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Section 4.2, Page 12
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            {/* Chat area */}
-            <div className="flex flex-1 flex-col bg-background p-4 sm:p-6">
-              {/* User message */}
-              <div className="mb-4 ml-auto max-w-md rounded-xl bg-muted/50 px-4 py-2.5 text-sm">
-                What is our vacation policy?
-              </div>
-
-              {/* AI response */}
-              <div className="mb-3 max-w-lg rounded-xl bg-primary/10 px-4 py-3 text-sm leading-relaxed">
-                <p className="mb-2">
-                  Full-time employees are entitled to 20 days of paid vacation
-                  per year. Vacation must be requested at least 2 weeks in
-                  advance through the HR portal.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Part-time employees accrue vacation proportionally based on
-                  their hours.
-                </p>
-              </div>
-
-              {/* Citation — THE DIFFERENTIATOR */}
-              <div className="flex max-w-md items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-                <FileText className="size-3.5 shrink-0 text-primary" />
-                <span className="text-xs text-muted-foreground">
-                  Source: Employee Handbook.pdf, Section 2
-                </span>
-              </div>
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -81,10 +60,26 @@ export default function ProductShowcase() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-6 text-center text-sm italic text-muted-foreground"
+          className="mt-6 text-center text-sm text-muted-foreground"
         >
-          Every answer includes the exact source.
+          ↑ Source citation — always visible
         </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="mt-6 text-center"
+        >
+          <Link
+            href="/register"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 hover:shadow-primary/30"
+          >
+            Get started free
+            <MoveRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

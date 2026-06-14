@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, MoveRight } from "lucide-react";
 import { motion } from "framer-motion";
 
-const features = ["50 documents", "Unlimited chat", "1 workspace"];
+const features = [
+  "50 documents",
+  "Unlimited chat",
+  "1 workspace",
+  "Team collaboration",
+  "Source citations",
+];
 
 export default function PricingSection() {
   return (
@@ -28,10 +34,13 @@ export default function PricingSection() {
           className="mx-auto mt-12 max-w-sm overflow-hidden rounded-2xl border border-border bg-card p-8"
         >
           <div className="text-center">
-            <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <div className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              ★ Most Popular
+            </div>
+            <div className="mt-3 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
               Starter
             </div>
-            <div className="mt-2 text-3xl font-bold">Free During Beta</div>
+            <div className="mt-2 text-3xl font-bold">Free</div>
           </div>
 
           <div className="mt-8 space-y-3">
@@ -44,15 +53,16 @@ export default function PricingSection() {
           </div>
 
           <Link
-            href="/chat"
-            className="mt-8 flex w-full items-center justify-center rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/80"
+            href="/register"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Start Free
+            Get started free
+            <MoveRight className="w-4 h-4" />
           </Link>
         </motion.div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Pro plans launching soon.
+          Pro plans coming soon.
         </p>
       </div>
     </section>

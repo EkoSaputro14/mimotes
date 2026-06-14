@@ -40,6 +40,14 @@ export default function LandingFooter() {
                   Pricing
                 </a>
               </li>
+              <li>
+                <a
+                  href="#how-it-works"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  How it works
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -51,7 +59,7 @@ export default function LandingFooter() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="/privacy"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Privacy
@@ -59,11 +67,19 @@ export default function LandingFooter() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/terms"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Terms
                 </Link>
+                </li>
+              <li>
+                <a
+                  href="mailto:hello@mimonotes.com"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Contact
+                </a>
               </li>
             </ul>
           </div>

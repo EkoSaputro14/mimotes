@@ -1,6 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Shield, Building2, ClipboardList } from "lucide-react";
+
+const badges = [
+  {
+    icon: Shield,
+    label: "AES-256",
+    description: "Encryption",
+  },
+  {
+    icon: Building2,
+    label: "Team",
+    description: "Isolation",
+  },
+  {
+    icon: ClipboardList,
+    label: "Audit",
+    description: "Logs",
+  },
+];
 
 export default function SecuritySection() {
   return (
@@ -16,8 +35,27 @@ export default function SecuritySection() {
           Private by default.
         </h2>
         <p className="mt-4 text-muted-foreground">
-          AES-256 encryption. Workspace isolation. Audit logging.
+          AES-256 encryption. Workspace isolation.
+          <br />
+          Audit logging. Your data is never used for training.
         </p>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          {badges.map((badge) => (
+            <div
+              key={badge.label}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border bg-background px-6 py-4"
+            >
+              <badge.icon className="h-6 w-6 text-primary" />
+              <div className="text-xs font-medium text-muted-foreground">
+                {badge.label}
+              </div>
+              <div className="text-xs text-muted-foreground/70">
+                {badge.description}
+              </div>
+            </div>
+          ))}
+        </div>
       </motion.div>
     </section>
   );

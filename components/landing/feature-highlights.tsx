@@ -4,14 +4,26 @@ import { motion } from "framer-motion";
 
 const features = [
   { title: "Ask", description: "Ask questions across all your documents." },
-  { title: "Verify", description: "Every answer links back to its source." },
-  { title: "Share", description: "Keep your entire team aligned." },
+  { title: "Verify", description: "Every answer cites its source." },
+  { title: "Share", description: "Your entire team shares one knowledge base." },
 ];
 
 export default function FeatureHighlights() {
   return (
     <section className="py-16 sm:py-24">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+            Built for teams who need accurate answers
+          </p>
+        </motion.div>
+
         <div className="grid gap-6 sm:grid-cols-3">
           {features.map((f, i) => (
             <motion.div
