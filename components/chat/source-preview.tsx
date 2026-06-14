@@ -77,6 +77,8 @@ export default function SourcePreview({
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         className="w-full flex items-center justify-between p-3 text-left"
+        aria-expanded={expanded}
+        aria-controls={`source-content-${index}`}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] rounded-md bg-primary/10 text-primary text-[11px] font-semibold flex-shrink-0">
@@ -111,7 +113,7 @@ export default function SourcePreview({
 
       {/* Content preview */}
       {expanded && (
-        <div className="px-3 pb-3">
+        <div id={`source-content-${index}`} className="px-3 pb-3">
           <p className="text-xs text-muted-foreground leading-relaxed break-words">
             {displayContent}
             {!expanded && needsTruncation ? "..." : ""}

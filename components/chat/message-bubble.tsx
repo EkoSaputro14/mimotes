@@ -213,6 +213,7 @@ export default function MessageBubble({
   highlightedSource,
   isLastMessage = false,
   isStreaming = false,
+  isLoading = false,
   onRegenerate,
 }: {
   message: Message;
@@ -220,6 +221,7 @@ export default function MessageBubble({
   highlightedSource?: number | null;
   isLastMessage?: boolean;
   isStreaming?: boolean;
+  isLoading?: boolean;
   onRegenerate?: () => void;
 }) {
   const isUser = message.role === "user";
@@ -288,6 +290,9 @@ export default function MessageBubble({
                 >
                   {message.content}
                 </ReactMarkdown>
+                {isStreaming && (
+                  <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-text-bottom" />
+                )}
               </div>
             )}
           </div>
@@ -298,6 +303,7 @@ export default function MessageBubble({
               content={message.content}
               isLastMessage={isLastMessage}
               isStreaming={isStreaming}
+              isLoading={isLoading}
               onRegenerate={onRegenerate}
             />
           )}

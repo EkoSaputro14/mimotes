@@ -9,6 +9,7 @@ interface FeedbackBarProps {
   content: string;
   isLastMessage?: boolean;
   isStreaming?: boolean;
+  isLoading?: boolean;
   onRegenerate?: () => void;
 }
 
@@ -16,6 +17,7 @@ export default function FeedbackBar({
   content,
   isLastMessage = false,
   isStreaming = false,
+  isLoading = false,
   onRegenerate,
 }: FeedbackBarProps) {
   const [feedback, setFeedback] = useState<"helpful" | "not-helpful" | null>(null);
@@ -106,15 +108,18 @@ export default function FeedbackBar({
         <button
           type="button"
           onClick={handleRegenerate}
+          disabled={isLoading}
           className={cn(
             "p-1.5 rounded-md transition-all duration-150",
             "text-muted-foreground hover:text-foreground hover:bg-muted",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+            "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
-          aria-label="Buat ulang jawaban"
-          title="Buat ulang jawaban"
+          aria-label={isLoading ? "Sedang memuat, tunggu sebentar" : "Buat ulang jawaban"}
+          aria-disabled={isLoading}
+          title={isLoading ? "Sedang memuat" : "Buat ulang jawaban"}
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <RotateCcw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
         </button>
       )}
     </div>

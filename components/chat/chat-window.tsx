@@ -7,6 +7,13 @@ import MessageBubble from "./message-bubble";
 import SessionSidebar from "./session-sidebar";
 import { cn } from "@/lib/utils";
 
+const MAX_MESSAGE_LENGTH = 10000;
+const EMPTY_STATE_SUGGESTIONS = [
+  "Apa saja dokumen yang tersedia?",
+  "Jelaskan isi dokumen utama",
+  "Buatkan ringkasan dari semua dokumen",
+];
+
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -81,8 +88,7 @@ export default function ChatWindow() {
 
   const handleFollowUp = useCallback((suggestion: string) => {
     setInput(suggestion);
-    // Auto-submit the follow-up
-    textareaRef.current?.closest("form")?.requestSubmit();
+    textareaRef.current?.focus();
   }, []);
 
   const handleRegenerate = useCallback(async () => {
@@ -230,8 +236,13 @@ export default function ChatWindow() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    if (input.length > MAX_MESSAGE_LENGTH) {
+      toast.error(`Pesan terlalu panjang. Maksimal ${MAX_MESSAGE_LENGTH} karakter.`);
+      return;
+    }
+
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: "user",
       content: input.trim(),
       createdAt: new Date().toISOString(),
@@ -244,6 +255,9 @@ export default function ChatWindow() {
     setHighlightedSource(null);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -251,12 +265,16 @@ export default function ChatWindow() {
           message: userMessage.content,
           sessionId,
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
+        clearTimeout(timeoutId);
         toast.error("Gagal mengirim pesan. Silakan coba lagi.");
         throw new Error("Gagal mengirim pesan");
       }
+
+      clearTimeout(timeoutId);
 
       const newSessionId = response.headers.get("X-Session-Id");
       const sourcesHeader = response.headers.get("X-Sources");
@@ -279,7 +297,7 @@ export default function ChatWindow() {
       let assistantContent = "";
 
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: "assistant",
         content: "",
         sources,
@@ -311,20 +329,31 @@ export default function ChatWindow() {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      if (
+      if (error instanceof Error && error.name === "AbortError") {
+        toast.error("Koneksi terputus. Silakan coba lagi.");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "Koneksi terputus atau permintaan habis waktu. Silakan coba lagi.",
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+      } else if (
         !(error instanceof Error && error.message === "Gagal mengirim pesan")
       ) {
         toast.error("Terjadi kesalahan. Silakan coba lagi.");
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "Maaf, terjadi kesalahan. Silakan coba lagi.",
+            createdAt: new Date().toISOString(),
+          },
+        ]);
       }
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Maaf, terjadi kesalahan. Silakan coba lagi.",
-          createdAt: new Date().toISOString(),
-        },
-      ]);
     } finally {
       setIsLoading(false);
     }
@@ -400,10 +429,30 @@ export default function ChatWindow() {
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 Selamat datang di Mimotes
               </h2>
-              <p className="text-muted-foreground max-w-md">
+              <p className="text-muted-foreground max-w-md mb-6">
                 Ajukan pertanyaan dan AI akan menjawab berdasarkan dokumen yang
                 tersedia. Jawaban akan disertai referensi sumber.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 max-w-lg">
+                {EMPTY_STATE_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => handleFollowUp(suggestion)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5",
+                      "text-xs font-medium text-muted-foreground",
+                      "bg-muted hover:bg-muted/80 rounded-full",
+                      "transition-colors duration-150",
+                      "border border-border hover:border-border/80",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    )}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -415,6 +464,7 @@ export default function ChatWindow() {
               highlightedSource={highlightedSource}
               isLastMessage={index === lastAssistantIdx && message.role === "assistant"}
               isStreaming={isLoading && index === lastAssistantIdx && message.role === "assistant" && message.content === ""}
+              isLoading={isLoading}
               onRegenerate={handleRegenerate}
             />
           ))}
