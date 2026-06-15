@@ -118,6 +118,8 @@ model Document {
   chunkCount  Int      @default(0) @map("chunk_count")
   description String?  @db.VarChar(500)
   folderId    String?  @map("folder_id")
+  errorMessage String? @map("error_message") @db.Text
+  processingMetrics Json? @map("processing_metrics")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

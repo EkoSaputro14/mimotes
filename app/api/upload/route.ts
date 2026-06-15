@@ -14,6 +14,12 @@ import { chunkText } from "@/lib/rag/chunker";
 import { generateEmbeddings } from "@/lib/rag/embedder";
 import { storeChunks } from "@/lib/rag/vectorstore";
 import { logAudit, AUDIT_ACTIONS } from "@/lib/audit";
+import {
+  enqueueJob,
+  startTimer,
+  formatProcessingError,
+  type ProcessingMetrics,
+} from "@/lib/processing-queue";
 
 // Max file size: 10MB default (configurable via MAX_FILE_SIZE env var)
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || "10485760", 10);
@@ -162,22 +168,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Process in background (don't await to return quickly)
+    // Enqueue processing job (concurrency-limited, FIFO queue with retry)
     if (fileType === "image") {
-      processImageDocument(document.id, workspaceId, fileUrl!, file?.size ?? 0).catch((error) => {
-        console.error("Image processing error:", error);
-        prisma.document.update({
-          where: { id: document.id },
-          data: { status: "failed" },
-        });
+      enqueueJob({
+        id: document.id,
+        type: "image",
+        workspaceId,
+        enqueueTime: Date.now(),
+        attempts: 0,
+        execute: () => processImageDocument(document.id, workspaceId, fileUrl!, file?.size ?? 0),
       });
     } else {
-      processDocument(document.id, workspaceId, rawContent, file?.size ?? 0).catch((error) => {
-        console.error("Document processing error:", error);
-        prisma.document.update({
-          where: { id: document.id },
-          data: { status: "failed" },
-        });
+      enqueueJob({
+        id: document.id,
+        type: "document",
+        workspaceId,
+        enqueueTime: Date.now(),
+        attempts: 0,
+        execute: () => processDocument(document.id, workspaceId, rawContent, file?.size ?? 0),
       });
     }
 
@@ -213,7 +221,29 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processDocument(documentId: string, workspaceId: string, rawContent: string, fileSize: number) {
+/**
+ * Process a document with full metrics tracking.
+ *
+ * Steps: parse → chunk → embed → store → update status
+ * Each step is timed. Errors are captured with step context.
+ */
+async function processDocument(
+  documentId: string,
+  workspaceId: string,
+  rawContent: string,
+  fileSize: number
+) {
+  const totalTimer = startTimer();
+  const metrics: ProcessingMetrics = {
+    parseDurationMs: 0,
+    chunkDurationMs: 0,
+    embedDurationMs: 0,
+    storeDurationMs: 0,
+    totalDurationMs: 0,
+    chunkCount: 0,
+    retryAttempt: 0,
+  };
+
   // Set workspace context for RLS — background task runs in separate context
   await setWorkspaceContext(workspaceId);
 
@@ -222,13 +252,40 @@ async function processDocument(documentId: string, workspaceId: string, rawConte
     return;
   }
 
-  // Chunk the content
-  const chunks = chunkText(rawContent);
+  // Step 1: Chunk the content
+  let chunks: { content: string; index: number; metadata: Record<string, unknown> }[];
+  try {
+    const chunkTimer = startTimer();
+    chunks = chunkText(rawContent);
+    metrics.chunkDurationMs = chunkTimer();
+    metrics.chunkCount = chunks.length;
+    console.log(
+      `[Processing] ${documentId}: chunked ${chunks.length} chunks in ${metrics.chunkDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("chunk", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
+  }
 
-  // Generate embeddings
-  const embeddings = await generateEmbeddings(chunks.map((c) => c.content));
+  // Step 2: Generate embeddings
+  let embeddings: number[][];
+  try {
+    const embedTimer = startTimer();
+    embeddings = await generateEmbeddings(chunks.map((c) => c.content));
+    metrics.embedDurationMs = embedTimer();
+    console.log(
+      `[Processing] ${documentId}: embedded ${embeddings.length} chunks in ${metrics.embedDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("embed", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
+  }
 
-  // Store chunks with embeddings — tenant_id written directly to each chunk
+  // Step 3: Store chunks with embeddings
   const chunkData = chunks.map((chunk, index) => ({
     content: chunk.content,
     embedding: embeddings[index],
@@ -236,29 +293,44 @@ async function processDocument(documentId: string, workspaceId: string, rawConte
     metadata: chunk.metadata,
   }));
 
-  await storeChunks(documentId, workspaceId, chunkData);
+  try {
+    const storeTimer = startTimer();
+    await storeChunks(documentId, workspaceId, chunkData);
+    metrics.storeDurationMs = storeTimer();
+    console.log(
+      `[Processing] ${documentId}: stored ${chunkData.length} chunks in ${metrics.storeDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("store", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
+  }
 
-  // Update document status
+  // Step 4: Update document status with metrics
+  metrics.totalDurationMs = totalTimer();
   await prisma.document.update({
     where: { id: documentId },
     data: {
       status: "ready",
       chunkCount: chunks.length,
+      errorMessage: null,
+      processingMetrics: JSON.parse(JSON.stringify(metrics)),
     },
   });
 
+  console.log(
+    `[Processing] ${documentId}: COMPLETE — ${chunks.length} chunks, total ${metrics.totalDurationMs}ms ` +
+    `(chunk=${metrics.chunkDurationMs} embed=${metrics.embedDurationMs} store=${metrics.storeDurationMs})`
+  );
+
   // Track usage (fire-and-forget)
-  // Check limits before tracking
   try {
     await checkLimit(workspaceId, "maxDocuments");
     await checkLimitWithAmount(workspaceId, "maxStorageMB", Math.ceil(fileSize / (1024 * 1024)));
-  } catch (error) {
-    if (error instanceof Error && error.name === "LimitExceededError") {
-      return Response.json(
-        { error: error.message, limitExceeded: true },
-        { status: 429 }
-      );
-    }
+  } catch {
+    // Usage limit exceeded — non-blocking, document is already processed
+    console.warn(`[Processing] ${documentId}: usage limit exceeded for workspace ${workspaceId}`);
   }
 
   trackDocumentUpload(workspaceId, fileSize).catch(() => {});
@@ -283,14 +355,38 @@ async function processImageDocument(
   fileUrl: string,
   fileSize: number
 ) {
+  const totalTimer = startTimer();
+  const metrics: ProcessingMetrics = {
+    parseDurationMs: 0,
+    chunkDurationMs: 0,
+    embedDurationMs: 0,
+    storeDurationMs: 0,
+    totalDurationMs: 0,
+    chunkCount: 0,
+    retryAttempt: 0,
+  };
+
   // Set workspace context for RLS — background task runs in separate context
   await setWorkspaceContext(workspaceId);
 
   // Convert public/ URL to absolute path for processing
   const imagePath = join(process.cwd(), "public", fileUrl);
 
-  // Run hardened image processing pipeline
-  const result = await processImage(imagePath);
+  // Step 1: Run image processing pipeline (OCR + vision)
+  let result: Awaited<ReturnType<typeof processImage>>;
+  try {
+    const parseTimer = startTimer();
+    result = await processImage(imagePath);
+    metrics.parseDurationMs = parseTimer();
+    console.log(
+      `[Processing] ${documentId}: image parsed in ${metrics.parseDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("parse", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
+  }
 
   // Track image ingestion analytics
   recordAnalyticsEvent("image_ingestion", {
@@ -310,10 +406,12 @@ async function processImageDocument(
     console.warn(
       `[Upload] Image rejected — no OCR text or caption: ${fileUrl}`
     );
-    await prisma.document.update({
-      where: { id: documentId },
-      data: { status: "failed" },
-    });
+    metrics.totalDurationMs = totalTimer();
+    await markFailed(
+      documentId,
+      formatProcessingError("parse", "Image rejected: no OCR text or caption", 1),
+      metrics
+    );
 
     recordAnalyticsEvent("image_rejection", {
       documentId,
@@ -324,63 +422,111 @@ async function processImageDocument(
     return;
   }
 
-  // Generate appropriate chunks based on content
-  const imageChunks = generateImageChunks(result, fileUrl);
+  // Step 2: Generate chunks
+  let imageChunks: ReturnType<typeof generateImageChunks>;
+  try {
+    const chunkTimer = startTimer();
+    imageChunks = generateImageChunks(result, fileUrl);
+    metrics.chunkDurationMs = chunkTimer();
+    metrics.chunkCount = imageChunks.length;
+    console.log(
+      `[Processing] ${documentId}: ${imageChunks.length} image chunks in ${metrics.chunkDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("chunk", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
+  }
 
   if (imageChunks.length === 0) {
     console.warn(`[Upload] No chunks generated for image: ${fileUrl}`);
-    await prisma.document.update({
-      where: { id: documentId },
-      data: { status: "failed" },
-    });
+    metrics.totalDurationMs = totalTimer();
+    await markFailed(
+      documentId,
+      formatProcessingError("chunk", "No chunks generated from image", 1),
+      metrics
+    );
     return;
   }
 
-  // Generate embeddings for each chunk
-  const contents = imageChunks.map((c) => c.content);
-  const embeddings = await generateEmbeddings(contents);
-
-  // Store chunks
-  for (let i = 0; i < imageChunks.length; i++) {
-    const chunk = imageChunks[i];
-    const embedding = embeddings[i];
-
-    const chunkMetadata = {
-      source: "image",
-      chunk_type: chunk.chunk_type,
-      extraction_method: chunk.metadata.extraction_method,
-      vision_model: chunk.metadata.vision_model,
-      ocr_engine: chunk.metadata.ocr_engine,
-      image_width: chunk.metadata.image_width,
-      image_height: chunk.metadata.image_height,
-      text_length: chunk.metadata.text_length,
-      caption_length: chunk.metadata.caption_length,
-      processing_time_ms: chunk.metadata.processing_time_ms,
-    };
-
-    await prisma.$executeRaw`
-      INSERT INTO document_chunks (
-        id, document_id, workspace_id, tenant_id, content, embedding,
-        chunk_index, metadata, chunk_type, ocr_text, caption, image_summary, image_url, created_at
-      ) VALUES (
-        gen_random_uuid(), ${documentId}, ${workspaceId}, ${workspaceId},
-        ${chunk.content},
-        ${`[${embedding.join(",")}]`}::vector,
-        ${i}, ${JSON.stringify(chunkMetadata)}::jsonb,
-        ${chunk.chunk_type}, ${chunk.ocr_text}, ${chunk.caption}, ${chunk.image_summary}, ${chunk.image_url},
-        NOW()
-      )
-    `;
+  // Step 3: Generate embeddings
+  let embeddings: number[][];
+  try {
+    const embedTimer = startTimer();
+    const contents = imageChunks.map((c) => c.content);
+    embeddings = await generateEmbeddings(contents);
+    metrics.embedDurationMs = embedTimer();
+    console.log(
+      `[Processing] ${documentId}: embedded ${embeddings.length} image chunks in ${metrics.embedDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("embed", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
   }
 
-  // Update document status
+  // Step 4: Store chunks
+  try {
+    const storeTimer = startTimer();
+    for (let i = 0; i < imageChunks.length; i++) {
+      const chunk = imageChunks[i];
+      const embedding = embeddings[i];
+
+      const chunkMetadata = {
+        source: "image",
+        chunk_type: chunk.chunk_type,
+        extraction_method: chunk.metadata.extraction_method,
+        vision_model: chunk.metadata.vision_model,
+        ocr_engine: chunk.metadata.ocr_engine,
+        image_width: chunk.metadata.image_width,
+        image_height: chunk.metadata.image_height,
+        text_length: chunk.metadata.text_length,
+        caption_length: chunk.metadata.caption_length,
+        processing_time_ms: chunk.metadata.processing_time_ms,
+      };
+
+      await prisma.$executeRaw`
+        INSERT INTO document_chunks (
+          id, document_id, workspace_id, tenant_id, content, embedding,
+          chunk_index, metadata, chunk_type, ocr_text, caption, image_summary, image_url, created_at
+        ) VALUES (
+          gen_random_uuid(), ${documentId}, ${workspaceId}, ${workspaceId},
+          ${chunk.content},
+          ${`[${embedding.join(",")}]`}::vector,
+          ${i}, ${JSON.stringify(chunkMetadata)}::jsonb,
+          ${chunk.chunk_type}, ${chunk.ocr_text}, ${chunk.caption}, ${chunk.image_summary}, ${chunk.image_url},
+          NOW()
+        )
+      `;
+    }
+    metrics.storeDurationMs = storeTimer();
+    console.log(
+      `[Processing] ${documentId}: stored ${imageChunks.length} image chunks in ${metrics.storeDurationMs}ms`
+    );
+  } catch (error) {
+    metrics.totalDurationMs = totalTimer();
+    const errorMsg = formatProcessingError("store", error, 1);
+    await markFailed(documentId, errorMsg, metrics);
+    throw error;
+  }
+
+  // Step 5: Update document status with metrics
+  metrics.totalDurationMs = totalTimer();
   await prisma.document.update({
     where: { id: documentId },
     data: {
       status: "ready",
       chunkCount: imageChunks.length,
+      errorMessage: null,
+      processingMetrics: JSON.parse(JSON.stringify(metrics)),
     },
   });
+
+  console.log(
+    `[Processing] ${documentId}: IMAGE COMPLETE — ${imageChunks.length} chunks, total ${metrics.totalDurationMs}ms`
+  );
 
   // Track usage
   trackDocumentUpload(workspaceId, fileSize).catch(() => {});
@@ -394,4 +540,33 @@ async function processImageDocument(
     chunkTypes: imageChunks.map((c) => c.chunk_type),
     extractionMethod: result.metadata.extraction_method,
   }, workspaceId).catch(() => {});
+}
+
+/**
+ * Mark a document as failed with error details and metrics.
+ */
+async function markFailed(
+  documentId: string,
+  errorMessage: string,
+  metrics: ProcessingMetrics
+): Promise<void> {
+  try {
+    await prisma.document.update({
+      where: { id: documentId },
+      data: {
+        status: "failed",
+        errorMessage,
+        processingMetrics: JSON.parse(JSON.stringify(metrics)),
+      },
+    });
+    console.error(
+      `[Processing] ${documentId}: FAILED — ${errorMessage}`
+    );
+  } catch (updateError) {
+    // If we can't even update the status, log it
+    console.error(
+      `[Processing] ${documentId}: CRITICAL — failed to update error status:`,
+      updateError
+    );
+  }
 }
