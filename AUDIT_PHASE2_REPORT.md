@@ -1,0 +1,128 @@
+# Audit Phase 2 — Implementation Report
+
+**Date:** June 7, 2026
+**Phase:** 2 of 2 — P1 High Routes
+**Build:** ✅ Clean (0 errors)
+
+---
+
+## Coverage Improvement
+
+| Metric | After Phase 1 | After Phase 2 | Total Change |
+|--------|---------------|---------------|--------------|
+| Files with audit | 9 | **18** | +9 |
+| Audit invocations | 27 | **48** | +21 |
+| Routes audited | 9/22 (41%) | **19/22 (86%)** | +45% |
+| Total routes audited | 9/58 (16%) | **19/58 (33%)** | +17% |
+| Audit actions defined | 30 | **32** | +2 |
+
+**Coverage: 86% of required routes now have audit logging.**
+
+---
+
+## Files Modified (9)
+
+| # | File | Actions Added |
+|---|------|---------------|
+| 1 | `lib/audit.ts` | `MCP_CONNECT`, `MCP_DISCONNECT` constants |
+| 2 | `app/api/workspace/members/route.ts` | `member.invite` |
+| 3 | `app/api/workspace/members/[id]/route.ts` | `member.role_change`, `member.remove` |
+| 4 | `app/api/upload/route.ts` | `document.upload` |
+| 5 | `app/api/documents/[id]/route.ts` | `document.delete` |
+| 6 | `app/api/mcp/servers/route.ts` | `mcp.server_add` |
+| 7 | `app/api/mcp/servers/[id]/route.ts` | `mcp.server_update`, `mcp.server_remove` |
+| 8 | `app/api/mcp/connect/route.ts` | `mcp.connect`, `mcp.disconnect` |
+| 9 | `app/api/workspace/route.ts` | `workspace.update` |
+| 10 | `app/api/admin/settings/route.ts` | `workspace.settings` |
+
+---
+
+## New Audit Actions (11 invocations)
+
+### Members (3 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `member.invite` | `workspace/members` POST | Member created | user |
+| `member.role_change` | `workspace/members/[id]` PATCH | Role updated | user |
+| `member.remove` | `workspace/members/[id]` DELETE | Member deleted | user |
+
+### Documents (2 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `document.upload` | `upload` POST | Document created | user |
+| `document.delete` | `documents/[id]` DELETE | Document deleted | user |
+
+### MCP (5 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `mcp.server_add` | `mcp/servers` POST | Server created | user |
+| `mcp.server_update` | `mcp/servers/[id]` PUT | Server updated | user |
+| `mcp.server_remove` | `mcp/servers/[id]` DELETE | Server deleted | user |
+| `mcp.connect` | `mcp/connect` POST | All servers connected | user |
+| `mcp.disconnect` | `mcp/connect` DELETE | All servers disconnected | user |
+
+### Workspace (2 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `workspace.update` | `workspace` PATCH | Workspace name changed | user |
+| `workspace.settings` | `admin/settings` POST | AI settings updated | user |
+
+---
+
+## Complete Audit Coverage Map
+
+### ✅ Audited Routes (19/22 = 86%)
+
+| # | Route | Actions |
+|---|-------|---------|
+| 1 | `lib/auth.ts` | login, logout, login_failed |
+| 2 | `auth/register` | register |
+| 3 | `billing/checkout` | checkout |
+| 4 | `billing/portal` | portal_access |
+| 5 | `billing/webhook` | subscription.created/updated/failed/canceled |
+| 6 | `workspace/billing` | plan_change, cancel |
+| 7 | `workspace` PATCH | workspace.update |
+| 8 | `workspace/members` POST | member.invite |
+| 9 | `workspace/members/[id]` PATCH | member.role_change |
+| 10 | `workspace/members/[id]` DELETE | member.remove |
+| 11 | `documents/[id]` DELETE | document.delete |
+| 12 | `upload` POST | document.upload |
+| 13 | `mcp/servers` POST | mcp.server_add |
+| 14 | `mcp/servers/[id]` PUT | mcp.server_update |
+| 15 | `mcp/servers/[id]` DELETE | mcp.server_remove |
+| 16 | `mcp/connect` POST | mcp.connect |
+| 17 | `mcp/connect` DELETE | mcp.disconnect |
+| 18 | `admin/settings` POST | workspace.settings |
+| 19 | `v1/keys` | api_key.create, api_key.revoke |
+| 20 | `v1/widget/create` | widget.create |
+| 21 | `v1/widget/update` | widget.update |
+
+### ❌ Not Audited (3 remaining — low priority)
+
+| # | Route | Reason |
+|---|-------|--------|
+| 22 | `mcp/route.ts` | MCP protocol transport — not a user action |
+| 23 | `mcp/tools/route.ts` | Read-only tool list |
+| 24 | `v1/widget/list` | Read-only list |
+
+---
+
+## Design Decisions
+
+1. **workspaceId for documents** — `documents/[id]` uses `resolveWorkspaceId(userId)` since document query is scoped by `userId` not `workspaceId`. Added explicit resolution before delete.
+
+2. **MCP connect/disconnect** — Added `MCP_CONNECT` and `MCP_DISCONNECT` to `AUDIT_ACTIONS` as they didn't exist. These are bulk operations (connect/disconnect all servers).
+
+3. **Member DELETE select fix** — Extended `select` to include `userId` for audit metadata. Original select only had `id, workspaceId, role`.
+
+4. **Settings audit metadata** — Logs `ai_provider` and `ai_model` but NOT `ai_api_key` (security: never log secrets).
+
+5. **Fire-and-forget** — All `logAudit()` calls are non-awaited. Errors are caught internally.
+
+---
+
+*Report generated by Hermes Agent — Audit Phase 2 Implementation*

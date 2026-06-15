@@ -25,7 +25,7 @@ export async function GET(
     const document = await prisma.document.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: session.user.id!,
       },
       include: {
         chunks: {
@@ -76,7 +76,7 @@ export async function DELETE(
     const document = await prisma.document.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: session.user.id!,
       },
     });
 
@@ -87,7 +87,7 @@ export async function DELETE(
       );
     }
 
-    const workspaceId = await resolveWorkspaceId(session.user.id as string);
+    const workspaceId = await resolveWorkspaceId(session.user.id! as string);
 
     // Delete vector embeddings
     await deleteDocumentChunks(id);
@@ -110,7 +110,7 @@ export async function DELETE(
     // Audit: document deleted
     logAudit({
       workspaceId,
-      actorId: session.user.id as string,
+      actorId: session.user.id! as string,
       actorType: "user",
       action: AUDIT_ACTIONS.DOCUMENT_DELETE,
       resourceType: "document",
@@ -143,7 +143,7 @@ export async function PATCH(
     const body = await request.json();
 
     const document = await prisma.document.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, userId: session.user.id! },
     });
 
     if (!document) {

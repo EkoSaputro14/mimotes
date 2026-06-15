@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const workspaceId = await resolveWorkspaceId(
-      session.user.id,
+      session.user.id!,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session as any).user.selectedWorkspaceId
     );
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const documents = await prisma.document.findMany({
       where: {
         id: { in: ids },
-        userId: session.user.id,
+        userId: session.user.id!,
       },
     });
 
@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const workspaceId = await resolveWorkspaceId(
-      session.user.id,
+      session.user.id!,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session as any).user.selectedWorkspaceId
     );
@@ -107,7 +107,7 @@ export async function PATCH(request: NextRequest) {
     const result = await prisma.document.updateMany({
       where: {
         id: { in: ids },
-        userId: session.user.id,
+        userId: session.user.id!,
       },
       data: { folderId: folderId || null },
     });

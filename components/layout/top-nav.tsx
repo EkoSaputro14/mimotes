@@ -206,13 +206,7 @@ export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: Top
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => {
-              const form = document.createElement("form");
-              form.action = "/api/auth/signout";
-              form.method = "POST";
-              document.body.appendChild(form);
-              form.submit();
-            }}
+            onClick={() => logout()}
           >
             <LogOut />
             Log out

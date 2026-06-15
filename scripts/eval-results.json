@@ -1,0 +1,1051 @@
+{
+  "timestamp": "2026-06-10T14:33:19",
+  "total_queries": 50,
+  "successful": 50,
+  "errors": 0,
+  "overall": {
+    "precision_at_5": 0.008,
+    "recall_at_5": 0.04,
+    "mrr": 0.015,
+    "doc_hit_rate": 0.28
+  },
+  "categories": {
+    "postgresql": {
+      "count": 15,
+      "avg_precision": 0.0,
+      "avg_recall": 0.0,
+      "avg_mrr": 0.0,
+      "doc_hit_rate": 0.6666666666666666
+    },
+    "business": {
+      "count": 10,
+      "avg_precision": 0.0,
+      "avg_recall": 0.0,
+      "avg_mrr": 0.0,
+      "doc_hit_rate": 0.0
+    },
+    "image": {
+      "count": 10,
+      "avg_precision": 0.02,
+      "avg_recall": 0.1,
+      "avg_mrr": 0.05,
+      "doc_hit_rate": 0.1
+    },
+    "text": {
+      "count": 10,
+      "avg_precision": 0.02,
+      "avg_recall": 0.1,
+      "avg_mrr": 0.025,
+      "doc_hit_rate": 0.3
+    },
+    "cross": {
+      "count": 5,
+      "avg_precision": 0.0,
+      "avg_recall": 0.0,
+      "avg_mrr": 0.0,
+      "doc_hit_rate": 0.0
+    }
+  },
+  "queries": [
+    {
+      "query_id": 1,
+      "query": "What is PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "d4104b2f-5de2-4e1e-ba71-793977636eee",
+        "90262fbc-56c5-4eaa-b0a0-dc043bbfd2c8",
+        "d1c0534b-58bc-47af-bf0f-786f154672b7",
+        "c3d3843e-4be5-4bfc-95ad-463f7a8f3de8",
+        "4eab3e4c-d1ae-43a3-afce-93137d8a9f90"
+      ],
+      "expected_chunk_ids": [
+        "a6f11553-41ef-47ad-b434-887366056298"
+      ]
+    },
+    {
+      "query_id": 2,
+      "query": "How do you create a table in PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "e52c82a0-7805-462f-8e22-7fd5999f9daa",
+        "e37fa962-bec3-45b5-ade0-942a52f76f7c",
+        "9604b67e-0ea3-4cc4-a765-343e3c3ff45b",
+        "cf9968ab-7759-4cac-873d-dacd50b212f5",
+        "fb2bbb71-3424-4a67-8388-265ad67332e7"
+      ],
+      "expected_chunk_ids": [
+        "aee2d1f5-f834-487e-8e29-402f9f6444e9"
+      ]
+    },
+    {
+      "query_id": 3,
+      "query": "What is MVCC in PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "d4104b2f-5de2-4e1e-ba71-793977636eee",
+        "d1c0534b-58bc-47af-bf0f-786f154672b7",
+        "90262fbc-56c5-4eaa-b0a0-dc043bbfd2c8",
+        "4eab3e4c-d1ae-43a3-afce-93137d8a9f90",
+        "ccef2f56-5cdf-40cb-a28a-8c6aa54711ff"
+      ],
+      "expected_chunk_ids": [
+        "4adbaa66-db78-413e-a81d-30df80bf9619"
+      ]
+    },
+    {
+      "query_id": 4,
+      "query": "How does PostgreSQL handle transactions?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "32b8c57a-993b-442f-af6b-bac083fc20c4",
+        "d1a957c8-a8cf-4e1f-bd70-66212182a9b9",
+        "b5f55f99-e6ff-4f1b-b601-8fce60d53dca",
+        "9a2e7940-5d04-4323-84f5-d1cf0753874a",
+        "929a0289-19e2-46d6-ac48-30b40d224b02"
+      ],
+      "expected_chunk_ids": [
+        "08f1b61e-2f67-4805-9817-dcc3a39cb525"
+      ]
+    },
+    {
+      "query_id": 5,
+      "query": "What is the PostgreSQL wire protocol?",
+      "category": "postgresql",
+      "difficulty": "hard",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "6bce422a-939f-4cf2-a3cd-c6948714b81e",
+        "f77bb7fd-ca2e-491a-b62b-6b1d686c37cd",
+        "bbfeb078-5435-47ae-b3a1-28df5cc0de87",
+        "01ff6e7f-046f-482e-9cde-35896af92e18",
+        "e000535a-5c1c-469c-98cd-f8c3731182bf"
+      ],
+      "expected_chunk_ids": [
+        "9c8986aa-14ae-4e1c-ab9e-0f2afd7f4a6b"
+      ]
+    },
+    {
+      "query_id": 6,
+      "query": "How do you configure PostgreSQL authentication?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "91156066-936f-4d0e-91a7-e0f7e1954567",
+        "9c70b73b-56fb-4fb8-b0b4-41c92e037b85",
+        "c708850f-1560-4c5b-bdd3-9a981d62d2a2",
+        "d9be433a-7a18-4b8c-8a14-41d1715279bb",
+        "8eb0c1f5-04e6-4010-a54c-7070be81f030"
+      ],
+      "expected_chunk_ids": [
+        "0e750808-d4f8-4315-869e-3ad4032574b8"
+      ]
+    },
+    {
+      "query_id": 7,
+      "query": "What are PostgreSQL data types?",
+      "category": "postgresql",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "cba76349-d984-4416-aa41-57846509e20a",
+        "fd3067ae-1f5b-4a5a-a2a9-0de2cff55646",
+        "5f0419dd-4b47-41db-9a5b-16abdc52418b",
+        "8c1b6aa1-5a14-4aa8-b84a-13cd62103e3a",
+        "1f210710-a4f2-4fe8-a101-12cd750c04e3"
+      ],
+      "expected_chunk_ids": [
+        "ef269ac2-fa6c-4b96-9a64-e1f71ac03f84"
+      ]
+    },
+    {
+      "query_id": 8,
+      "query": "How do you create an index in PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "5bd0b031-622e-407a-9334-9a4b8a7a6274",
+        "0ef78c12-9115-40c1-8dfb-02818afb4ed4",
+        "2667a6cf-c8a5-47b4-92a1-69f04d8073d6",
+        "86aaa5f1-a89c-4930-9c6a-5c1bca778860",
+        "1fd4019a-f7a5-4c52-bd0f-e9707f4f83f1"
+      ],
+      "expected_chunk_ids": [
+        "183a841d-65d7-48ab-a057-1bd01997f115"
+      ]
+    },
+    {
+      "query_id": 9,
+      "query": "What is the pg_hba.conf file?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "6457dacc-e58f-4ca8-b21f-36768d10f450",
+        "e214ac34-282d-4776-81df-ff3c4e25b773",
+        "d5a8a0be-17fb-4950-8d5c-47e0733953f4",
+        "d1091a43-9615-4994-868a-f39865b498eb",
+        "73d21c13-f814-432d-8aab-5d5cbc0874f8"
+      ],
+      "expected_chunk_ids": [
+        "52b8b1a5-da05-4bf9-9b75-eb869a7df7fc"
+      ]
+    },
+    {
+      "query_id": 10,
+      "query": "How do you backup a PostgreSQL database?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "d1ed7f51-cbe1-40c4-a92b-748a86632cf6",
+        "c7dd9838-fb7b-48c6-9a96-4f34ae2f2d6b",
+        "486b4fde-7590-4a07-bbc2-1bac08f1a3b2",
+        "ee0e5b7a-8418-4703-8bb4-3fd212d0cb72",
+        "ce35c755-8fbe-4e7d-943f-33b62dd7111e"
+      ],
+      "expected_chunk_ids": [
+        "0cf072f2-0892-4b95-a323-c4031e4c594f"
+      ]
+    },
+    {
+      "query_id": 11,
+      "query": "What is logical replication in PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "hard",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "2190383e-da96-42e1-9965-a7365c3ca285",
+        "f81bdfdf-8889-4582-b9bc-d95474f7facb",
+        "5a6fc0af-a1f1-4568-8b62-248118628864",
+        "8fa3b878-05a4-4c00-bb7c-5ede2931f16c",
+        "0c330ad4-3246-4375-a9de-951fe288d9ff"
+      ],
+      "expected_chunk_ids": [
+        "535ff567-3f82-487c-8775-f51e1fb53eaa"
+      ]
+    },
+    {
+      "query_id": 12,
+      "query": "How do you partition a table in PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "hard",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "dd26f7a5-e20f-4c0c-9475-28e3b1f26278",
+        "70316345-8e28-4c46-9bbe-ed5797b2464e",
+        "73698ebd-4512-40b3-a9f6-0342d830330b",
+        "5fbc8c1b-54bb-4830-8736-9eb97e350498",
+        "8edcc0c5-577e-474f-8a4e-bd89bffefd44"
+      ],
+      "expected_chunk_ids": [
+        "30cc496c-712f-4da8-bf88-5cac97c56776"
+      ]
+    },
+    {
+      "query_id": 13,
+      "query": "What are PostgreSQL extensions?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "1beca970-14f4-4c7d-bd07-0f03acc77bd2",
+        "4f315064-fa31-4dce-a9bb-cd4a109d3cfb",
+        "9ddd5ef4-f82a-4817-9576-5d22d5695cdd",
+        "0c1f5efd-1067-44a1-9413-3785c4374ee7",
+        "04f17589-5928-4223-a59a-dea37c9f10c5"
+      ],
+      "expected_chunk_ids": [
+        "78197f4f-2b97-4b07-92e1-c9c630a5c0f6"
+      ]
+    },
+    {
+      "query_id": 14,
+      "query": "How do you monitor PostgreSQL performance?",
+      "category": "postgresql",
+      "difficulty": "hard",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "cf974703-815a-4715-8467-cdc60ed0923f",
+        "8a09027f-0601-4562-bfda-822b5a8a7a3e",
+        "c708850f-1560-4c5b-bdd3-9a981d62d2a2",
+        "04f17589-5928-4223-a59a-dea37c9f10c5",
+        "be169688-cf98-484b-b94f-cd0ac9ec0176"
+      ],
+      "expected_chunk_ids": [
+        "1c93adff-fcd8-47c1-8777-12b4e06785ff"
+      ]
+    },
+    {
+      "query_id": 15,
+      "query": "What is the Write-Ahead Log in PostgreSQL?",
+      "category": "postgresql",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "00cd66de-6204-4378-9546-e679a6915db8",
+        "958cadc6-418e-4fca-b199-8a426f8f3043",
+        "5aa1c7b9-1271-466b-ae57-f8bb2cc7ffef",
+        "94c6caba-f916-4f84-93df-d044cd49e06f",
+        "8972a9e1-8ba7-4dbc-882f-68b49d14da1f"
+      ],
+      "expected_chunk_ids": [
+        "08f1b61e-2f67-4805-9817-dcc3a39cb525"
+      ]
+    },
+    {
+      "query_id": 16,
+      "query": "What is the Mimotes project?",
+      "category": "business",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "372f0c2a-b322-432f-8be4-0db9f0404e9e",
+        "33e070ed-324d-4475-ac7d-6c49ab854d94",
+        "d1d953a0-6218-4f8a-bf6b-ba2b173388f6",
+        "c64958c2-462e-41bd-be6c-fb96c7ce5367",
+        "f9d61a89-f9c0-4599-8bf4-df1758262d94"
+      ],
+      "expected_chunk_ids": [
+        "be48b9f9-a29b-461d-9cb5-4320f678c231"
+      ]
+    },
+    {
+      "query_id": 17,
+      "query": "What are the business objectives of Mimotes?",
+      "category": "business",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "14adb685-764d-4810-8358-4fd08906d714",
+        "d2fd4787-fd67-42e8-b724-f722fd1146f7",
+        "af8f95ec-ec9e-4a37-aa93-fbcd0bec9457",
+        "2a1139c9-0d73-4a90-bddf-065bf3d2ab20",
+        "87bb367b-5e3a-472e-beb5-a84a595d4510"
+      ],
+      "expected_chunk_ids": [
+        "5ddd8f2f-2095-4d2b-a970-b60c1649db57"
+      ]
+    },
+    {
+      "query_id": 18,
+      "query": "What technology stack does Mimotes use?",
+      "category": "business",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "b0cfbc57-e9a6-4946-8e1c-de0ab73b328a",
+        "e49c098b-049e-4155-ba80-a8f91635845c",
+        "2538de27-1df7-4a81-abe9-b9cf74fd8bee",
+        "d71714ee-5a5d-405d-a25c-0e911897301f",
+        "aaec32c2-a54a-4322-a58f-f61303779000"
+      ],
+      "expected_chunk_ids": [
+        "9f3f11b6-03cb-4127-b90e-f2c30cae1296"
+      ]
+    },
+    {
+      "query_id": 19,
+      "query": "What is the total amount of invoice INV-2026-0042?",
+      "category": "business",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "78cb9976-8c4d-466f-8b73-5bed3b1bf6f5",
+        "4e7994c2-9654-4447-a636-411f92211ac5",
+        "37dbcf4e-4bd9-4292-b45a-c842c9e69ece",
+        "247335e6-0ad6-46f8-b702-bb26ae2ece88",
+        "cb805eda-411d-4675-bea6-d3ac8d26f4c9"
+      ],
+      "expected_chunk_ids": [
+        "b128c416-29e5-4cae-a4c9-e88198708e5e"
+      ]
+    },
+    {
+      "query_id": 20,
+      "query": "Who is the vendor in the purchase order?",
+      "category": "business",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "7c0ed344-aaa3-46e5-9b74-27a9f2e14193",
+        "dc48cd5f-1ac6-430c-8172-f9e86c4d8189",
+        "1e150b46-24fb-4cce-8048-13e2e1550d56",
+        "c51c2202-d1eb-4af6-afc8-2c56aeaac489",
+        "d5085c00-2d37-4a93-a901-0cf1a47886fe"
+      ],
+      "expected_chunk_ids": [
+        "a68eac0c-1b50-456a-bd93-fb53d0bdfc53"
+      ]
+    },
+    {
+      "query_id": 21,
+      "query": "What items are in the purchase order?",
+      "category": "business",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "9ad6ccd8-9aba-4006-b587-486e62839f6c",
+        "4a6f77f6-1e96-4be6-a001-e463dae82db1",
+        "221f849a-ef5f-4293-8c8e-557e06cecf56",
+        "ee8950de-a4b4-4d80-bcf6-bd8970925064",
+        "f27c27e3-d32e-410f-906b-0fad4f2cb97c"
+      ],
+      "expected_chunk_ids": [
+        "7290299f-99b2-4bcf-94f6-89ba1a391d9f"
+      ]
+    },
+    {
+      "query_id": 22,
+      "query": "Who attended the sprint planning meeting?",
+      "category": "business",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "75fbe7ab-0102-46c1-9531-af668802c7da",
+        "16e441b5-75e4-4597-80e2-f0c46788f271",
+        "c1d42a05-14db-4d23-9ece-7107f6934c6e",
+        "f05fdb83-f534-4d9b-a2a4-2a8fde86e63a",
+        "5bea70aa-b03c-449b-b355-13f99ae2cb11"
+      ],
+      "expected_chunk_ids": [
+        "09eb7cdb-f579-49f1-9f47-c7c88fc9d9c2"
+      ]
+    },
+    {
+      "query_id": 23,
+      "query": "What action items were assigned in the meeting?",
+      "category": "business",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "c4b459fd-90a3-409e-a008-9d1469c1822b",
+        "1a560c28-9d04-48ec-8ac1-dfc3c07a1345",
+        "a71d83e4-b6a6-4290-b67e-0dd963162ade",
+        "c8ae6873-1bf6-43e6-95c5-2a68ac8fe890",
+        "f957f62f-f04c-4696-aa16-92d3c19bf60e"
+      ],
+      "expected_chunk_ids": [
+        "b4b9f26a-6d50-4e24-8540-62e23e0f6ca7"
+      ]
+    },
+    {
+      "query_id": 24,
+      "query": "What is the ROI estimate for the AI platform?",
+      "category": "business",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "cf69d781-4289-451c-b62f-011d35c37244",
+        "65932e0b-500a-4b06-85bd-1f13dde55207",
+        "fe2da698-efa4-4950-a4b5-0c60396c2ebc",
+        "67c428f0-514f-4e78-8cd5-60af7ffc5d30",
+        "6e055f3c-443c-4ce6-ae85-dfc530c0c87d"
+      ],
+      "expected_chunk_ids": [
+        "2b9e6c4d-2c44-4f3c-8f84-cdcdc0f2d8be"
+      ]
+    },
+    {
+      "query_id": 25,
+      "query": "What features does the proposed solution include?",
+      "category": "business",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "3804fb45-d3d0-47e0-89a0-d1b50cf7f667",
+        "73df86d2-184b-4ad5-977c-0c7bc1916e72",
+        "d2491b69-19a5-4bee-8f2a-e69a9f3580e1",
+        "8ecaf19e-f949-4a7d-b8bc-4339035d85a6",
+        "ea928834-3c27-4e34-a611-42a1fa39c95f"
+      ],
+      "expected_chunk_ids": [
+        "6c7c5adb-e90c-4306-885d-808a45fc71b5"
+      ]
+    },
+    {
+      "query_id": 26,
+      "query": "What is the auction date for the property in Tegal?",
+      "category": "image",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "65932e0b-500a-4b06-85bd-1f13dde55207",
+        "fe2da698-efa4-4950-a4b5-0c60396c2ebc",
+        "cf69d781-4289-451c-b62f-011d35c37244",
+        "fbbac4ad-342e-466f-8d80-1b58345234ca",
+        "3cef3aee-6ae3-4726-94c2-bb858ed7ca58"
+      ],
+      "expected_chunk_ids": [
+        "44973a72-b6e8-46b3-9221-5e9cebbbf4ea"
+      ]
+    },
+    {
+      "query_id": 27,
+      "query": "What is the property location in the auction?",
+      "category": "image",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "c0c08051-f347-487c-b220-5e92d2e97bf1",
+        "54707131-e6ed-4a17-b0c9-4b8e6087927d",
+        "9e76d5b8-e802-4faf-aed1-5a656b4d3854",
+        "9e87e93c-4379-4379-a8c7-e96b99699400",
+        "be28b78f-4365-4b8a-ab3f-a1bdd73a3db0"
+      ],
+      "expected_chunk_ids": [
+        "44973a72-b6e8-46b3-9221-5e9cebbbf4ea"
+      ]
+    },
+    {
+      "query_id": 28,
+      "query": "What is the total invoice amount in the image?",
+      "category": "image",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "6dc3f595-7833-4fcd-b699-7dfd75097802",
+        "3437815f-fd47-4d30-a3c5-7c5f97275ae4",
+        "6ea9db0b-5ea3-431c-87e7-079739b2cfb2",
+        "a4e8d978-39b7-46e7-a0ce-31bbf3b0dcfb",
+        "5c22bf62-6d02-4110-aeef-34a09378c5f8"
+      ],
+      "expected_chunk_ids": [
+        "4e42e9df-c5a1-42cc-88d7-850ba43b11ca"
+      ]
+    },
+    {
+      "query_id": 29,
+      "query": "What items are listed in the invoice image?",
+      "category": "image",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "4a6f77f6-1e96-4be6-a001-e463dae82db1",
+        "c7b917e0-2324-45bb-b67e-01a35058a67c",
+        "ae8d570f-b70e-4842-b9c1-3fb08cd4c455",
+        "167e28b0-8e52-4afa-b839-05f7bfb635c1",
+        "df560944-aa01-49c8-8e94-6cb7a1276b9c"
+      ],
+      "expected_chunk_ids": [
+        "4e42e9df-c5a1-42cc-88d7-850ba43b11ca"
+      ]
+    },
+    {
+      "query_id": 30,
+      "query": "What is the total monthly API cost?",
+      "category": "image",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "762244a5-65e3-48bc-a2a6-66d4fdc52611",
+        "96c1a076-9ed6-4c3e-aa15-bae2e2059987",
+        "9d7a6903-0786-4adb-9527-a65b325d4c7f",
+        "68eb6565-ae8f-4dd1-a195-894bb2e1c5f2",
+        "607bb455-30e0-417a-92b5-972ffcb7041e"
+      ],
+      "expected_chunk_ids": [
+        "55f89948-bd99-4476-8373-9780901a31e6"
+      ]
+    },
+    {
+      "query_id": 31,
+      "query": "What is the CPU usage on the network dashboard?",
+      "category": "image",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "f37671eb-9c7e-4ae7-810f-365557aca8d1",
+        "71aacccc-7885-4a0b-9e5f-11f31254333e",
+        "1b6d0ac9-60ff-4900-93cd-3bd66e62a1db",
+        "949aa1de-ea19-4c12-8232-aecfaa074d70",
+        "d418b141-8e00-4335-a213-7080114e6d91"
+      ],
+      "expected_chunk_ids": [
+        "1184250c-11d8-48d0-afd2-ad171b2153e8"
+      ]
+    },
+    {
+      "query_id": 32,
+      "query": "What tables are in the database schema?",
+      "category": "image",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "20f5aaac-67a0-479e-8843-0c8ed4380291",
+        "a8be1f99-987e-474d-85db-98a77d35fefd",
+        "99abd5b1-4199-45d7-9cb0-9a20ca8fff1a",
+        "93e0666e-008e-4161-9073-f658517ac4a7",
+        "e0895f97-b1de-475d-aba3-bfdc3ef8883b"
+      ],
+      "expected_chunk_ids": [
+        "3cd73b51-f1e8-4e99-a13c-87b12bc66021"
+      ]
+    },
+    {
+      "query_id": 33,
+      "query": "What are the CI/CD pipeline stages?",
+      "category": "image",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "d42327c6-b1b1-4a87-988a-9cdfd723bde5",
+        "8eb323a8-065a-47a7-946e-90eef23311c5",
+        "6412d1db-ab03-4f1d-8a70-80e6c60899d9",
+        "7f97427a-5dd4-4c10-bcb7-0b1447b663fd",
+        "203d4e33-560d-44ab-9ba5-68cde2d8a856"
+      ],
+      "expected_chunk_ids": [
+        "c7035a99-1343-4fb2-8cf0-614c763fecf5"
+      ]
+    },
+    {
+      "query_id": 34,
+      "query": "What API endpoints are documented?",
+      "category": "image",
+      "difficulty": "medium",
+      "precision_at_5": 0.2,
+      "recall_at_5": 1.0,
+      "mrr": 0.5,
+      "doc_hit": true,
+      "top_results": [
+        "9e4104ba-0828-49a4-ad91-9a7f9b369383",
+        "dd3b0602-cc31-4523-90a6-1453881f6eff",
+        "b43d21d8-a062-4427-af03-4e748b22737f",
+        "ecbe8239-bd4b-4606-9eb4-6e2273d829df",
+        "40a10ec2-cb9c-4837-b573-f68fe078c92d"
+      ],
+      "expected_chunk_ids": [
+        "dd3b0602-cc31-4523-90a6-1453881f6eff"
+      ]
+    },
+    {
+      "query_id": 35,
+      "query": "What users are listed in the admin panel?",
+      "category": "image",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "4a6f77f6-1e96-4be6-a001-e463dae82db1",
+        "5b32563b-ec54-4b72-accb-55d32acaf90d",
+        "681dc245-5c93-419b-9ab1-5ebe79274dc2",
+        "2bef2fb7-01eb-4fed-8c1b-11b1f571bc94",
+        "3811b9d2-4d65-4ae6-866b-eaa5eb878473"
+      ],
+      "expected_chunk_ids": [
+        "9e83bf94-2ddc-451a-a2f9-9591e7f9f31a"
+      ]
+    },
+    {
+      "query_id": 36,
+      "query": "How do you compile the Linux kernel?",
+      "category": "text",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "aff486e4-187a-4329-9bf2-c11f1d61ecdb",
+        "1468832d-2772-4014-8638-8943c1f6c7e5",
+        "889c1fe1-81a6-4754-8ab4-77fba4269e26",
+        "0d52b7d5-56ba-4437-a076-303bd1e03256",
+        "7219bcf2-c770-4189-a08a-e3cdc030967a"
+      ],
+      "expected_chunk_ids": [
+        "624b264a-9e85-483b-8e87-e18a31f98015"
+      ]
+    },
+    {
+      "query_id": 37,
+      "query": "What is the Linux kernel README about?",
+      "category": "text",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "1fd46eea-6bd5-4ffc-b3ec-17752bf058c4",
+        "cd77e50c-1d2a-4509-9a06-6577ef5e1ec9",
+        "12b128c3-668f-4fef-b3cb-af2e3c1b106d",
+        "0f43fd19-270a-4ca0-92a3-519647a3ecae",
+        "166cafe7-8269-4733-871e-43acf7cb41d7"
+      ],
+      "expected_chunk_ids": [
+        "52267fe5-406b-4f2d-9f29-d02699da3663"
+      ]
+    },
+    {
+      "query_id": 38,
+      "query": "What is Docker?",
+      "category": "text",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "49f1717d-b8b8-48f4-af74-da2dc8fbe7ab",
+        "479c8edb-4551-4320-8504-8b559eacb9cc",
+        "f389f8de-1b32-4ac2-aafb-cc195c8dd423",
+        "5a86921d-e4a5-45a4-bb50-4288cb975cb8",
+        "aabbf331-cdf1-4e5e-91bd-a3bc46e3057b"
+      ],
+      "expected_chunk_ids": [
+        "c1a1c225-3c32-4d79-ab43-e7c8ae526efd"
+      ]
+    },
+    {
+      "query_id": 39,
+      "query": "What does the PostgreSQL README say?",
+      "category": "text",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "bbfeb078-5435-47ae-b3a1-28df5cc0de87",
+        "f77bb7fd-ca2e-491a-b62b-6b1d686c37cd",
+        "6bce422a-939f-4cf2-a3cd-c6948714b81e",
+        "ccef2f56-5cdf-40cb-a28a-8c6aa54711ff",
+        "cb5a380d-f18f-4c8c-b08a-b24b98c4fb9e"
+      ],
+      "expected_chunk_ids": [
+        "66313d05-616c-4dbd-807e-90a8223664c0"
+      ]
+    },
+    {
+      "query_id": 40,
+      "query": "What is the security.txt standard?",
+      "category": "text",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "ed152193-2c96-408b-84c8-b7045ec7d5b4",
+        "47d16228-7b01-443a-9f89-95a94df1a1dd",
+        "ab87e65d-77df-49ad-874f-b3d21efd1fe9",
+        "e2ca1d56-af4a-4162-b9d9-17a0b6026f25",
+        "9df0994a-15c4-40d7-9182-fe1e7adeb8ef"
+      ],
+      "expected_chunk_ids": [
+        "31d8c4a8-93e4-4c52-8ab9-5c5e3a4348ff"
+      ]
+    },
+    {
+      "query_id": 41,
+      "query": "What paths does Google disallow in robots.txt?",
+      "category": "text",
+      "difficulty": "medium",
+      "precision_at_5": 0.2,
+      "recall_at_5": 1.0,
+      "mrr": 0.25,
+      "doc_hit": true,
+      "top_results": [
+        "95b30bd1-c0e9-4a56-83b5-0138d5b836fa",
+        "05b7cf03-c404-4e0e-bf8d-4d9e8f549dd1",
+        "dc3743c3-b538-4f01-ab3a-f5a1e65f74fe",
+        "17b36fda-b63d-43ce-a907-4b1c94646cc5",
+        "d4e89e6f-abbd-4680-a80c-dcab5275a127"
+      ],
+      "expected_chunk_ids": [
+        "17b36fda-b63d-43ce-a907-4b1c94646cc5"
+      ]
+    },
+    {
+      "query_id": 42,
+      "query": "What user agents does Google allow?",
+      "category": "text",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "95b30bd1-c0e9-4a56-83b5-0138d5b836fa",
+        "05b7cf03-c404-4e0e-bf8d-4d9e8f549dd1",
+        "c2f580af-8871-4760-9ba2-ed98dd9dfcd7",
+        "6b7807d5-cb1a-458a-af62-c5b1a2d36290",
+        "cc78b1f2-a43e-424b-a22f-664b1bfeef79"
+      ],
+      "expected_chunk_ids": [
+        "17b36fda-b63d-43ce-a907-4b1c94646cc5"
+      ]
+    },
+    {
+      "query_id": 43,
+      "query": "What are the Linux kernel build instructions?",
+      "category": "text",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "0f43fd19-270a-4ca0-92a3-519647a3ecae",
+        "bdf76101-a344-4f09-b200-17da7658ef33",
+        "f27c27e3-d32e-410f-906b-0fad4f2cb97c",
+        "f23201bc-76cb-4509-a14c-b5f65b7d38ae",
+        "ee8950de-a4b4-4d80-bcf6-bd8970925064"
+      ],
+      "expected_chunk_ids": [
+        "624b264a-9e85-483b-8e87-e18a31f98015"
+      ]
+    },
+    {
+      "query_id": 44,
+      "query": "What is the Docker project?",
+      "category": "text",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": true,
+      "top_results": [
+        "1bb47bae-25d5-413f-93e7-e8963975d37b",
+        "68b4da49-cd16-49e6-b9ff-6f0812cb0ac2",
+        "f9d61a89-f9c0-4599-8bf4-df1758262d94",
+        "46dbff38-4e8a-4a0e-ade6-dbb5dccbc084",
+        "c7e9d651-2851-46f0-9b51-9925876b0fbc"
+      ],
+      "expected_chunk_ids": [
+        "c1a1c225-3c32-4d79-ab43-e7c8ae526efd"
+      ]
+    },
+    {
+      "query_id": 45,
+      "query": "What contact information is in security.txt?",
+      "category": "text",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "e83a9f64-c12f-40aa-aae0-d78d5bf5ff2b",
+        "2d1c98db-9004-44d5-8787-26a7f3a585ef",
+        "74eec055-94c1-4e3e-aa11-2969ca45bc8c",
+        "1058468b-cb73-4989-81e5-c1838b7d0227",
+        "6b4fbc17-8322-40d2-9e27-19f34571cf05"
+      ],
+      "expected_chunk_ids": [
+        "31d8c4a8-93e4-4c52-8ab9-5c5e3a4348ff"
+      ]
+    },
+    {
+      "query_id": 46,
+      "query": "What database does Mimotes use?",
+      "category": "cross",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "a0ddc881-d593-4935-85f5-3c37235d74b8",
+        "eadb2e19-4d2f-400a-b52d-01971919b3d4",
+        "f2378686-8850-473c-837e-6e13a8317501",
+        "72ac9ef1-d746-4c71-828f-970b88fb39f6",
+        "bb396999-dad8-455b-8047-cfc13c8e8610"
+      ],
+      "expected_chunk_ids": [
+        "9f3f11b6-03cb-4127-b90e-f2c30cae1296"
+      ]
+    },
+    {
+      "query_id": 47,
+      "query": "What AI providers does Mimotes support?",
+      "category": "cross",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "266621fd-22f5-41c5-9a88-4757b7099894",
+        "38517e30-7e2f-46bf-bda9-9d130268cdc1",
+        "8cc5f334-2750-4b59-9d0e-8e77d4ab84f6",
+        "b51d5717-e510-49ca-a9e2-1c9d45cdaf7a",
+        "3ed9f482-ad34-4e2d-8c52-2ba9c0c2d093"
+      ],
+      "expected_chunk_ids": [
+        "9f3f11b6-03cb-4127-b90e-f2c30cae1296"
+      ]
+    },
+    {
+      "query_id": 48,
+      "query": "How much does the server cost?",
+      "category": "cross",
+      "difficulty": "easy",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "7d22b6a5-908f-4229-99b0-6e778da2d8a5",
+        "b3eaac12-e222-490c-8697-03effdc9e967",
+        "071a88ef-70ba-40f2-8f9d-a33385d582e9",
+        "e9d25058-7bd2-4a41-a291-5dc03be44082",
+        "33a713dc-8003-4678-986b-335e623d5d70"
+      ],
+      "expected_chunk_ids": [
+        "b128c416-29e5-4cae-a4c9-e88198708e5e"
+      ]
+    },
+    {
+      "query_id": 49,
+      "query": "What is the deployment architecture?",
+      "category": "cross",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "f2b3851e-df73-496e-bab5-27849c0829e3",
+        "e6206102-a69d-4828-af6c-68ae10277a3f",
+        "bcd029f7-85f0-4579-98fa-cca8e92e31cb",
+        "2284148e-ca10-4060-a27b-eabe0c135d0b",
+        "051bb470-efaf-46cc-a6b4-92bbaaf00b96"
+      ],
+      "expected_chunk_ids": [
+        "c7035a99-1343-4fb2-8cf0-614c763fecf5"
+      ]
+    },
+    {
+      "query_id": 50,
+      "query": "What search capabilities does Mimotes have?",
+      "category": "cross",
+      "difficulty": "medium",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "mrr": 0.0,
+      "doc_hit": false,
+      "top_results": [
+        "261b389a-a43f-4e97-830d-b49d718d60cd",
+        "1f0dd5a5-e87a-49c9-bc46-9e1d7631cda8",
+        "7c659783-014b-49e4-a216-5a39621d4158",
+        "87752076-ddb3-49e9-a487-515d77da40b8",
+        "654d36d3-3cda-4450-8e33-fab7d74a31d9"
+      ],
+      "expected_chunk_ids": [
+        "2d567ce7-072f-4300-96cb-6b74f35c00f6"
+      ]
+    }
+  ]
+}

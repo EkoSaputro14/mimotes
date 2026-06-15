@@ -31,7 +31,7 @@ export async function logAudit(params: LogActionParams): Promise<void> {
       SELECT current_setting('app.current_workspace_id', true) as v
     `;
     if (!currentCtx[0]?.v) {
-      await prisma.$executeRaw`SELECT set_config('app.current_workspace_id', ${params.workspaceId}, true)`;
+      await prisma.$executeRaw`SELECT set_config('app.current_workspace_id', ${params.workspaceId}, false)`;
     }
 
     await prisma.auditLog.create({

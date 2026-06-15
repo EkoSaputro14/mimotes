@@ -9,7 +9,7 @@ export async function POST() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id as string;
+    const userId = session.user.id! as string;
     const workspaceId = await resolveWorkspaceId(userId);
     await setWorkspaceContext(workspaceId);
 

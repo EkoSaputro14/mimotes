@@ -1,0 +1,210 @@
+{
+  "version": "1.0.0",
+  "description": "RAG Retrieval Benchmark Dataset for MimoNotes",
+  "created": "2026-06-13",
+  "totalQueries": 20,
+  "queries": [
+    {
+      "id": "factual-001",
+      "query": "Apa itu RAG?",
+      "expectedKeywords": ["retrieval", "augmented", "generation"],
+      "expectedDocTypes": ["technical"],
+      "category": "factual",
+      "difficulty": "easy",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "factual-002",
+      "query": "Bagaimana cara mengupload dokumen?",
+      "expectedKeywords": ["upload", "document", "file"],
+      "expectedDocTypes": ["guide"],
+      "category": "factual",
+      "difficulty": "easy",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "factual-003",
+      "query": "What is pgvector?",
+      "expectedKeywords": ["pgvector", "postgresql", "vector", "extension"],
+      "expectedDocTypes": ["technical"],
+      "category": "factual",
+      "difficulty": "easy",
+      "language": "en",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "factual-004",
+      "query": "Apa fungsi dari embedding dalam RAG?",
+      "expectedKeywords": ["embedding", "vector", "representasi"],
+      "expectedDocTypes": ["technical"],
+      "category": "factual",
+      "difficulty": "medium",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "factual-005",
+      "query": "Bagaimana cara kerja cosine similarity?",
+      "expectedKeywords": ["cosine", "similarity", "vector", "distance"],
+      "expectedDocTypes": ["technical"],
+      "category": "factual",
+      "difficulty": "medium",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "conceptual-001",
+      "query": "Mengapa chunking penting dalam pipeline RAG?",
+      "expectedKeywords": ["chunk", "split", "context", "retrieval"],
+      "expectedDocTypes": ["technical", "guide"],
+      "category": "conceptual",
+      "difficulty": "medium",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "conceptual-002",
+      "query": "Apa perbedaan antara vector search dan keyword search?",
+      "expectedKeywords": ["vector", "keyword", "semantic", "BM25"],
+      "expectedDocTypes": ["technical"],
+      "category": "conceptual",
+      "difficulty": "hard",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "conceptual-003",
+      "query": "Bagaimana cara mengurangi hallucination dalam RAG?",
+      "expectedKeywords": ["hallucination", "grounding", "context", "prompt"],
+      "expectedDocTypes": ["technical", "guide"],
+      "category": "conceptual",
+      "difficulty": "hard",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "conceptual-004",
+      "query": "What are the tradeoffs between chunk size and retrieval quality?",
+      "expectedKeywords": ["chunk", "size", "retrieval", "quality", "tradeoff"],
+      "expectedDocTypes": ["technical"],
+      "category": "conceptual",
+      "difficulty": "hard",
+      "language": "en",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "conceptual-005",
+      "query": "Mengapa hybrid search lebih baik dari vector-only search?",
+      "expectedKeywords": ["hybrid", "search", "vector", "BM25", "RRF"],
+      "expectedDocTypes": ["technical"],
+      "category": "conceptual",
+      "difficulty": "hard",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "multi-doc-001",
+      "query": "Apa hubungan antara embedding quality dan retrieval precision?",
+      "expectedKeywords": ["embedding", "quality", "retrieval", "precision"],
+      "expectedDocTypes": ["technical"],
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "multi-doc-002",
+      "query": "Bagaimana cara mengoptimalkan RAG pipeline secara end-to-end?",
+      "expectedKeywords": ["optimize", "pipeline", "chunk", "embed", "retrieval"],
+      "expectedDocTypes": ["technical", "guide"],
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "multi-doc-003",
+      "query": "What security considerations exist for a RAG system?",
+      "expectedKeywords": ["security", "SSRF", "injection", "encryption"],
+      "expectedDocTypes": ["technical", "security"],
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "language": "en",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "multi-doc-004",
+      "query": "Bagaimana NextAuth dan Prisma bekerja bersama dalam aplikasi ini?",
+      "expectedKeywords": ["nextauth", "prisma", "auth", "database"],
+      "expectedDocTypes": ["technical"],
+      "category": "multi-doc",
+      "difficulty": "medium",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "multi-doc-005",
+      "query": "Jelaskan arsitektur lengkap sistem MimoNotes dari frontend hingga database.",
+      "expectedKeywords": ["nextjs", "react", "postgresql", "prisma", "api"],
+      "expectedDocTypes": ["technical", "architecture"],
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "language": "id",
+      "shouldRetrieve": true
+    },
+    {
+      "id": "negative-001",
+      "query": "Bagaimana cara memasak nasi goreng?",
+      "expectedKeywords": [],
+      "expectedDocTypes": [],
+      "category": "negative",
+      "difficulty": "easy",
+      "language": "id",
+      "shouldRetrieve": false
+    },
+    {
+      "id": "negative-002",
+      "query": "What is the weather forecast for Jakarta tomorrow?",
+      "expectedKeywords": [],
+      "expectedDocTypes": [],
+      "category": "negative",
+      "difficulty": "easy",
+      "language": "en",
+      "shouldRetrieve": false
+    },
+    {
+      "id": "negative-003",
+      "query": "Siapa presiden Indonesia tahun 2030?",
+      "expectedKeywords": [],
+      "expectedDocTypes": [],
+      "category": "negative",
+      "difficulty": "easy",
+      "language": "id",
+      "shouldRetrieve": false
+    },
+    {
+      "id": "edge-001",
+      "query": "RAG",
+      "expectedKeywords": ["RAG"],
+      "expectedDocTypes": ["technical"],
+      "category": "factual",
+      "difficulty": "easy",
+      "language": "en",
+      "shouldRetrieve": true,
+      "note": "Single-word query — tests minimum query length handling"
+    },
+    {
+      "id": "edge-002",
+      "query": "Bagaimana cara menggunakan fitur yang belum ada di sistem ini?",
+      "expectedKeywords": [],
+      "expectedDocTypes": [],
+      "category": "negative",
+      "difficulty": "medium",
+      "language": "id",
+      "shouldRetrieve": false,
+      "note": "Asks about non-existent feature — should return 'not found'"
+    }
+  ]
+}

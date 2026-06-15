@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Geist:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        .status-pulse {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(192, 193, 255, 0.4); }
+            100% { box-shadow: 0 0 0 8px rgba(192, 193, 255, 0); }
+        }
+        body {
+            background-color: #000000;
+            color: #e5e2e1;
+            overflow-x: hidden;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1f1f23;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-background": "#e5e2e1",
+                        "background": "#131313",
+                        "surface-dim": "#131313",
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary": "#131e8c",
+                        "secondary-fixed": "#e0e0ff",
+                        "surface-bright": "#3a3939",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "on-tertiary-container": "#452000",
+                        "surface-container-high": "#2a2a2a",
+                        "on-error": "#690005",
+                        "tertiary-container": "#d97721",
+                        "surface-container-low": "#1c1b1b",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-primary": "#1000a9",
+                        "on-secondary-fixed": "#000767",
+                        "tertiary": "#ffb783",
+                        "inverse-on-surface": "#313030",
+                        "on-surface-variant": "#c7c4d7",
+                        "surface-tint": "#c0c1ff",
+                        "on-secondary-fixed-variant": "#2f3aa3",
+                        "inverse-primary": "#494bd6",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "surface": "#131313",
+                        "on-tertiary": "#4f2500",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "on-secondary-container": "#a8afff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "secondary": "#bdc2ff",
+                        "surface-container-highest": "#353534",
+                        "surface-variant": "#353534",
+                        "secondary-container": "#2f3aa3",
+                        "surface-container": "#201f1f",
+                        "on-surface": "#e5e2e1",
+                        "primary-fixed": "#e1e0ff",
+                        "primary-container": "#8083ff",
+                        "outline": "#908fa0",
+                        "on-primary-container": "#0d0096",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-primary-fixed": "#07006c",
+                        "inverse-surface": "#e5e2e1",
+                        "primary": "#c0c1ff",
+                        "outline-variant": "#464554",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "1rem",
+                        "lg": "2rem",
+                        "xs": "0.5rem",
+                        "margin": "32px",
+                        "md": "1.5rem",
+                        "base": "4px",
+                        "xl": "4rem",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "mono": ["Geist"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Geist"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "mono": ["13px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-surface bg-background dark">
+<!-- SideNavBar (Authority: JSON & Style Guidance) -->
+<aside class="w-[240px] h-full fixed left-0 top-0 border-r border-outline-variant bg-surface-container-lowest flex flex-col py-md px-sm z-50">
+<div class="mb-xl flex items-center gap-xs">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">neurology</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">Mimotes</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">AI Knowledge Base</p>
+</div>
+</div>
+<button class="mb-lg w-full bg-primary-container text-on-primary-container py-xs px-sm rounded-lg font-label-md text-label-md flex items-center justify-center gap-xs hover:opacity-90 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-sm">add</span>
+            New Chat
+        </button>
+<nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
+<!-- Dashboard (Active State Mapping) -->
+<a class="flex items-center gap-sm px-sm py-xs text-primary dark:text-primary border-l-2 border-primary bg-primary/10 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-body-md text-body-md">Chat</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Documents</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-body-md text-body-md">Upload</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="widgets">widgets</span>
+<span class="font-body-md text-body-md">Widgets</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="api">api</span>
+<span class="font-body-md text-body-md">API</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-sm border-t border-outline-variant">
+<div class="flex items-center gap-sm px-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant">
+<img alt="Profile" data-alt="A professional headshot of a software engineer with a neutral expression, set against a dark studio background with soft indigo rim lighting. The style is modern corporate minimalist, with high contrast and sharp focus on facial features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuClyFy0Z_lmCRnG-OoW_e6HjC8fcuwQ7anPaTTndzjbQBnDChL8uSQG6NWXiUua3zSmZNBN_9hTxXF4trseJ4UADrnwFB-4Mxxob5AMmCg5o4bKSLFjaXU0twgAC6k5tHcDiJAfOLK_mw3DyhDpUj7LYu-XGMpklNxhsRQ1BPoe5WqucCGQl0zHRHIV5BmCkUQ4FchbwgPn0LvAduepGPw3-_tAD13mKDRwFsFi-wcfag6cNRiN3WHhrLPYC_fsepRTX_vwQs0yjOM"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-on-surface font-label-md truncate">Alex Chen</p>
+<p class="text-on-surface-variant text-[10px] truncate">Enterprise Plan</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Authority: JSON & Style Guidance) -->
+<header class="flex justify-between items-center ml-[240px] px-margin h-16 w-[calc(100%-240px)] fixed top-0 bg-background/80 backdrop-blur-md border-b border-outline-variant z-40">
+<div class="flex items-center gap-xs">
+<span class="text-on-surface-variant font-label-md text-label-md">Home</span>
+<span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+<span class="text-primary font-bold font-label-md text-label-md">Dashboard</span>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden md:flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-sm py-xs gap-xs text-on-surface-variant cursor-pointer hover:border-outline transition-colors">
+<span class="material-symbols-outlined text-[18px]">search</span>
+<span class="font-label-md">Search across knowledge...</span>
+<span class="ml-sm font-mono text-[10px] bg-surface-container-high px-1 rounded text-outline border border-outline-variant">⌘K</span>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<button class="p-xs text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-[240px] pt-24 px-margin pb-xl min-h-screen">
+<!-- Welcome Header -->
+<div class="mb-lg flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Knowledge Overview</h2>
+<p class="text-on-surface-variant font-body-md">Monitoring your AI knowledge infrastructure and activity.</p>
+</div>
+<!-- System Health Panel -->
+<div class="bg-surface-container-lowest border border-outline-variant px-sm py-xs rounded-lg flex items-center gap-sm">
+<div class="relative flex h-2.5 w-2.5">
+<span class="status-pulse absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+</div>
+<span class="text-label-md font-label-md text-on-surface">All systems operational</span>
+</div>
+</div>
+<!-- KPI Stat Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-lg">
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded transition-colors hover:border-outline">
+<div class="flex items-center justify-between mb-sm">
+<span class="text-label-md font-label-md text-on-surface-variant">Documents</span>
+<span class="material-symbols-outlined text-primary text-[18px]">description</span>
+</div>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">34</span>
+<span class="text-label-md text-primary font-mono">+2 new</span>
+</div>
+<div class="mt-md h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded transition-colors hover:border-outline">
+<div class="flex items-center justify-between mb-sm">
+<span class="text-label-md font-label-md text-on-surface-variant">Chunks</span>
+<span class="material-symbols-outlined text-primary text-[18px]">reorder</span>
+</div>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">107K</span>
+<span class="text-label-md text-primary font-mono">↑ 12%</span>
+</div>
+<div class="mt-md h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded transition-colors hover:border-outline">
+<div class="flex items-center justify-between mb-sm">
+<span class="text-label-md font-label-md text-on-surface-variant">Chat Sessions</span>
+<span class="material-symbols-outlined text-primary text-[18px]">chat_bubble_outline</span>
+</div>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">7</span>
+<span class="text-label-md text-on-surface-variant font-mono">Active</span>
+</div>
+<div class="mt-md h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[25%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded transition-colors hover:border-outline">
+<div class="flex items-center justify-between mb-sm">
+<span class="text-label-md font-label-md text-on-surface-variant">Messages</span>
+<span class="material-symbols-outlined text-primary text-[18px]">send</span>
+</div>
+<div class="flex items-baseline gap-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">106</span>
+<span class="text-label-md text-on-surface-variant font-mono">Total</span>
+</div>
+<div class="mt-md h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[42%]"></div>
+</div>
+</div>
+</div>
+<!-- Dashboard Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Quick Actions Grid -->
+<div class="col-span-12 lg:col-span-8 space-y-gutter">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-surface">Quick Actions</h3>
+<button class="text-label-md font-label-md text-primary hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-sm">
+<div class="group bg-surface-container-lowest border border-outline-variant p-sm rounded hover:bg-primary/5 hover:border-primary transition-all cursor-pointer">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center mb-sm group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">add_comment</span>
+</div>
+<h4 class="font-body-md font-bold text-on-surface">New Chat</h4>
+<p class="text-xs text-on-surface-variant mt-xs">Start a fresh AI knowledge query</p>
+</div>
+<div class="group bg-surface-container-lowest border border-outline-variant p-sm rounded hover:bg-primary/5 hover:border-primary transition-all cursor-pointer">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center mb-sm group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">upload</span>
+</div>
+<h4 class="font-body-md font-bold text-on-surface">Upload File</h4>
+<p class="text-xs text-on-surface-variant mt-xs">Ingest PDF, TXT or Markdown</p>
+</div>
+<div class="group bg-surface-container-lowest border border-outline-variant p-sm rounded hover:bg-primary/5 hover:border-primary transition-all cursor-pointer">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center mb-sm group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">vpn_key</span>
+</div>
+<h4 class="font-body-md font-bold text-on-surface">Manage API</h4>
+<p class="text-xs text-on-surface-variant mt-xs">Configure your access keys</p>
+</div>
+<div class="group bg-surface-container-lowest border border-outline-variant p-sm rounded hover:bg-primary/5 hover:border-primary transition-all cursor-pointer">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center mb-sm group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">auto_fix_high</span>
+</div>
+<h4 class="font-body-md font-bold text-on-surface">Optimization</h4>
+<p class="text-xs text-on-surface-variant mt-xs">Fine-tune your vector chunks</p>
+</div>
+<div class="group bg-surface-container-lowest border border-outline-variant p-sm rounded hover:bg-primary/5 hover:border-primary transition-all cursor-pointer">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center mb-sm group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">link</span>
+</div>
+<h4 class="font-body-md font-bold text-on-surface">Connect App</h4>
+<p class="text-xs text-on-surface-variant mt-xs">Sync with external sources</p>
+</div>
+<div class="group bg-surface-container-lowest border border-outline-variant p-sm rounded hover:bg-primary/5 hover:border-primary transition-all cursor-pointer">
+<div class="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center mb-sm group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined text-primary">analytics</span>
+</div>
+<h4 class="font-body-md font-bold text-on-surface">Reports</h4>
+<p class="text-xs text-on-surface-variant mt-xs">Export usage metrics</p>
+</div>
+</div>
+<!-- Featured Card / Graphic -->
+<div class="relative h-64 rounded overflow-hidden border border-outline-variant bg-surface-container-lowest group">
+
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+<div class="absolute bottom-md left-md">
+<span class="bg-primary/20 text-primary px-xs py-[2px] rounded text-[10px] font-mono border border-primary/30 uppercase tracking-tighter mb-xs inline-block">Pro Feature</span>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-xs">Semantic Knowledge Graphs</h4>
+<p class="text-on-surface-variant font-body-md max-w-md">Visualize how your knowledge chunks are interconnected. Upgrade to view the 3D semantic map of your entire workspace.</p>
+</div>
+<button class="absolute bottom-md right-md bg-on-surface text-background px-md py-xs rounded font-label-md hover:bg-primary transition-colors">Explore Graph</button>
+</div>
+</div>
+<!-- Activity Feed & Secondary Column -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-surface">Activity Feed</h3>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">more_horiz</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded divide-y divide-outline-variant">
+<div class="p-sm flex gap-sm items-start hover:bg-surface-container-high transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-primary flex-shrink-0"></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-on-surface leading-tight">Document <span class="font-bold">Enterprise_Policy_v2.pdf</span> indexed</p>
+<p class="text-xs text-on-surface-variant mt-xs">2 minutes ago • Storage: 1.2MB</p>
+</div>
+</div>
+<div class="p-sm flex gap-sm items-start hover:bg-surface-container-high transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary flex-shrink-0"></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-on-surface leading-tight">API Key <span class="font-mono text-[10px] bg-surface-container-highest px-1 rounded">prod-main-key</span> created</p>
+<p class="text-xs text-on-surface-variant mt-xs">4 hours ago • by Alex Chen</p>
+</div>
+</div>
+<div class="p-sm flex gap-sm items-start hover:bg-surface-container-high transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-outline flex-shrink-0"></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-on-surface leading-tight">Workspace settings updated</p>
+<p class="text-xs text-on-surface-variant mt-xs">Yesterday • Model: GPT-4o-Mini</p>
+</div>
+</div>
+<div class="p-sm flex gap-sm items-start hover:bg-surface-container-high transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-primary flex-shrink-0"></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-on-surface leading-tight">Knowledge sync complete</p>
+<p class="text-xs text-on-surface-variant mt-xs">Yesterday • 1,204 chunks updated</p>
+</div>
+</div>
+<div class="p-sm flex gap-sm items-start hover:bg-surface-container-high transition-colors">
+<div class="mt-1 w-2 h-2 rounded-full bg-error flex-shrink-0"></div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-on-surface leading-tight">Upload failed: <span class="text-error">Corrupt_File.docx</span></p>
+<p class="text-xs text-on-surface-variant mt-xs">2 days ago • Retry available</p>
+</div>
+</div>
+</div>
+<!-- Storage Quote -->
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded">
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-md">Vector Storage</h4>
+<div class="flex justify-between items-end mb-xs">
+<span class="text-headline-md font-bold text-on-surface">4.2 GB</span>
+<span class="text-label-md text-on-surface-variant">of 10 GB</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[42%]"></div>
+</div>
+<p class="text-xs text-on-surface-variant mt-md">You are using 42% of your enterprise allocation. Increase limit in <a class="text-primary hover:underline" href="#">Billing</a>.</p>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for cards
+        document.querySelectorAll('.bg-surface-container-lowest').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+                card.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+
+        // Search shortcut mock
+        window.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                alert('Search overlay would open here.');
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upload | Mimotes AI Knowledge Base</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Geist:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-line::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 100%;
+            height: 1px;
+            background: theme('colors.outline-variant');
+            z-index: 0;
+        }
+        .progress-line:last-child::after {
+            display: none;
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 2s linear infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#131313",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#301400",
+                        "on-primary-fixed": "#07006c",
+                        "error-container": "#93000a",
+                        "secondary": "#bdc2ff",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-fixed": "#000767",
+                        "inverse-primary": "#494bd6",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "on-tertiary": "#4f2500",
+                        "tertiary-container": "#d97721",
+                        "on-secondary-fixed-variant": "#2f3aa3",
+                        "surface-container-highest": "#353534",
+                        "surface-tint": "#c0c1ff",
+                        "outline-variant": "#464554",
+                        "on-primary-container": "#0d0096",
+                        "tertiary": "#ffb783",
+                        "primary": "#c0c1ff",
+                        "surface-container-high": "#2a2a2a",
+                        "on-secondary": "#131e8c",
+                        "surface-dim": "#131313",
+                        "inverse-on-surface": "#313030",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "primary-container": "#8083ff",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-variant": "#353534",
+                        "on-error": "#690005",
+                        "on-surface": "#e5e2e1",
+                        "surface-bright": "#3a3939",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-tertiary-container": "#452000",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#c7c4d7",
+                        "secondary-fixed": "#e0e0ff",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "secondary-container": "#2f3aa3",
+                        "on-secondary-container": "#a8afff",
+                        "surface-container": "#201f1f",
+                        "on-primary": "#1000a9",
+                        "tertiary-fixed": "#ffdcc5",
+                        "background": "#131313",
+                        "outline": "#908fa0",
+                        "primary-fixed": "#e1e0ff",
+                        "on-background": "#e5e2e1",
+                        "indigo-brand": "#6366f1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "4rem",
+                        "lg": "2rem",
+                        "xs": "0.5rem",
+                        "md": "1.5rem",
+                        "base": "4px",
+                        "margin": "32px",
+                        "sm": "1rem",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Geist"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "mono": ["Geist"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar -->
+<aside class="w-[240px] h-full fixed left-0 top-0 border-r border-outline-variant bg-surface flex flex-col py-md px-sm z-50">
+<div class="mb-lg px-xs">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">neurology</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface leading-tight">Mimotes</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-label-md">AI Knowledge Base</p>
+</div>
+</div>
+</div>
+<div class="px-xs mb-md">
+<button class="w-full bg-primary-container text-on-primary-container h-10 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Chat
+            </button>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Navigation Items Mapping from JSON -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+                Chat
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+                Documents
+            </a>
+<!-- Active Item: Upload -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary border-l-2 border-primary bg-primary/10 transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">upload_file</span>
+                Upload
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">insights</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">widgets</span>
+                Widgets
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">api</span>
+                API
+            </a>
+<div class="pt-4 mt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                    Settings
+                </a>
+</div>
+</nav>
+</aside>
+<!-- TopNavBar -->
+<header class="flex justify-between items-center ml-[240px] px-margin h-16 w-[calc(100%-240px)] border-b border-outline-variant bg-background/80 backdrop-blur-md fixed top-0 z-40">
+<div class="flex items-center gap-4">
+<nav class="flex items-center space-x-6">
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" href="#">Dashboard</a>
+</nav>
+</div>
+<div class="flex items-center gap-gutter">
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer active:opacity-70">dark_mode</button>
+<button class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer active:opacity-70">notifications</button>
+<button class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer active:opacity-70">account_circle</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[240px] pt-16 min-h-screen bg-background">
+<div class="max-w-6xl mx-auto px-margin py-lg">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 mb-lg">
+<span class="text-on-surface-variant font-label-md text-label-md">Knowledge Base</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">chevron_right</span>
+<span class="text-primary font-label-md text-label-md">Upload</span>
+</nav>
+<!-- Page Header -->
+<div class="mb-xl">
+<h2 class="font-headline-lg text-headline-lg mb-2">Ingest Information</h2>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Expand your AI's expertise by uploading documents or importing web resources.</p>
+</div>
+<!-- Tabs Section -->
+<div class="mb-lg border-b border-outline-variant flex gap-8">
+<button class="pb-3 border-b-2 border-indigo-brand text-on-surface font-label-md text-label-md px-1 transition-all">
+                    File Upload
+                </button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface font-label-md text-label-md px-1 transition-all">
+                    URL Import
+                </button>
+</div>
+<!-- Upload Zone -->
+<div class="mb-xl">
+<div class="w-full aspect-[21/9] min-h-[320px] rounded-xl border-2 border-dashed border-indigo-brand/50 bg-surface-container-low flex flex-col items-center justify-center p-lg transition-all hover:border-indigo-brand hover:bg-surface-container hover:cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-indigo-brand/10 flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-indigo-brand text-4xl" style="font-variation-settings: 'FILL' 1;">cloud_upload</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs">Drop files here or click to browse</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-md text-center">
+                        Supported formats: PDF, DOCX, TXT, CSV, XLSX, PNG, JPG, WEBP. Max 100MB.
+                    </p>
+<button class="px-lg h-10 bg-indigo-brand text-white rounded-lg font-label-md text-label-md hover:bg-indigo-600 transition-colors">
+                        Select Files
+                    </button>
+</div>
+</div>
+<!-- Processing Queue -->
+<section>
+<div class="flex items-center justify-between mb-md">
+<h4 class="font-headline-md text-headline-md">Processing Queue</h4>
+<span class="bg-surface-container-high px-3 py-1 rounded-full text-on-surface-variant font-label-md text-label-md">2 active processes</span>
+</div>
+<div class="space-y-gutter">
+<!-- Queue Item 1: Active -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md mb-lg">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-surface-container-highest rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">description</span>
+</div>
+<div>
+<h5 class="font-bold text-on-surface">Q3_Financial_Analysis.pdf</h5>
+<p class="text-on-surface-variant font-label-md text-label-md">12.4 MB • Updated 2m ago</p>
+</div>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-indigo-brand animate-spin-slow">autorenew</span>
+<span class="text-indigo-brand font-label-md text-label-md font-bold uppercase tracking-widest">Processing</span>
+</div>
+</div>
+<!-- Progress Tracker -->
+<div class="flex justify-between items-start max-w-4xl mx-auto px-lg relative">
+<!-- Stage 1: Done -->
+<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+<div class="w-8 h-8 rounded-full bg-indigo-brand flex items-center justify-center progress-line">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<span class="text-indigo-brand font-label-md text-[11px] uppercase tracking-tighter">Upload</span>
+</div>
+<!-- Stage 2: Done -->
+<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+<div class="w-8 h-8 rounded-full bg-indigo-brand flex items-center justify-center progress-line">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<span class="text-indigo-brand font-label-md text-[11px] uppercase tracking-tighter">Parse</span>
+</div>
+<!-- Stage 3: Active -->
+<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+<div class="w-8 h-8 rounded-full border-2 border-indigo-brand bg-background flex items-center justify-center progress-line shadow-[0_0_12px_rgba(99,102,241,0.3)]">
+<span class="material-symbols-outlined text-indigo-brand text-[18px] animate-pulse">hourglass_top</span>
+</div>
+<span class="text-on-surface font-bold font-label-md text-[11px] uppercase tracking-tighter">Chunk</span>
+</div>
+<!-- Stage 4: Pending -->
+<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+<div class="w-8 h-8 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center progress-line">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+<span class="text-on-surface-variant font-label-md text-[11px] uppercase tracking-tighter">Embed</span>
+</div>
+<!-- Stage 5: Pending -->
+<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+<div class="w-8 h-8 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+<span class="text-on-surface-variant font-label-md text-[11px] uppercase tracking-tighter">Store</span>
+</div>
+</div>
+</div>
+<!-- Queue Item 2: Completed -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-md opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-surface-container-highest rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">table_chart</span>
+</div>
+<div>
+<h5 class="font-bold text-on-surface">Client_Dataset_v2.xlsx</h5>
+<p class="text-on-surface-variant font-label-md text-label-md">2.8 MB • Completed 15m ago</p>
+</div>
+</div>
+<div class="flex items-center gap-gutter">
+<div class="flex items-center gap-xs text-green-400">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-md text-label-md font-bold uppercase tracking-widest">Successful</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Queue Item 3: Queued -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-md border-dashed">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-surface-container-highest/50 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">article</span>
+</div>
+<div>
+<h5 class="font-bold text-on-surface-variant">Architecture_Overview.txt</h5>
+<p class="text-on-surface-variant font-label-md text-label-md">Queued • 42 KB</p>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant/50">
+<span class="material-symbols-outlined text-[20px]">pending</span>
+<span class="font-label-md text-label-md uppercase tracking-widest">Pending</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 -z-10 pointer-events-none opacity-20">
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-brand/20 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-0 left-[240px] w-[300px] h-[300px] bg-primary/10 blur-[100px] rounded-full"></div>
+</div>
+<script>
+        // Simple micro-interaction for drag-and-drop zone highlight
+        const dropZone = document.querySelector('.border-dashed');
+        if (dropZone) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('bg-indigo-brand/5', 'border-indigo-brand');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('bg-indigo-brand/5', 'border-indigo-brand');
+                }, false);
+            });
+        }
+    </script>
+</body></html>

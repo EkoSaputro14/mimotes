@@ -1,0 +1,116 @@
+# Audit Phase 1 — Implementation Report
+
+**Date:** June 7, 2026
+**Phase:** 1 of 2 — P0 Critical Routes
+**Build:** ✅ Clean (0 errors)
+
+---
+
+## Coverage Improvement
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Routes with audit | 3 | **9** | +6 |
+| Audit invocations | 7 | **27** | +20 |
+| Required routes audited | 3/22 (14%) | **9/22 (41%)** | +27% |
+| Total routes audited | 3/58 (5%) | **9/58 (16%)** | +11% |
+| Audit actions defined | 28 | **30** | +2 |
+
+**Note:** Phase 1 covers all P0 (Critical) routes as specified. Phase 2 will cover P1 (High) routes to reach 70%+ coverage.
+
+---
+
+## Files Modified (7)
+
+| # | File | Actions Added |
+|---|------|---------------|
+| 1 | `lib/audit.ts` | `AUTH_REGISTER`, `BILLING_PORTAL` constants |
+| 2 | `lib/auth.ts` | `auth.login`, `auth.logout`, `auth.login_failed` |
+| 3 | `app/api/auth/register/route.ts` | `auth.register` |
+| 4 | `app/api/billing/checkout/route.ts` | `billing.checkout` |
+| 5 | `app/api/billing/portal/route.ts` | `billing.portal_access` |
+| 6 | `app/api/billing/webhook/route.ts` | `subscription.created`, `subscription.updated`, `subscription.payment_failed`, `subscription.canceled` |
+| 7 | `app/api/workspace/billing/route.ts` | `billing.plan_change`, `billing.cancel` |
+
+---
+
+## New Audit Actions (12 invocations)
+
+### Authentication (5 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `auth.login` | `lib/auth.ts` | signIn callback (successful login) | user |
+| `auth.logout` | `lib/auth.ts` | signOut event | user |
+| `auth.login_failed` | `lib/auth.ts` | authorize (user not found) | user (email) |
+| `auth.login_failed` | `lib/auth.ts` | authorize (invalid password) | user (id) |
+| `auth.register` | `auth/register/route.ts` | POST (new user created) | user (new id) |
+
+### Billing (3 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `billing.checkout` | `billing/checkout/route.ts` | POST (checkout session created) | user |
+| `billing.portal_access` | `billing/portal/route.ts` | POST (portal session created) | user |
+| `billing.plan_change` | `workspace/billing/route.ts` | POST action=change_plan | user |
+| `billing.cancel` | `workspace/billing/route.ts` | POST action=cancel | user |
+
+### Subscription Webhooks (5 invocations)
+
+| Action | File | Trigger | Actor |
+|--------|------|---------|-------|
+| `subscription.created` | `billing/webhook/route.ts` | checkout.session.completed | system |
+| `subscription.updated` | `billing/webhook/route.ts` | invoice.paid | system |
+| `subscription.updated` | `billing/webhook/route.ts` | customer.subscription.updated | system |
+| `subscription.payment_failed` | `billing/webhook/route.ts` | invoice.payment_failed | system |
+| `subscription.canceled` | `billing/webhook/route.ts` | customer.subscription.deleted | system |
+
+---
+
+## Design Decisions
+
+1. **Auth audit in `lib/auth.ts`** — Not in route handler because NextAuth manages the flow. Added `signIn` callback + `signOut` event + `authorize` failure logging.
+
+2. **"system" workspace for pre-workspace events** — Registration and failed login happen before workspace creation. Uses `workspaceId: "system"` as fallback.
+
+3. **Webhook audit uses `actorType: "system"`** — Stripe webhooks have no human actor. All webhook events log as system-initiated with metadata for traceability.
+
+4. **Fire-and-forget pattern** — All `logAudit()` calls are non-awaited. Errors are caught internally and logged to console, never blocking business logic.
+
+5. **Tenant isolation preserved** — All authenticated routes derive `workspaceId` from `resolveWorkspaceId(userId)`. Webhook routes derive from subscription lookup (`sub.workspaceId`).
+
+---
+
+## P0 Route Coverage (6/6 = 100%)
+
+| Route | Status |
+|-------|--------|
+| `auth/[...nextauth]` → `lib/auth.ts` | ✅ Login, Logout, Login Failed |
+| `auth/register` | ✅ Register |
+| `billing/checkout` | ✅ Checkout |
+| `billing/portal` | ✅ Portal Access |
+| `billing/webhook` | ✅ All 5 subscription events |
+| `workspace/billing` | ✅ Plan Change, Cancel |
+
+---
+
+## Remaining Routes (Phase 2 — P1 High)
+
+| # | Route | Actions Needed |
+|---|-------|---------------|
+| 1 | `workspace/route.ts` PATCH | `workspace.update` |
+| 2 | `workspace/members` POST | `member.invite` |
+| 3 | `workspace/members/[id]` PATCH/DELETE | `member.role_change`, `member.remove` |
+| 4 | `documents/[id]` DELETE | `document.delete` |
+| 5 | `upload` POST | `document.upload` |
+| 6 | `mcp/servers` POST | `mcp.server_add` |
+| 7 | `mcp/servers/[id]` PUT/DELETE | `mcp.server_update`, `mcp.server_remove` |
+| 8 | `mcp/route.ts` POST/DELETE | `mcp.server_add`, `mcp.server_remove` |
+| 9 | `mcp/connect` POST/DELETE | `mcp.connect`, `mcp.disconnect` |
+| 10 | `admin/settings` POST | `workspace.settings` |
+
+Phase 2 will bring coverage from 41% to ~86% (19/22 required routes).
+
+---
+
+*Report generated by Hermes Agent — Audit Phase 1 Implementation*

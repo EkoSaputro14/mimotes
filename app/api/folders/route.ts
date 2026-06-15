@@ -10,7 +10,7 @@ export async function GET() {
     }
 
     const workspaceId = await resolveWorkspaceId(
-      session.user.id,
+      session.user.id!,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session as any).user.selectedWorkspaceId
     );
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const workspaceId = await resolveWorkspaceId(
-      session.user.id,
+      session.user.id!,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session as any).user.selectedWorkspaceId
     );
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const folder = await prisma.folder.create({
       data: {
         name: trimmedName,
-        userId: session.user.id,
+        userId: session.user.id!,
         workspaceId,
       },
     });
@@ -87,7 +87,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const workspaceId = await resolveWorkspaceId(
-      session.user.id,
+      session.user.id!,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session as any).user.selectedWorkspaceId
     );
@@ -142,7 +142,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const workspaceId = await resolveWorkspaceId(
-      session.user.id,
+      session.user.id!,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (session as any).user.selectedWorkspaceId
     );

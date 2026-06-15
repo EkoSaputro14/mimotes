@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get("sort") || "createdAt";
     const order = searchParams.get("order") || "desc";
 
-    const where: Record<string, unknown> = { userId: session.user.id };
+    const where: Record<string, unknown> = { userId: session.user.id! };
 
     if (search) {
       where.OR = [
