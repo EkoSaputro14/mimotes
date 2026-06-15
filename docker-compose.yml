@@ -1,0 +1,148 @@
+# ============================================
+# Mimotes AI Chatbot - Docker Compose
+# ============================================
+# Quick start:
+#   1. cp .env.example .env
+#   2. Edit .env with your AI provider settings
+#   3. docker compose up -d
+#   4. Open http://localhost:3000
+# ============================================
+
+services:
+  # ==========================================
+  # PostgreSQL with pgvector extension
+  # ==========================================
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    shm_size: '256mb'
+    environment:
+      POSTGRES_USER: mimotes
+      POSTGRES_PASSWORD: mimotes_password
+      POSTGRES_DB: mimotes
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mimotes -d mimotes"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Database Migration (runs once on startup)
+  # ==========================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrations
+    environment:
+      DATABASE_URL: "postgresql://mimotes:mimotes_password@db:5432/mimotes?schema=public"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ==========================================
+  # Mimotes Application
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    env_file: .env
+    environment:
+      # Database connection — uses mimotes_app role (non-superuser, RLS enforced)
+      DATABASE_URL: "postgresql://mimotes_app:mimotes2026app@db:5432/mimotes?schema=public"
+
+      # NextAuth
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-mimotes-super-secret-change-me}"
+      NEXTAUTH_URL: "http://localhost:3100"
+      AUTH_TRUST_HOST: "true"
+
+      # Admin seed
+      SEED_ADMIN: "true"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@mimotes.com}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-admin123}"
+
+      # AI Provider (configure in .env file)
+      AI_PROVIDER: "${AI_PROVIDER:-mimo}"
+
+      # Mimo Pro Config
+      MIMO_API_KEY: "${MIMO_API_KEY:-}"
+      MIMO_BASE_URL: "${MIMO_BASE_URL:-https://token-plan-sgp.xiaomimimo.com/v1}"
+      MIMO_MODEL: "${MIMO_MODEL:-mimo-v2.5-pro}"
+      MIMO_EMBEDDING_MODEL: "${MIMO_EMBEDDING_MODEL:-mimo-embedding}"
+
+      # OpenAI Config (use if AI_PROVIDER=openai)
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-4o-mini}"
+      OPENAI_EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}"
+
+      # LM Studio (use if AI_PROVIDER=lmstudio)
+      LMSTUDIO_BASE_URL: "${LMSTUDIO_BASE_URL:-http://host.docker.internal:1234/v1}"
+      LMSTUDIO_MODEL: "${LMSTUDIO_MODEL:-local-model}"
+
+      # Ollama (use if AI_PROVIDER=ollama)
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3}"
+
+      # Google Gemini (use if AI_PROVIDER=google)
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+      GOOGLE_BASE_URL: "${GOOGLE_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai/}"
+      GOOGLE_MODEL: "${GOOGLE_MODEL:-gemini-2.0-flash}"
+      GOOGLE_EMBEDDING_MODEL: "${GOOGLE_EMBEDDING_MODEL:-text-embedding-004}"
+
+      # App config
+      CHUNK_SIZE: "${CHUNK_SIZE:-500}"
+      CHUNK_OVERLAP: "${CHUNK_OVERLAP:-50}"
+      TOP_K_RESULTS: "${TOP_K_RESULTS:-5}"
+      
+      # PaddleOCR Sidecar
+      PADDLEOCR_URL: "http://paddleocr:8090"
+      
+      # Upload size limit (100MB for large PDFs)
+      MAX_FILE_SIZE: "104857600"
+    volumes:
+      - uploads_data:/app/public/uploads
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      paddleocr:
+        condition: service_started
+
+  # ==========================================
+  # PaddleOCR Sidecar (Local OCR Engine)
+  # ==========================================
+  paddleocr:
+    build:
+      context: ./paddleocr-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      - PORT=8090
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+
+volumes:
+  postgres_data:
+  uploads_data:
