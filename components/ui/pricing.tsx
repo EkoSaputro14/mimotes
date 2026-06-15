@@ -33,7 +33,7 @@ interface PricingProps {
 export function Pricing({
   plans,
   title = "Simple, Transparent Pricing",
-  description = "Choose the plan that works for you.\nAll plans include access to our platform, lead generation tools, and dedicated support.",
+  description = "Start free, scale as you grow. All plans include document chat, source citations, and RAG pipeline.",
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -74,25 +74,33 @@ export function Pricing({
         <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
           {title}
         </h2>
-        <p className="text-muted-foreground text-lg whitespace-pre-line">
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           {description}
         </p>
       </div>
 
-      <div className="flex justify-center mb-10">
-        <label className="relative inline-flex items-center cursor-pointer">
-          <Label>
-            <Switch
-              ref={switchRef as any}
-              checked={!isMonthly}
-              onCheckedChange={handleToggle}
-              className="relative"
-            />
-          </Label>
-        </label>
-        <span className="ml-2 font-semibold">
-          Annual billing <span className="text-primary">(Save 20%)</span>
+      <div className="flex justify-center items-center gap-3 mb-10">
+        <span className={cn("text-sm font-medium", isMonthly ? "text-foreground" : "text-muted-foreground")}>
+          Monthly
         </span>
+        <Label htmlFor="billing-toggle" className="sr-only">
+          Toggle annual billing
+        </Label>
+        <Switch
+          id="billing-toggle"
+          ref={switchRef as any}
+          checked={!isMonthly}
+          onCheckedChange={handleToggle}
+          aria-label="Toggle annual billing"
+        />
+        <span className={cn("text-sm font-medium", !isMonthly ? "text-foreground" : "text-muted-foreground")}>
+          Annual
+        </span>
+        {!isMonthly && (
+          <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            Save 20%
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 sm:grid-cols-2 gap-4">
@@ -171,11 +179,11 @@ export function Pricing({
                 {isMonthly ? "billed monthly" : "billed annually"}
               </p>
 
-              <ul className="mt-5 gap-2 flex flex-col">
+              <ul className="mt-5 gap-2 flex flex-col" role="list">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                    <span className="text-left">{feature}</span>
+                    <Check className="h-4 w-4 text-primary mt-1 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-left text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>

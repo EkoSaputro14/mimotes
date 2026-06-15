@@ -69,7 +69,7 @@ export default function PricingSection() {
       <Pricing
         plans={mimotesPlans}
         title="Simple, Transparent Pricing"
-        description="Start free, scale as you grow.\nAll plans include document chat, source citations, and RAG pipeline."
+        description="Start free, scale as you grow. All plans include document chat, source citations, and RAG pipeline."
       />
     </section>
   );
