@@ -214,6 +214,9 @@ export async function POST(request: NextRequest) {
 }
 
 async function processDocument(documentId: string, workspaceId: string, rawContent: string, fileSize: number) {
+  // Set workspace context for RLS — background task runs in separate context
+  await setWorkspaceContext(workspaceId);
+
   // Skip if empty content (image files have empty content — handled by processImageDocument)
   if (!rawContent.trim()) {
     return;
@@ -280,6 +283,9 @@ async function processImageDocument(
   fileUrl: string,
   fileSize: number
 ) {
+  // Set workspace context for RLS — background task runs in separate context
+  await setWorkspaceContext(workspaceId);
+
   // Convert public/ URL to absolute path for processing
   const imagePath = join(process.cwd(), "public", fileUrl);
 

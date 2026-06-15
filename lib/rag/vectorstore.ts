@@ -88,14 +88,16 @@ export async function storeChunks(
   const batchSize = 50;
   for (let i = 0; i < chunks.length; i += batchSize) {
     const batch = chunks.slice(i, i + batchSize);
-    await prisma.$transaction(
-      batch.map((chunk) =>
-        prisma.$executeRaw`
+    await prisma.$transaction(async (tx) => {
+      // Set workspace context on the same connection used by the transaction
+      await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
+      for (const chunk of batch) {
+        await tx.$executeRaw`
           INSERT INTO document_chunks (id, document_id, workspace_id, tenant_id, content, embedding, chunk_index, metadata, created_at)
           VALUES (gen_random_uuid(), ${documentId}, ${workspaceId}, ${workspaceId}, ${chunk.content}, ${`[${chunk.embedding.join(",")}]`}::vector, ${chunk.index}, ${JSON.stringify(chunk.metadata || {})}::jsonb, NOW())
-        `
-      )
-    );
+        `;
+      }
+    });
   }
 }
 
