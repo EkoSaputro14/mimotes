@@ -59,6 +59,7 @@ COPY postcss.config.mjs ./
 COPY eslint.config.mjs ./
 COPY app ./app
 COPY components ./components
+COPY hooks ./hooks
 COPY lib ./lib
 COPY public ./public
 
