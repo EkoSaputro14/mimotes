@@ -32,8 +32,8 @@ interface PricingProps {
 
 export function Pricing({
   plans,
-  title = "Simple, Transparent Pricing",
-  description = "Start free, scale as you grow. All plans include document chat, source citations, and RAG pipeline.",
+  title = "Plans for every team size",
+  description = "Start free with 50 documents. Upgrade when you need more capacity, team features, or dedicated support.",
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 768px)");
