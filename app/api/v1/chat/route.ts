@@ -2,13 +2,16 @@ import { NextRequest } from "next/server";
 import { requireApiAuth, apiErrorResponse } from "@/lib/api-auth";
 import { checkRateLimit } from "@/lib/api-rate-limit";
 import { trackApiUsage } from "@/lib/api-usage";
+import { streamRAGResponse, generateRAGResponse } from "@/lib/rag/chain";
+import { setWorkspaceContext } from "@/lib/prisma";
 
 /**
  * POST /api/v1/chat
  * Send a chat message via API.
  *
  * Body: { message: string, sessionId?: string, model?: string }
- * Headers: Authorization: Bearer mk_live_xxx
+ * Headers: Authorization: Bearer ***
+ * Query: ?stream=true for SSE streaming
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -48,15 +51,95 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Integrate with actual chat engine
-    // For now, return a placeholder response
+    // Set workspace context for RLS
+    await setWorkspaceContext(auth.workspaceId);
+
+    const messageId = `msg_${Date.now()}`;
+    const url = new URL(request.url);
+    const isStream = url.searchParams.get("stream") === "true";
+
+    if (isStream) {
+      // ── Streaming SSE response ──
+      const result = await streamRAGResponse(message, 5, auth.workspaceId);
+
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const send = (data: string) => {
+            controller.enqueue(encoder.encode(data));
+          };
+
+          if (result.noContext || !result.stream) {
+            // No context or refused — send the refusal message
+            const refusalMsg = result.refusalMessage || "No relevant information found.";
+            send(`event: message\ndata: ${JSON.stringify({ type: "chunk", content: refusalMsg })}\n\n`);
+            send(`event: message\ndata: ${JSON.stringify({ type: "done", messageId })}\n\n`);
+            controller.close();
+            return;
+          }
+
+          try {
+            // Stream chunks from OpenAI
+            for await (const chunk of result.stream) {
+              const content = chunk.choices[0]?.delta?.content;
+              if (content) {
+                send(`event: message\ndata: ${JSON.stringify({ type: "chunk", content })}\n\n`);
+              }
+            }
+          } catch (streamError) {
+            console.error("[API Chat] Stream error:", streamError);
+          }
+
+          send(`event: message\ndata: ${JSON.stringify({ type: "done", messageId })}\n\n`);
+          controller.close();
+
+          // Track usage (fire-and-forget)
+          const latencyMs = Date.now() - startTime;
+          trackApiUsage({
+            workspaceId: auth.workspaceId,
+            apiKeyId: auth.apiKeyId,
+            endpoint: "/api/v1/chat",
+            method: "POST",
+            statusCode: 200,
+            latencyMs,
+            tokensUsed: message.split(" ").length + 10,
+            ipAddress: request.headers.get("x-forwarded-for") || undefined,
+          }).catch(() => {});
+        },
+      });
+
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+          "X-RateLimit-Limit": String(rateLimit.limit),
+          "X-RateLimit-Remaining": String(rateLimit.remaining),
+          "X-RateLimit-Reset": String(rateLimit.resetAt),
+        },
+      });
+    }
+
+    // ── Non-streaming fallback ──
+    const ragResult = await generateRAGResponse(message, 5, auth.workspaceId);
+
     const response = {
-      id: `msg_${Date.now()}`,
+      id: messageId,
       message: message,
-      response: `[API] Received: ${message}`,
+      response: ragResult.answer,
       model: model || "default",
       sessionId: sessionId || `session_${Date.now()}`,
-      tokens: { input: message.split(" ").length, output: 10 },
+      sources: ragResult.sources.map((s) => ({
+        documentTitle: s.documentTitle,
+        similarity: s.similarity,
+        chunkIndex: s.chunkIndex,
+      })),
+      confidence: ragResult.confidence,
+      tokens: {
+        input: message.split(" ").length,
+        output: ragResult.answer.split(" ").length,
+      },
     };
 
     const latencyMs = Date.now() - startTime;

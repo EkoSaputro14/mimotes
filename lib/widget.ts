@@ -234,6 +234,54 @@ export function buildWidgetCorsHeaders(
 }
 
 /**
+ * Get conversations for a visitor by public key.
+ */
+export async function getConversationsByVisitor(
+  publicKey: string,
+  visitorId: string
+) {
+  const widget = await getWidgetByPublicKey(publicKey);
+  if (!widget) return [];
+
+  return prisma.widgetConversation.findMany({
+    where: { widgetId: widget.id, visitorId },
+    orderBy: { startedAt: "desc" },
+    select: {
+      id: true,
+      startedAt: true,
+      status: true,
+      _count: { select: { messages: true } },
+    },
+  });
+}
+
+/**
+ * Get messages for a conversation, validating it belongs to the widget.
+ */
+export async function getConversationMessages(
+  conversationId: string,
+  publicKey: string
+) {
+  const widget = await getWidgetByPublicKey(publicKey);
+  if (!widget) return null;
+
+  const conv = await prisma.widgetConversation.findUnique({
+    where: { id: conversationId },
+  });
+  if (!conv || conv.widgetId !== widget.id) return null;
+
+  return prisma.widgetMessage.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      role: true,
+      content: true,
+      createdAt: true,
+    },
+  });
+}
+
+/**
  * Build a safe JSON response with proper CORS headers for widget endpoints.
  * Replaces manual "Access-Control-Allow-Origin": "*" pattern.
  */
