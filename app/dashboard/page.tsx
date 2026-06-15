@@ -39,6 +39,9 @@ export default async function DashboardPage() {
   let documentsByStatus = {} as Record<string, number>;
 
   try {
+    const userId = session?.user?.id as string;
+    const userDocWhere = userId ? { userId } : {};
+
     const [
       docs,
       chunks,
@@ -46,19 +49,19 @@ export default async function DashboardPage() {
       messages,
       statusGroups,
     ] = await Promise.all([
-      prisma.document.count(),
-      prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*)::bigint as count FROM document_chunks`.catch(() => [{ count: BigInt(0) }]),
-      prisma.chatSession.count(),
-      prisma.chatMessage.count(),
-      prisma.document.groupBy({ by: ["status"], _count: { id: true } }),
+      prisma.document.count({ where: userDocWhere }),
+      prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*)::bigint as count FROM document_chunks dc JOIN documents d ON dc.document_id = d.id WHERE d.user_id = ${userId}`.catch(() => [{ count: BigInt(0) }]),
+      prisma.chatSession.count({ where: userDocWhere }),
+      prisma.chatMessage.count({ where: { session: { userId } } }),
+      prisma.document.groupBy({ by: ["status"], where: userDocWhere, _count: { id: true } }),
     ]);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const [tSessions, tMessages] = await Promise.all([
-      prisma.chatSession.count({ where: { createdAt: { gte: today } } }),
-      prisma.chatMessage.count({ where: { createdAt: { gte: today } } }),
+      prisma.chatSession.count({ where: { userId, createdAt: { gte: today } } }),
+      prisma.chatMessage.count({ where: { session: { userId }, createdAt: { gte: today } } }),
     ]);
 
     documentCount = docs;

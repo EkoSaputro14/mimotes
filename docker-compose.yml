@@ -62,7 +62,7 @@ services:
 
       # NextAuth
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-mimotes-super-secret-change-me}"
-      NEXTAUTH_URL: "http://localhost:3100"
+      NEXTAUTH_URL: "https://mimotes.ekohomelab.online"
       AUTH_TRUST_HOST: "true"
 
       # Admin seed
