@@ -58,7 +58,7 @@ services:
     env_file: .env
     environment:
       # Database connection — uses mimotes_app role (non-superuser, RLS enforced)
-      DATABASE_URL: "postgresql://mimotes_app:mimotes2026app@db:5432/mimotes?schema=public"
+      DATABASE_URL: "postgresql://mimotes_app:mimotes2026app@db:5432/mimotes?connection_limit=20&schema=public"
 
       # NextAuth
       NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:-mimotes-super-secret-change-me}"
