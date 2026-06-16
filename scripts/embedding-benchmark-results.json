@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-06-10T14:40:05",
+  "test_pairs": [
+    {
+      "pair": "Docker \u2194 Docker README",
+      "query": "How to install and run Docker containers",
+      "expected_doc": "nginx-readme.txt",
+      "found_at": 1,
+      "top_similarities": [
+        0.414079,
+        0.40606,
+        0.392465,
+        0.387221,
+        0.382248
+      ],
+      "avg_similarity": 0.3857872
+    },
+    {
+      "pair": "Linux \u2194 Linux Kernel README",
+      "query": "How to compile the Linux kernel from source",
+      "expected_doc": "linux-kernel-readme.txt",
+      "found_at": null,
+      "top_similarities": [
+        0.448618,
+        0.448618,
+        0.448618,
+        0.42643,
+        0.42643
+      ],
+      "avg_similarity": 0.4321808
+    },
+    {
+      "pair": "PostgreSQL \u2194 PostgreSQL Docs",
+      "query": "PostgreSQL database configuration and setup",
+      "expected_doc": "postgresql-9.6-US.pdf",
+      "found_at": 1,
+      "top_similarities": [
+        0.595337,
+        0.585837,
+        0.585837,
+        0.585837,
+        0.585837
+      ],
+      "avg_similarity": 0.5798515
+    },
+    {
+      "pair": "Mimotes \u2194 BRD Mimotes",
+      "query": "Mimotes AI knowledge base platform requirements",
+      "expected_doc": "business-requirements.docx",
+      "found_at": 1,
+      "top_similarities": [
+        0.498038,
+        0.473726,
+        0.342155,
+        0.332699,
+        0.308752
+      ],
+      "avg_similarity": 0.3383581
+    },
+    {
+      "pair": "Invoice \u2194 Invoice DOCX",
+      "query": "Invoice for server hardware purchase total amount",
+      "expected_doc": "invoice.docx",
+      "found_at": null,
+      "top_similarities": [
+        0.377394,
+        0.375278,
+        0.375278,
+        0.366437,
+        0.365833
+      ],
+      "avg_similarity": 0.36649279999999995
+    }
+  ],
+  "summary": {
+    "total_tests": 5,
+    "found": 3,
+    "not_found": 2
+  }
+}

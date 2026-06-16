@@ -1,0 +1,38 @@
+[
+  {
+    "severity": "MEDIUM",
+    "journey": "J1",
+    "step": "Step 7",
+    "description": "No file input element found on upload page"
+  },
+  {
+    "severity": "HIGH",
+    "journey": "J1",
+    "step": "Step 8",
+    "description": "Document processing failed"
+  },
+  {
+    "severity": "CRITICAL",
+    "journey": "J3",
+    "step": "Runtime",
+    "description": "Journey 3 crashed: elementHandle.setInputFiles: Error: Non-multiple file input can only accept single file"
+  },
+  {
+    "severity": "LOW",
+    "journey": "J4",
+    "step": "Step 3",
+    "description": "No password change UI available in settings"
+  },
+  {
+    "severity": "LOW",
+    "journey": "J4",
+    "step": "Step 5",
+    "description": "No session management UI found"
+  },
+  {
+    "severity": "LOW",
+    "journey": "J5",
+    "step": "Touch Targets",
+    "description": "19 interactive elements below 44px touch target minimum"
+  }
+]

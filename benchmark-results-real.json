@@ -1,0 +1,428 @@
+{
+  "timestamp": "2026-06-13T03:15:59.556663Z",
+  "totalQueries": 20,
+  "retrievalAccuracy": 1.0,
+  "avgPrecision": 0.4658,
+  "avgSimilarity": 0.3218,
+  "avgLatencyMs": 325.22,
+  "p95LatencyMs": 628.58,
+  "falsePositiveRate": 1.0,
+  "refusalAccuracy": 0.0,
+  "categoryBreakdown": {
+    "factual": {
+      "count": 6,
+      "retrieved": 6,
+      "avgSimilarity": 0.2729,
+      "avgKeywordHit": 0.5278,
+      "accuracy": 1.0
+    },
+    "conceptual": {
+      "count": 5,
+      "retrieved": 5,
+      "avgSimilarity": 0.3669,
+      "avgKeywordHit": 0.3,
+      "accuracy": 1.0
+    },
+    "multi-doc": {
+      "count": 5,
+      "retrieved": 5,
+      "avgSimilarity": 0.3559,
+      "avgKeywordHit": 0.13,
+      "accuracy": 1.0
+    },
+    "negative": {
+      "count": 4,
+      "retrieved": 4,
+      "avgSimilarity": 0.2963,
+      "avgKeywordHit": 1.0,
+      "accuracy": 1.0
+    }
+  },
+  "difficultyBreakdown": {
+    "easy": {
+      "count": 7,
+      "retrieved": 7,
+      "avgSimilarity": 0.2847,
+      "avgKeywordHit": 0.6429,
+      "accuracy": 1.0
+    },
+    "medium": {
+      "count": 5,
+      "retrieved": 5,
+      "avgSimilarity": 0.3036,
+      "avgKeywordHit": 0.5333,
+      "accuracy": 1.0
+    },
+    "hard": {
+      "count": 8,
+      "retrieved": 8,
+      "avgSimilarity": 0.3657,
+      "avgKeywordHit": 0.2687,
+      "accuracy": 1.0
+    }
+  },
+  "gates": [
+    {
+      "name": "Retrieval Accuracy",
+      "value": 1.0,
+      "threshold": 0.7,
+      "passed": true
+    },
+    {
+      "name": "Avg Similarity",
+      "value": 0.3218,
+      "threshold": 0.4,
+      "passed": false
+    },
+    {
+      "name": "False Positive Rate",
+      "value": 1.0,
+      "threshold": 0.2,
+      "passed": false
+    },
+    {
+      "name": "Refusal Accuracy",
+      "value": 0.0,
+      "threshold": 0.8,
+      "passed": false
+    },
+    {
+      "name": "Avg Latency (ms)",
+      "value": 325.223,
+      "threshold": 200,
+      "passed": false
+    }
+  ],
+  "perQueryResults": [
+    {
+      "queryId": "factual-001",
+      "query": "Apa itu RAG?",
+      "category": "factual",
+      "difficulty": "easy",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2411,
+      "maxSimilarity": 0.2504,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 628.58,
+      "topDocTitle": "postgresql-18-US.pdf"
+    },
+    {
+      "queryId": "factual-002",
+      "query": "Bagaimana cara mengupload dokumen?",
+      "category": "factual",
+      "difficulty": "easy",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.1916,
+      "maxSimilarity": 0.2083,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 341.99,
+      "topDocTitle": "business-requirements.docx"
+    },
+    {
+      "queryId": "factual-003",
+      "query": "What is pgvector?",
+      "category": "factual",
+      "difficulty": "easy",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.3151,
+      "maxSimilarity": 0.3427,
+      "keywordHitRate": 0.5,
+      "correctRefusal": false,
+      "latencyMs": 301.56,
+      "topDocTitle": "postgresql-14-US.pdf"
+    },
+    {
+      "queryId": "factual-004",
+      "query": "Apa fungsi dari embedding dalam RAG?",
+      "category": "factual",
+      "difficulty": "medium",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2233,
+      "maxSimilarity": 0.2629,
+      "keywordHitRate": 0.6667,
+      "correctRefusal": false,
+      "latencyMs": 283.17,
+      "topDocTitle": "postgresql-10-US.pdf"
+    },
+    {
+      "queryId": "factual-005",
+      "query": "Bagaimana cara kerja cosine similarity?",
+      "category": "factual",
+      "difficulty": "medium",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2454,
+      "maxSimilarity": 0.2739,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 325.94,
+      "topDocTitle": "business-requirements.docx"
+    },
+    {
+      "queryId": "conceptual-001",
+      "query": "Mengapa chunking penting dalam pipeline RAG?",
+      "category": "conceptual",
+      "difficulty": "medium",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.3357,
+      "maxSimilarity": 0.377,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 293.89,
+      "topDocTitle": "postgresql-18-US.pdf"
+    },
+    {
+      "queryId": "conceptual-002",
+      "query": "Apa perbedaan antara vector search dan keyword search?",
+      "category": "conceptual",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.3471,
+      "maxSimilarity": 0.3558,
+      "keywordHitRate": 0.5,
+      "correctRefusal": false,
+      "latencyMs": 270.17,
+      "topDocTitle": "postgresql-9.6-US.pdf"
+    },
+    {
+      "queryId": "conceptual-003",
+      "query": "Bagaimana cara mengurangi hallucination dalam RAG?",
+      "category": "conceptual",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2567,
+      "maxSimilarity": 0.2654,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 376.19,
+      "topDocTitle": "postgresql-9.6-US.pdf"
+    },
+    {
+      "queryId": "conceptual-004",
+      "query": "What are the tradeoffs between chunk size and retrieval quality?",
+      "category": "conceptual",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.4302,
+      "maxSimilarity": 0.4321,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 326.61,
+      "topDocTitle": "postgresql-9.6-US.pdf"
+    },
+    {
+      "queryId": "conceptual-005",
+      "query": "Mengapa hybrid search lebih baik dari vector-only search?",
+      "category": "conceptual",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.3478,
+      "maxSimilarity": 0.4041,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 271.39,
+      "topDocTitle": "business-requirements.docx"
+    },
+    {
+      "queryId": "multi-doc-001",
+      "query": "Apa hubungan antara embedding quality dan retrieval precision?",
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.297,
+      "maxSimilarity": 0.3018,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 294.15,
+      "topDocTitle": "SKPT RIFKA ANNISA LUTFIA.pdf"
+    },
+    {
+      "queryId": "multi-doc-002",
+      "query": "Bagaimana cara mengoptimalkan RAG pipeline secara end-to-end?",
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2964,
+      "maxSimilarity": 0.3358,
+      "keywordHitRate": 0.2,
+      "correctRefusal": false,
+      "latencyMs": 385.88,
+      "topDocTitle": "postgresql-18-US.pdf"
+    },
+    {
+      "queryId": "multi-doc-003",
+      "query": "What security considerations exist for a RAG system?",
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.462,
+      "maxSimilarity": 0.4711,
+      "keywordHitRate": 0.25,
+      "correctRefusal": false,
+      "latencyMs": 294.38,
+      "topDocTitle": "postgresql-10-US.pdf"
+    },
+    {
+      "queryId": "multi-doc-004",
+      "query": "Bagaimana NextAuth dan Prisma bekerja bersama dalam aplikasi ini?",
+      "category": "multi-doc",
+      "difficulty": "medium",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2977,
+      "maxSimilarity": 0.3111,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 297.77,
+      "topDocTitle": "SKPT RIFKA ANNISA LUTFIA.pdf"
+    },
+    {
+      "queryId": "multi-doc-005",
+      "query": "Jelaskan arsitektur lengkap sistem MimoNotes dari frontend hingga database.",
+      "category": "multi-doc",
+      "difficulty": "hard",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.3561,
+      "maxSimilarity": 0.3597,
+      "keywordHitRate": 0.2,
+      "correctRefusal": false,
+      "latencyMs": 307.87,
+      "topDocTitle": "postgresql-14-US.pdf"
+    },
+    {
+      "queryId": "negative-001",
+      "query": "Bagaimana cara memasak nasi goreng?",
+      "category": "negative",
+      "difficulty": "easy",
+      "shouldRetrieve": false,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.172,
+      "maxSimilarity": 0.1793,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 296.09,
+      "topDocTitle": "postgresql-17-US.pdf"
+    },
+    {
+      "queryId": "negative-002",
+      "query": "What is the weather forecast for Jakarta tomorrow?",
+      "category": "negative",
+      "difficulty": "easy",
+      "shouldRetrieve": false,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.4975,
+      "maxSimilarity": 0.5068,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 301.53,
+      "topDocTitle": "postgresql-17-US.pdf"
+    },
+    {
+      "queryId": "negative-003",
+      "query": "Siapa presiden Indonesia tahun 2030?",
+      "category": "negative",
+      "difficulty": "easy",
+      "shouldRetrieve": false,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2013,
+      "maxSimilarity": 0.2058,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 310.45,
+      "topDocTitle": "postgresql-9.6-US.pdf"
+    },
+    {
+      "queryId": "edge-001",
+      "query": "RAG",
+      "category": "factual",
+      "difficulty": "easy",
+      "shouldRetrieve": true,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2994,
+      "maxSimilarity": 0.2994,
+      "keywordHitRate": 0.0,
+      "correctRefusal": false,
+      "latencyMs": 291.33,
+      "topDocTitle": "postgresql-14-US.pdf"
+    },
+    {
+      "queryId": "edge-002",
+      "query": "Bagaimana cara menggunakan fitur yang belum ada di sistem ini?",
+      "category": "negative",
+      "difficulty": "medium",
+      "shouldRetrieve": false,
+      "actuallyRetrieved": true,
+      "retrievedCount": 5,
+      "avgSimilarity": 0.2723,
+      "maxSimilarity": 0.2932,
+      "keywordHitRate": 1.0,
+      "correctRefusal": false,
+      "latencyMs": 305.52,
+      "topDocTitle": "SKPT RIFKA ANNISA LUTFIA.pdf"
+    }
+  ],
+  "corpusStats": {
+    "totalDocuments": 35,
+    "totalChunks": 107571,
+    "chunksWithEmbeddings": 107571,
+    "embeddingType": "feature_hashing",
+    "hasHNSWIndex": false,
+    "workspaceCount": 5,
+    "fileTypes": [
+      {
+        "type": "pdf",
+        "docs": 11,
+        "chunks": 30813
+      },
+      {
+        "type": "txt",
+        "docs": 6,
+        "chunks": 124
+      },
+      {
+        "type": "docx",
+        "docs": 5,
+        "chunks": 71
+      },
+      {
+        "type": "image",
+        "docs": 13,
+        "chunks": 13
+      }
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+[
+  {
+    "label": "J1-chat",
+    "error": "[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "label": "J1-chat-response",
+    "error": "[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  },
+  {
+    "label": "J1-chat-response",
+    "error": "[error] Chat error: Error: Gagal mengirim pesan\n    at M (http://localhost:3100/_next/static/chunks/3-h6576ij1nlj.js:1:336691)"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/documents?_rsc=qYT2Wy2QR8kXuUU6 net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/documents?_rsc=EcffMdcMC2EpAI4y net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/analytics/usage?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/search?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/analytics/usage?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/documents?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J2-login",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/search?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/documents?_rsc=EcffMdcMC2EpAI4y net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/analytics/usage?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/search?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/documents?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/analytics/usage?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/search?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J4-settings",
+    "error": "[NET FAIL] http://localhost:3100/knowledge/documents?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J5-mobile-login",
+    "error": "[NET FAIL] http://localhost:3100/documents?_rsc=qYT2Wy2QR8kXuUU6 net::ERR_ABORTED"
+  },
+  {
+    "label": "J5-mobile-login",
+    "error": "[NET FAIL] http://localhost:3100/documents?_rsc=EcffMdcMC2EpAI4y net::ERR_ABORTED"
+  },
+  {
+    "label": "J5-mobile-login",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J5-mobile-login",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  },
+  {
+    "label": "J5-mobile-documents",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=rve90R7o1tLnxMuV net::ERR_ABORTED"
+  },
+  {
+    "label": "J5-mobile-documents",
+    "error": "[NET FAIL] http://localhost:3100/dashboard?_rsc=yehh8CJVaWXHfpj0 net::ERR_ABORTED"
+  }
+]

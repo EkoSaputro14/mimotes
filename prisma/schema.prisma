@@ -1,0 +1,734 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+// ============================================================
+// USER & WORKSPACE (Tenant Foundation)
+// ============================================================
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String?
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  documents        Document[]
+  documentChunks   DocumentChunk[]
+  folders          Folder[]
+  chatSessions     ChatSession[]
+  analyticsEvents  AnalyticsEvent[]
+  promptTemplates  PromptTemplate[]  @relation("PromptCreator")
+  promptVersions   PromptVersion[]   @relation("VersionCreator")
+  mcpServers       McpServer[]
+  memberships      WorkspaceMember[]
+  sentInvitations  WorkspaceInvitation[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(200)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  avatarUrl   String?  @map("avatar_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members          WorkspaceMember[]
+  invitations      WorkspaceInvitation[]
+  documents        Document[]
+  documentChunks   DocumentChunk[]
+  folders          Folder[]
+  chatSessions     ChatSession[]
+  analyticsEvents  AnalyticsEvent[]
+  promptTemplates  PromptTemplate[]
+  mcpServers       McpServer[]
+  settings         WorkspaceSetting[]
+  subscription     WorkspaceSubscription?
+  usage            WorkspaceUsage[]
+  invoices         Invoice[]
+  payments         Payment[]
+  subscriptionEvents SubscriptionEvent[]
+  apiKeys           ApiKey[]
+  apiUsageLogs      ApiUsageLog[]
+  widgets           Widget[]
+  widgetConversations WidgetConversation[]
+  widgetMessages    WidgetMessage[]
+  auditLogs         AuditLog[]
+
+  notificationConfigs NotificationConfig[]
+  notificationLogs   NotificationLog[]
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id           String    @id @default(uuid())
+  workspaceId  String    @map("workspace_id")
+  userId       String    @map("user_id")
+  role         String    @default("viewer") @db.VarChar(20)
+  lastActiveAt DateTime? @map("last_active_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId], map: "workspace_members_user_id_idx")
+  @@index([workspaceId], map: "workspace_members_workspace_id_idx")
+  @@map("workspace_members")
+}
+
+// ============================================================
+// DOCUMENTS & CHUNKS
+// ============================================================
+
+model Folder {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(200)
+  userId      String   @map("user_id")
+  workspaceId String   @map("workspace_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@unique([name, workspaceId])
+  @@index([workspaceId])
+  @@map("folders")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  workspaceId String   @map("workspace_id")
+  title       String   @db.VarChar(500)
+  fileType    String   @map("file_type") @db.VarChar(50)
+  fileUrl     String?  @map("file_url")
+  status      String   @default("processing") @db.VarChar(50)
+  chunkCount  Int      @default(0) @map("chunk_count")
+  description String?  @db.VarChar(500)
+  folderId    String?  @map("folder_id")
+  errorMessage String? @map("error_message") @db.Text
+  processingMetrics Json? @map("processing_metrics")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  folder    Folder?          @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  chunks    DocumentChunk[]
+
+  @@index([workspaceId], map: "documents_workspace_id_idx")
+  @@index([folderId], map: "documents_folder_id_idx")
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id           String   @id @default(uuid())
+  documentId   String   @map("document_id")
+  tenantId     String   @map("tenant_id")
+  workspaceId  String   @map("workspace_id")
+  content      String
+  embedding    Unsupported("vector(1536)")?
+  chunkIndex   Int      @map("chunk_index")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  chunkType    String?  @default("text") @map("chunk_type") @db.VarChar(50)
+  ocrText      String?  @map("ocr_text")
+  caption      String?
+  imageSummary String?  @map("image_summary")
+  imageUrl     String?  @map("image_url")
+
+  document  Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([documentId], map: "document_chunks_document_id_idx")
+  @@index([tenantId], map: "document_chunks_tenant_id_idx")
+  @@index([workspaceId], map: "document_chunks_workspace_id_idx")
+  @@index([chunkType], map: "document_chunks_chunk_type_idx")
+  @@map("document_chunks")
+}
+
+// ============================================================
+// CHAT
+// ============================================================
+
+model ChatSession {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  workspaceId String   @map("workspace_id")
+  title       String?  @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@index([workspaceId], map: "chat_sessions_workspace_id_idx")
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  role      String   @db.VarChar(20)
+  content   String
+  sources   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+
+// Global settings (legacy — for env-based defaults)
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique @db.VarChar(100)
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+// Per-workspace settings (AI config, etc.)
+model WorkspaceSetting {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  key         String   @db.VarChar(100)
+  value       String
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, key])
+  @@index([workspaceId], map: "workspace_settings_workspace_id_idx")
+  @@map("workspace_settings")
+}
+
+// ============================================================
+// SUBSCRIPTION & USAGE (Billing Foundation)
+// ============================================================
+
+// Plan definitions (seeded, read-only)
+model SubscriptionPlan {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(50)
+  displayName String   @map("display_name") @db.VarChar(100)
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+
+  // Limits (-1 = unlimited)
+  maxDocuments       Int      @default(10) @map("max_documents")
+  maxStorageMB       Int      @default(100) @map("max_storage_mb")
+  maxChatMessages    Int      @default(1000) @map("max_chat_messages")
+  maxChunks          Int      @default(5000) @map("max_chunks")
+  maxAIRequests      Int      @default(500) @map("max_ai_requests")
+  maxEmbeddingReqs   Int      @default(500) @map("max_embedding_reqs")
+  maxMCPExecutions   Int      @default(100) @map("max_mcp_executions")
+  maxMembers         Int      @default(3) @map("max_members")
+  maxWorkspaces      Int      @default(1) @map("max_workspaces")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscriptions WorkspaceSubscription[]
+  planFeatures PlanFeature[]
+
+  @@map("subscription_plans")
+}
+
+// Workspace's current subscription
+model WorkspaceSubscription {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  planId      String   @map("plan_id")
+  status      String   @default("active") @db.VarChar(20)
+
+  // Stripe fields
+  stripeCustomerId       String?  @map("stripe_customer_id") @unique
+  stripeSubscriptionId   String?  @map("stripe_subscription_id") @unique
+  stripePriceId          String?  @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
+
+  trialStartsAt   DateTime? @map("trial_starts_at")
+  trialEndsAt     DateTime? @map("trial_ends_at")
+  currentPeriodStart DateTime? @map("current_period_start")
+  currentPeriodEnd   DateTime? @map("current_period_end")
+  canceledAt    DateTime? @map("canceled_at")
+  cancelAtPeriodEnd Boolean @default(false) @map("cancel_at_period_end")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@unique([workspaceId])
+  @@index([workspaceId], map: "workspace_subscriptions_workspace_id_idx")
+  @@index([stripeCustomerId], map: "workspace_subscriptions_stripe_customer_id_idx")
+  @@index([stripeSubscriptionId], map: "workspace_subscriptions_stripe_subscription_id_idx")
+  @@map("workspace_subscriptions")
+}
+
+// Monthly usage counters per workspace
+model WorkspaceUsage {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  period      String   @db.VarChar(7)
+
+  documentsCreated    Int @default(0) @map("documents_created")
+  storageBytesUsed    BigInt @default(0) @map("storage_bytes_used")
+  chunksCreated       Int @default(0) @map("chunks_created")
+  chatMessages        Int @default(0) @map("chat_messages")
+  aiRequests          Int @default(0) @map("ai_requests")
+  embeddingRequests   Int @default(0) @map("embedding_requests")
+  mcpExecutions       Int @default(0) @map("mcp_executions")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, period])
+  @@index([workspaceId], map: "workspace_usage_workspace_id_idx")
+  @@map("workspace_usage")
+}
+
+// ============================================================
+// BILLING (Stripe-ready foundation)
+// ============================================================
+
+model Invoice {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  invoiceNumber   String   @unique @map("invoice_number") @db.VarChar(50)
+  status          String   @default("draft") @db.VarChar(20)
+  currency        String   @default("usd") @db.VarChar(3)
+  subtotal        Int      @default(0)
+  tax             Int      @default(0)
+  total           Int      @default(0)
+  periodStart     DateTime @map("period_start")
+  periodEnd       DateTime @map("period_end")
+  dueDate         DateTime? @map("due_date")
+  paidAt          DateTime? @map("paid_at")
+  stripeInvoiceId String?  @map("stripe_invoice_id")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lineItems InvoiceLineItem[]
+  payments  Payment[]
+
+  @@index([workspaceId], map: "invoices_workspace_id_idx")
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String   @map("invoice_id")
+  description String   @db.VarChar(500)
+  quantity    Int      @default(1)
+  unitPrice   Int      @default(0) @map("unit_price")
+  amount      Int      @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], map: "invoice_line_items_invoice_id_idx")
+  @@map("invoice_line_items")
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  invoiceId       String   @map("invoice_id")
+  workspaceId     String   @map("workspace_id")
+  amount          Int
+  currency        String   @default("usd") @db.VarChar(3)
+  status          String   @default("pending") @db.VarChar(20)
+  paymentMethod   String?  @map("payment_method") @db.VarChar(50)
+  stripePaymentId String?  @map("stripe_payment_id")
+  paidAt          DateTime? @map("paid_at")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  invoice   Invoice   @relation(fields: [invoiceId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId], map: "payments_workspace_id_idx")
+  @@index([invoiceId], map: "payments_invoice_id_idx")
+  @@map("payments")
+}
+
+model SubscriptionEvent {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  eventType       String   @map("event_type") @db.VarChar(50)
+  fromPlan        String?  @map("from_plan") @db.VarChar(50)
+  toPlan          String?  @map("to_plan") @db.VarChar(50)
+  fromStatus      String?  @map("from_status") @db.VarChar(20)
+  toStatus        String?  @map("to_status") @db.VarChar(20)
+  reason          String?
+  stripeEventId   String?  @map("stripe_event_id")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId], map: "subscription_events_workspace_id_idx")
+  @@index([eventType, createdAt], map: "subscription_events_type_created_idx")
+  @@map("subscription_events")
+}
+
+// ============================================================
+// WEBHOOK IDEMPOTENCY (Stripe Event Deduplication)
+// ============================================================
+
+model StripeWebhookEvent {
+  id            String   @id @default(uuid())
+  stripeEventId String   @unique @map("stripe_event_id") @db.VarChar(100)
+  eventType     String   @map("event_type") @db.VarChar(100)
+  processedAt   DateTime @default(now()) @map("processed_at")
+
+  @@index([stripeEventId], map: "stripe_webhook_events_event_id_idx")
+  @@map("stripe_webhook_events")
+}
+
+// ============================================================
+// API PLATFORM (API Keys + Usage Tracking)
+// ============================================================
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  name        String    @db.VarChar(100)
+  keyHash     String    @unique @map("key_hash") @db.VarChar(64)
+  keyPrefix   String    @map("key_prefix") @db.VarChar(12)
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  usageLogs ApiUsageLog[]
+
+  @@index([workspaceId], map: "api_keys_workspace_id_idx")
+  @@index([keyHash], map: "api_keys_key_hash_idx")
+  @@map("api_keys")
+}
+
+model ApiUsageLog {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  apiKeyId    String?  @map("api_key_id")
+  endpoint    String   @db.VarChar(200)
+  method      String   @db.VarChar(10)
+  statusCode  Int      @map("status_code")
+  latencyMs   Int      @map("latency_ms")
+  tokensUsed  Int      @default(0) @map("tokens_used")
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  apiKey    ApiKey?    @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt], map: "api_usage_logs_workspace_time_idx")
+  @@index([apiKeyId], map: "api_usage_logs_api_key_id_idx")
+  @@map("api_usage_logs")
+}
+
+// ============================================================
+// PUBLIC WIDGET PLATFORM
+// ============================================================
+
+model Widget {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  name            String   @db.VarChar(100)
+  slug            String   @unique @db.VarChar(100)
+  publicKey       String   @unique @map("public_key") @db.VarChar(64)
+  secretKey       String   @unique @map("secret_key") @db.VarChar(64)
+  allowedDomains  String[] @default([]) @map("allowed_domains")
+  isActive        Boolean  @default(true) @map("is_active")
+
+  // Theme customization
+  primaryColor    String   @default("#3B82F6") @map("primary_color") @db.VarChar(7)
+  backgroundColor String   @default("#FFFFFF") @map("background_color") @db.VarChar(7)
+  textColor       String   @default("#1F2937") @map("text_color") @db.VarChar(7)
+  logoUrl         String?  @map("logo_url")
+  avatarUrl       String?  @map("avatar_url")
+  welcomeMessage  String   @default("Hi! How can I help you?") @map("welcome_message") @db.VarChar(500)
+  position        String   @default("bottom-right") @map("position") @db.VarChar(20)
+  quickReplies    String[] @default([]) @map("quick_replies")
+  leadCaptureEnabled Boolean @default(false) @map("lead_capture_enabled")
+  leadFields         Json    @default("[]") @map("lead_fields")
+  autoTriggerMessages Int @default(0) @map("auto_trigger_messages")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace    Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversations WidgetConversation[]
+
+  @@index([workspaceId], map: "widgets_workspace_id_idx")
+  @@index([slug], map: "widgets_slug_idx")
+  @@index([publicKey], map: "widgets_public_key_idx")
+  @@map("widgets")
+}
+
+model WidgetConversation {
+  id          String   @id @default(uuid())
+  widgetId    String   @map("widget_id")
+  workspaceId String   @map("workspace_id")
+  visitorId   String?  @map("visitor_id") @db.VarChar(100)
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  status      String   @default("active") @db.VarChar(20)
+  startedAt   DateTime @default(now()) @map("started_at")
+  endedAt     DateTime? @map("ended_at")
+  leadName     String?  @map("lead_name") @db.VarChar(200)
+  leadEmail    String?  @map("lead_email") @db.VarChar(300)
+  leadWhatsApp String?  @map("lead_whatsapp") @db.VarChar(30)
+  leadData     Json?    @map("lead_data")
+  leadScore  String? @default("low") @map("lead_score") @db.VarChar(20)
+  leadStatus String? @default("new") @map("lead_status") @db.VarChar(20)
+  leadIntent String? @map("lead_intent") @db.VarChar(30)
+
+  widget    Widget           @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages  WidgetMessage[]
+
+  @@index([widgetId], map: "widget_conversations_widget_id_idx")
+  @@index([workspaceId], map: "widget_conversations_workspace_id_idx")
+  @@index([startedAt], map: "widget_conversations_started_at_idx")
+  @@map("widget_conversations")
+}
+
+model WidgetMessage {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  workspaceId    String   @map("workspace_id")
+  role           String   @db.VarChar(20)
+  content        String
+  tokensUsed     Int      @default(0) @map("tokens_used")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation WidgetConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  workspace    Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], map: "widget_messages_conversation_id_idx")
+  @@index([workspaceId], map: "widget_messages_workspace_id_idx")
+  @@map("widget_messages")
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  workspaceId  String   @map("workspace_id")
+  actorId      String?  @map("actor_id") @db.VarChar(100)
+  actorType    String   @default("user") @map("actor_type") @db.VarChar(20)
+  action       String   @db.VarChar(100)
+  resourceType String?  @map("resource_type") @db.VarChar(50)
+  resourceId   String?  @map("resource_id") @db.VarChar(100)
+  metadata     Json?
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  userAgent    String?  @map("user_agent") @db.VarChar(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt], map: "audit_logs_workspace_time_idx")
+  @@index([workspaceId, action], map: "audit_logs_workspace_action_idx")
+  @@index([workspaceId, actorId], map: "audit_logs_workspace_actor_idx")
+  @@index([resourceType, resourceId], map: "audit_logs_resource_idx")
+  @@map("audit_logs")
+}
+
+// ============================================================
+// ENTITLEMENTS (Plan Features)
+// ============================================================
+
+model PlanFeature {
+  id        String   @id @default(uuid())
+  planId    String   @map("plan_id")
+  feature   String   @db.VarChar(50)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, feature])
+  @@index([planId], map: "plan_features_plan_id_idx")
+  @@map("plan_features")
+}
+
+// ============================================================
+// INVITATIONS
+// ============================================================
+
+model WorkspaceInvitation {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  email       String    @db.VarChar(255)
+  role        String    @default("viewer") @db.VarChar(20)
+  token       String    @db.VarChar(255)
+  tokenPrefix String    @map("token_prefix") @db.VarChar(8)
+  invitedById String    @map("invited_by")
+  status      String    @default("pending") @db.VarChar(20)
+  expiresAt   DateTime  @map("expires_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation(fields: [invitedById], references: [id])
+
+  @@unique([workspaceId, email, status], map: "workspace_invitations_unique_pending")
+  @@index([token], map: "workspace_invitations_token_idx")
+  @@index([workspaceId, status], map: "workspace_invitations_workspace_status_idx")
+  @@map("workspace_invitations")
+}
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+
+model AnalyticsEvent {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  workspaceId String   @map("workspace_id")
+  eventType   String   @map("event_type") @db.VarChar(50)
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User?       @relation(fields: [userId], references: [id])
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([eventType, createdAt])
+  @@index([createdAt])
+  @@index([workspaceId], map: "analytics_events_workspace_id_idx")
+  @@map("analytics_events")
+}
+
+model PromptTemplate {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(200)
+  content     String
+  category    String   @default("general") @db.VarChar(50)
+  isActive    Boolean  @default(false) @map("is_active")
+  version     Int      @default(1)
+  createdBy   String?  @map("created_by")
+  workspaceId String   @map("workspace_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  creator   User?          @relation("PromptCreator", fields: [createdBy], references: [id])
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  versions  PromptVersion[]
+
+  @@index([workspaceId], map: "prompt_templates_workspace_id_idx")
+  @@map("prompt_templates")
+}
+
+model PromptVersion {
+  id        String   @id @default(uuid())
+  promptId  String   @map("prompt_id")
+  version   Int
+  content   String
+  changeNote String? @map("change_note")
+  createdBy String? @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  prompt  PromptTemplate @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  creator User?          @relation("VersionCreator", fields: [createdBy], references: [id])
+
+  @@unique([promptId, version])
+  @@map("prompt_versions")
+}
+
+// ============================================================
+// MCP SERVERS
+// ============================================================
+
+model McpServer {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(200)
+  url         String
+  apiKey      String?  @map("api_key")
+  isActive    Boolean  @default(true) @map("is_active")
+  tools       Json?    @default("[]")
+  userId      String   @map("user_id")
+  workspaceId String   @map("workspace_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId], map: "mcp_servers_workspace_id_idx")
+  @@map("mcp_servers")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model NotificationConfig {
+  id              String   @id @default(uuid())
+  workspaceId     String   @unique @map("workspace_id")
+  emailEnabled    Boolean  @default(false) @map("email_enabled")
+  emailAddress    String?  @map("email_address") @db.VarChar(300)
+  telegramEnabled Boolean  @default(false) @map("telegram_enabled")
+  telegramBotToken String? @map("telegram_bot_token") @db.VarChar(200)
+  telegramChatId  String?  @map("telegram_chat_id") @db.VarChar(50)
+  discordEnabled  Boolean  @default(false) @map("discord_enabled")
+  discordWebhookUrl String? @map("discord_webhook_url") @db.VarChar(500)
+  notifyOnHighLead   Boolean @default(true) @map("notify_on_high_lead")
+  notifyOnConverted  Boolean @default(true) @map("notify_on_converted")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("notification_configs")
+}
+
+model NotificationLog {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  conversationId  String?  @map("conversation_id")
+  channel         String   @db.VarChar(20)
+  eventType       String   @map("event_type") @db.VarChar(50)
+  recipientEmail  String?  @map("recipient_email") @db.VarChar(300)
+  status          String   @default("sent") @db.VarChar(20)
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([conversationId])
+  @@map("notification_logs")
+}
