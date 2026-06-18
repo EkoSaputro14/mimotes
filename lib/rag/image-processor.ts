@@ -25,7 +25,7 @@ export interface ImageProcessingResult {
 }
 
 export interface ImageMetadata {
-  extraction_method: "vision" | "paddleocr" | "rejected";
+  extraction_method: "vision" | "paddleocr" | "metadata" | "rejected";
   vision_model: string | null;
   ocr_engine: string | null;
   ocr_confidence: number | null;
@@ -200,7 +200,7 @@ export async function processImage(
   let caption = "";
   let summary = "";
   let visionModel: string | null = null;
-  let extractionMethod: "vision" | "paddleocr" | "rejected" = "rejected";
+  let extractionMethod: "vision" | "paddleocr" | "metadata" | "rejected" = "rejected";
   let ocrConfidence: number | null = null;
 
   try {
@@ -255,18 +255,22 @@ export async function processImage(
     }
   }
 
-  // ---- Priority 3: Validation & Rejection ----
+  // ---- Priority 3: Validation — accept all images with metadata fallback ----
   const hasOCR = ocrText.length > 10; // Minimum 10 chars for valid OCR
   const hasCaption = caption.length > 0;
 
   if (!hasOCR && !hasCaption) {
-    // REJECT: Neither Vision nor PaddleOCR produced usable content
-    console.warn(
-      `[ImageProcessor] REJECTED: No OCR text or caption for ${fileName}. ` +
-        `Vision available: false, PaddleOCR: 0 chars. ` +
-        `Image will NOT be embedded.`
+    // ACCEPT with metadata fallback — no text extracted but image is still valuable
+    console.log(
+      `[ImageProcessor] No OCR/caption for ${fileName}. ` +
+        `Using metadata fallback. Dimensions: ${dimensions.width}x${dimensions.height}`
     );
-    extractionMethod = "rejected";
+    extractionMethod = "metadata";
+    // Generate a minimal description for the chunk
+    caption = `Image uploaded on ${new Date().toISOString().split("T")[0]}`;
+    summary = dimensions.width > 0 
+      ? `Image (${dimensions.width}x${dimensions.height} pixels). No text could be extracted.`
+      : `Image file. No text could be extracted.`;
   }
 
   // Generate summary from available data (only if we have content)
@@ -322,6 +326,20 @@ export function generateImageChunks(
 
   const hasOCR = ocrText.length > 10;
   const hasCaption = caption.length > 0;
+
+  // Metadata fallback chunk (no text or caption extracted)
+  if (metadata.extraction_method === "metadata" && !hasOCR && !hasCaption) {
+    chunks.push({
+      content: caption || summary || "Image uploaded without extracted text",
+      chunk_type: "image_caption",
+      ocr_text: "",
+      caption: caption || "Image metadata",
+      image_summary: summary,
+      image_url: imageUrl,
+      metadata,
+    });
+    return chunks;
+  }
 
   // Combined chunk (best quality — has both OCR and caption)
   if (hasOCR && hasCaption) {

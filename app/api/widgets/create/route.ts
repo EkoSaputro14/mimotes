@@ -67,6 +67,17 @@ export async function POST(request: NextRequest) {
         slug: widget.slug,
         publicKey: widget.publicKey,
         secretKey: widget.secretKey,
+        allowedDomains: widget.allowedDomains ?? [],
+        isActive: widget.isActive,
+        primaryColor: widget.primaryColor,
+        backgroundColor: widget.backgroundColor,
+        textColor: widget.textColor,
+        logoUrl: widget.logoUrl,
+        avatarUrl: widget.avatarUrl,
+        welcomeMessage: widget.welcomeMessage,
+        position: widget.position,
+        leadCaptureEnabled: widget.leadCaptureEnabled,
+        leadFields: widget.leadFields ?? [],
       },
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, setWorkspaceContext } from "@/lib/prisma";
 
 // ============================================================
 // Plan Definitions (defaults — seeded in DB)
@@ -99,39 +99,48 @@ export function isTrialExpired(trialEndsAt: Date | null): boolean {
  * - Trial has expired
  */
 export async function getPlanLimits(workspaceId: string): Promise<PlanLimits> {
-  const sub = await prisma.workspaceSubscription.findUnique({
-    where: { workspaceId },
-    include: { plan: true },
-  });
+  // Use transaction to ensure RLS context and query share the same connection
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
 
-  if (sub?.plan && isSubscriptionActive(sub.status)) {
-    // Check trial expiration
-    if (sub.status === "trial" && isTrialExpired(sub.trialEndsAt)) {
-      return DEFAULT_LIMITS.free;
+    const sub = await tx.workspaceSubscription.findUnique({
+      where: { workspaceId },
+      include: { plan: true },
+    });
+
+    if (sub?.plan && isSubscriptionActive(sub.status)) {
+      // Check trial expiration
+      if (sub.status === "trial" && isTrialExpired(sub.trialEndsAt)) {
+        return DEFAULT_LIMITS.free;
+      }
+      return {
+        maxDocuments: sub.plan.maxDocuments,
+        maxStorageMB: sub.plan.maxStorageMB,
+        maxChatMessages: sub.plan.maxChatMessages,
+        maxChunks: sub.plan.maxChunks,
+        maxAIRequests: sub.plan.maxAIRequests,
+        maxEmbeddingReqs: sub.plan.maxEmbeddingReqs,
+        maxMCPExecutions: sub.plan.maxMCPExecutions,
+        maxMembers: sub.plan.maxMembers,
+        maxWorkspaces: sub.plan.maxWorkspaces,
+      };
     }
-    return {
-      maxDocuments: sub.plan.maxDocuments,
-      maxStorageMB: sub.plan.maxStorageMB,
-      maxChatMessages: sub.plan.maxChatMessages,
-      maxChunks: sub.plan.maxChunks,
-      maxAIRequests: sub.plan.maxAIRequests,
-      maxEmbeddingReqs: sub.plan.maxEmbeddingReqs,
-      maxMCPExecutions: sub.plan.maxMCPExecutions,
-      maxMembers: sub.plan.maxMembers,
-      maxWorkspaces: sub.plan.maxWorkspaces,
-    };
-  }
 
-  return DEFAULT_LIMITS.free;
+    return DEFAULT_LIMITS.free;
+  });
 }
 
 /**
  * Get workspace subscription info.
  */
 export async function getWorkspaceSubscription(workspaceId: string) {
-  return prisma.workspaceSubscription.findUnique({
-    where: { workspaceId },
-    include: { plan: true },
+  // Use transaction to ensure RLS context and query share the same connection
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
+    return tx.workspaceSubscription.findUnique({
+      where: { workspaceId },
+      include: { plan: true },
+    });
   });
 }
 
@@ -255,47 +264,82 @@ export async function getUsage(
   period?: string
 ): Promise<UsageSnapshot> {
   const p = period || getCurrentPeriod();
-  const usage = await getOrCreateUsage(workspaceId, p);
-  const limits = await getPlanLimits(workspaceId);
 
-  const sub = await prisma.workspaceSubscription.findUnique({
-    where: { workspaceId },
-    include: { plan: { select: { displayName: true } } },
+  // Use transaction to ensure RLS context and all queries share the same connection
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
+
+    // getOrCreateUsage inline
+    let usage = await tx.workspaceUsage.findUnique({
+      where: { workspaceId_period: { workspaceId, period: p } },
+    });
+    if (!usage) {
+      usage = await tx.workspaceUsage.create({
+        data: { workspaceId, period: p },
+      });
+    }
+
+    // getPlanLimits inline
+    const sub = await tx.workspaceSubscription.findUnique({
+      where: { workspaceId },
+      include: { plan: true },
+    });
+
+    let limits: PlanLimits;
+    if (sub?.plan && isSubscriptionActive(sub.status)) {
+      if (sub.status === "trial" && isTrialExpired(sub.trialEndsAt)) {
+        limits = DEFAULT_LIMITS.free;
+      } else {
+        limits = {
+          maxDocuments: sub.plan.maxDocuments,
+          maxStorageMB: sub.plan.maxStorageMB,
+          maxChatMessages: sub.plan.maxChatMessages,
+          maxChunks: sub.plan.maxChunks,
+          maxAIRequests: sub.plan.maxAIRequests,
+          maxEmbeddingReqs: sub.plan.maxEmbeddingReqs,
+          maxMCPExecutions: sub.plan.maxMCPExecutions,
+          maxMembers: sub.plan.maxMembers,
+          maxWorkspaces: sub.plan.maxWorkspaces,
+        };
+      }
+    } else {
+      limits = DEFAULT_LIMITS.free;
+    }
+
+    const planName = sub?.plan?.displayName || "Free";
+
+    function pct(used: number, max: number): number {
+      if (max === UNLIMITED) return 0;
+      if (max === 0) return 100;
+      return Math.min(100, Math.round((used / max) * 100));
+    }
+
+    return {
+      period: p,
+      documentsCreated: usage.documentsCreated,
+      storageBytesUsed: Number(usage.storageBytesUsed),
+      storageMBUsed: Math.round(Number(usage.storageBytesUsed) / (1024 * 1024)),
+      chunksCreated: usage.chunksCreated,
+      chatMessages: usage.chatMessages,
+      aiRequests: usage.aiRequests,
+      embeddingRequests: usage.embeddingRequests,
+      mcpExecutions: usage.mcpExecutions,
+      limits,
+      planName,
+      usagePercent: {
+        documents: pct(usage.documentsCreated, limits.maxDocuments),
+        storage: pct(
+          Math.round(Number(usage.storageBytesUsed) / (1024 * 1024)),
+          limits.maxStorageMB
+        ),
+        chatMessages: pct(usage.chatMessages, limits.maxChatMessages),
+        chunks: pct(usage.chunksCreated, limits.maxChunks),
+        aiRequests: pct(usage.aiRequests, limits.maxAIRequests),
+        embeddingRequests: pct(usage.embeddingRequests, limits.maxEmbeddingReqs),
+        mcpExecutions: pct(usage.mcpExecutions, limits.maxMCPExecutions),
+      },
+    };
   });
-
-  const planName = sub?.plan?.displayName || "Free";
-
-  function pct(used: number, max: number): number {
-    if (max === UNLIMITED) return 0;
-    if (max === 0) return 100;
-    return Math.min(100, Math.round((used / max) * 100));
-  }
-
-  return {
-    period: p,
-    documentsCreated: usage.documentsCreated,
-    storageBytesUsed: Number(usage.storageBytesUsed),
-    storageMBUsed: Math.round(Number(usage.storageBytesUsed) / (1024 * 1024)),
-    chunksCreated: usage.chunksCreated,
-    chatMessages: usage.chatMessages,
-    aiRequests: usage.aiRequests,
-    embeddingRequests: usage.embeddingRequests,
-    mcpExecutions: usage.mcpExecutions,
-    limits,
-    planName,
-    usagePercent: {
-      documents: pct(usage.documentsCreated, limits.maxDocuments),
-      storage: pct(
-        Math.round(Number(usage.storageBytesUsed) / (1024 * 1024)),
-        limits.maxStorageMB
-      ),
-      chatMessages: pct(usage.chatMessages, limits.maxChatMessages),
-      chunks: pct(usage.chunksCreated, limits.maxChunks),
-      aiRequests: pct(usage.aiRequests, limits.maxAIRequests),
-      embeddingRequests: pct(usage.embeddingRequests, limits.maxEmbeddingReqs),
-      mcpExecutions: pct(usage.mcpExecutions, limits.maxMCPExecutions),
-    },
-  };
 }
 
 // ============================================================

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, setWorkspaceContext } from "@/lib/prisma";
 import { getPlanLimits, getCurrentPeriod } from "@/lib/usage";
 import { clearEntitlementCache } from "@/lib/entitlements";
 
@@ -606,109 +606,116 @@ async function getWorkspaceIdForPlan(_planName: string): Promise<string> {
 export async function getBillingSummary(
   workspaceId: string
 ): Promise<BillingSummary> {
-  const sub = await prisma.workspaceSubscription.findUnique({
-    where: { workspaceId },
-    include: { plan: true },
-  });
+  // Use transaction to ensure all queries share the same connection
+  // so RLS workspace context is available to every query.
+  return prisma.$transaction(async (tx) => {
+    // Set workspace context on THIS connection
+    await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
 
-  const planName = sub?.plan?.name || "free";
-  const planDisplayName = sub?.plan?.displayName || "Free";
+    const sub = await tx.workspaceSubscription.findUnique({
+      where: { workspaceId },
+      include: { plan: true },
+    });
 
-  // Get usage
-  const period = getCurrentPeriod();
-  const usage = await prisma.workspaceUsage.findUnique({
-    where: { workspaceId_period: { workspaceId, period } },
-  });
+    const planName = sub?.plan?.name || "free";
+    const planDisplayName = sub?.plan?.displayName || "Free";
 
-  const limits = sub?.plan
-    ? {
-        maxDocuments: sub.plan.maxDocuments,
-        maxStorageMB: sub.plan.maxStorageMB,
-        maxChatMessages: sub.plan.maxChatMessages,
-        maxAIRequests: sub.plan.maxAIRequests,
-      }
-    : { maxDocuments: 10, maxStorageMB: 100, maxChatMessages: 1000, maxAIRequests: 500 };
+    // Get usage
+    const period = getCurrentPeriod();
+    const usage = await tx.workspaceUsage.findUnique({
+      where: { workspaceId_period: { workspaceId, period } },
+    });
 
-  function pct(used: number, max: number): number {
-    if (max === -1) return 0;
-    if (max === 0) return 100;
-    return Math.min(100, Math.round((used / max) * 100));
-  }
+    const limits = sub?.plan
+      ? {
+          maxDocuments: sub.plan.maxDocuments,
+          maxStorageMB: sub.plan.maxStorageMB,
+          maxChatMessages: sub.plan.maxChatMessages,
+          maxAIRequests: sub.plan.maxAIRequests,
+        }
+      : { maxDocuments: 10, maxStorageMB: 100, maxChatMessages: 1000, maxAIRequests: 500 };
 
-  // Get invoices
-  const invoices = await prisma.invoice.findMany({
-    where: { workspaceId },
-    orderBy: { createdAt: "desc" },
-    take: 12,
-    select: {
-      id: true,
-      invoiceNumber: true,
-      status: true,
-      total: true,
-      currency: true,
-      dueDate: true,
-      paidAt: true,
-      periodStart: true,
-      periodEnd: true,
-    },
-  });
+    function pct(used: number, max: number): number {
+      if (max === -1) return 0;
+      if (max === 0) return 100;
+      return Math.min(100, Math.round((used / max) * 100));
+    }
 
-  // Total paid
-  const payments = await prisma.payment.aggregate({
-    where: { workspaceId, status: "succeeded" },
-    _sum: { amount: true },
-  });
-
-  const totalPaid = payments._sum.amount || 0;
-
-  // Upgrade suggestions
-  const upgradeSuggestions = await getUpgradeSuggestions(workspaceId);
-
-  return {
-    workspaceId,
-    plan: { name: planName, displayName: planDisplayName },
-    subscription: {
-      status: (sub?.status as SubscriptionStatus) || "active",
-      trialEndsAt: sub?.trialEndsAt?.toISOString() || null,
-      currentPeriodStart: sub?.currentPeriodStart?.toISOString() || null,
-      currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() || null,
-      canceledAt: sub?.canceledAt?.toISOString() || null,
-    },
-    usage: {
-      period,
-      documents: {
-        used: usage?.documentsCreated || 0,
-        limit: limits.maxDocuments,
-        percent: pct(usage?.documentsCreated || 0, limits.maxDocuments),
+    // Get invoices
+    const invoices = await tx.invoice.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: {
+        id: true,
+        invoiceNumber: true,
+        status: true,
+        total: true,
+        currency: true,
+        dueDate: true,
+        paidAt: true,
+        periodStart: true,
+        periodEnd: true,
       },
-      storage: {
-        used: Math.round(Number(usage?.storageBytesUsed || 0) / (1024 * 1024)),
-        limit: limits.maxStorageMB,
-        percent: pct(
-          Math.round(Number(usage?.storageBytesUsed || 0) / (1024 * 1024)),
-          limits.maxStorageMB
-        ),
+    });
+
+    // Total paid
+    const payments = await tx.payment.aggregate({
+      where: { workspaceId, status: "succeeded" },
+      _sum: { amount: true },
+    });
+
+    const totalPaid = payments._sum.amount || 0;
+
+    // Upgrade suggestions
+    const upgradeSuggestions = await getUpgradeSuggestions(workspaceId);
+
+    return {
+      workspaceId,
+      plan: { name: planName, displayName: planDisplayName },
+      subscription: {
+        status: (sub?.status as SubscriptionStatus) || "active",
+        trialEndsAt: sub?.trialEndsAt?.toISOString() || null,
+        currentPeriodStart: sub?.currentPeriodStart?.toISOString() || null,
+        currentPeriodEnd: sub?.currentPeriodEnd?.toISOString() || null,
+        canceledAt: sub?.canceledAt?.toISOString() || null,
       },
-      chatMessages: {
-        used: usage?.chatMessages || 0,
-        limit: limits.maxChatMessages,
-        percent: pct(usage?.chatMessages || 0, limits.maxChatMessages),
+      usage: {
+        period,
+        documents: {
+          used: usage?.documentsCreated || 0,
+          limit: limits.maxDocuments,
+          percent: pct(usage?.documentsCreated || 0, limits.maxDocuments),
+        },
+        storage: {
+          used: Math.round(Number(usage?.storageBytesUsed || 0) / (1024 * 1024)),
+          limit: limits.maxStorageMB,
+          percent: pct(
+            Math.round(Number(usage?.storageBytesUsed || 0) / (1024 * 1024)),
+            limits.maxStorageMB
+          ),
+        },
+        chatMessages: {
+          used: usage?.chatMessages || 0,
+          limit: limits.maxChatMessages,
+          percent: pct(usage?.chatMessages || 0, limits.maxChatMessages),
+        },
+        aiRequests: {
+          used: usage?.aiRequests || 0,
+          limit: limits.maxAIRequests,
+          percent: pct(usage?.aiRequests || 0, limits.maxAIRequests),
+        },
       },
-      aiRequests: {
-        used: usage?.aiRequests || 0,
-        limit: limits.maxAIRequests,
-        percent: pct(usage?.aiRequests || 0, limits.maxAIRequests),
-      },
-    },
-    invoices: invoices.map((inv) => ({
-      ...inv,
-      status: inv.status as InvoiceStatus,
-      dueDate: inv.dueDate?.toISOString() || null,
-      paidAt: inv.paidAt?.toISOString() || null,
-      periodStart: inv.periodStart.toISOString(),
-      periodEnd: inv.periodEnd.toISOString(),
-    })),
-    totalPaid,
-    upgradeSuggestions,
-  };
+      invoices: invoices.map((inv) => ({
+        ...inv,
+        status: inv.status as InvoiceStatus,
+        dueDate: inv.dueDate?.toISOString() || null,
+        paidAt: inv.paidAt?.toISOString() || null,
+        periodStart: inv.periodStart.toISOString(),
+        periodEnd: inv.periodEnd.toISOString(),
+      })),
+      totalPaid,
+      upgradeSuggestions,
+    };
+  });
 }

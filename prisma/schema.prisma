@@ -486,6 +486,15 @@ model Widget {
   leadFields         Json    @default("[]") @map("lead_fields")
   autoTriggerMessages Int @default(0) @map("auto_trigger_messages")
 
+  // Business profile fields
+  businessName        String?  @map("business_name") @db.VarChar(200)
+  businessDescription String?  @map("business_description") @db.Text
+  businessWhatsApp    String?  @map("business_whatsapp") @db.VarChar(30)
+  businessPhone       String?  @map("business_phone") @db.VarChar(30)
+  businessEmail       String?  @map("business_email") @db.VarChar(200)
+  businessAddress     String?  @map("business_address") @db.Text
+  mode                String   @default("knowledge_base") @map("mode") @db.VarChar(30)
+
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -515,6 +524,20 @@ model WidgetConversation {
   leadScore  String? @default("low") @map("lead_score") @db.VarChar(20)
   leadStatus String? @default("new") @map("lead_status") @db.VarChar(20)
   leadIntent String? @map("lead_intent") @db.VarChar(30)
+  
+  // Lead Summary (auto-generated from conversation)
+  leadSummary      String?  @map("lead_summary") @db.Text
+  businessInterest String?  @map("business_interest") @db.VarChar(200)
+  budget           String?  @map("budget") @db.VarChar(100)
+  location         String?  @map("location") @db.VarChar(100)
+
+  // Notification tracking
+  seen             Boolean  @default(false)
+  seenAt           DateTime? @map("seen_at")
+
+  // Intelligence (Phase C)
+  timeline         String?  @db.VarChar(50)
+  followUp         String?  @map("follow_up") @db.Text
 
   widget    Widget           @relation(fields: [widgetId], references: [id], onDelete: Cascade)
   workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -822,4 +845,28 @@ model WhatsAppMessage {
   @@index([conversationId, createdAt])
   @@index([metaMessageId])
   @@map("whatsapp_messages")
+}
+
+model OnboardingProgress {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String    @unique @map("user_id") @db.Text
+  workspaceId         String    @map("workspace_id") @db.Text
+  currentStep         Int       @default(1) @map("current_step")
+  businessName        String?   @map("business_name") @db.Text
+  businessType        String?   @default("general") @map("business_type") @db.Text
+  businessDescription String?   @map("business_description") @db.Text
+  businessWhatsApp    String?   @map("business_whatsapp") @db.Text
+  businessPhone       String?   @map("business_phone") @db.Text
+  businessEmail       String?   @map("business_email") @db.Text
+  businessAddress     String?   @map("business_address") @db.Text
+  documentsUploaded   Int       @default(0) @map("documents_uploaded")
+  testCompleted       Boolean   @default(false) @map("test_completed")
+  widgetId            String?   @map("widget_id") @db.Text
+  completed           Boolean   @default(false)
+  startedAt           DateTime  @default(now()) @map("started_at")
+  completedAt         DateTime? @map("completed_at")
+
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("onboarding_progress")
 }

@@ -2,6 +2,9 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { setWorkspaceContext, resolveWorkspaceId } from "@/lib/prisma";
 import { streamRAGResponse } from "@/lib/rag/chain";
+import { type PromptContext } from "@/lib/rag/chain";
+import { buildSystemPrompt } from "@/lib/prompts/templates";
+import type { WidgetMode } from "@/lib/prompts/templates";
 import { ratelimit } from "@/lib/ratelimit";
 import { getClientIP } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let body: { message?: string; sessionId?: string };
+    let body: { message?: string; sessionId?: string; mode?: string };
     try {
       body = await request.json();
     } catch {
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { message, sessionId } = body;
+    const { message, sessionId, mode } = body;
 
     if (!message || typeof message !== "string") {
       return Response.json(
@@ -100,7 +103,15 @@ export async function POST(request: NextRequest) {
     }, userId).catch(() => {});
 
     // Generate RAG response — scoped to workspace's documents only
-    const result = await streamRAGResponse(message, 5, workspaceId);
+    const promptContext: PromptContext = {
+      mode: (mode || "knowledge_base") as WidgetMode,
+      businessName: "",
+      businessDescription: "",
+      contactInfo: {},
+      knowledgeContext: "",
+      conversationHistory: "",
+    };
+    const result = await streamRAGResponse(message, 5, workspaceId, undefined, undefined, promptContext);
 
     if (result.noContext) {
       // No context found, return a simple response

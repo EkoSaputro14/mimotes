@@ -20,6 +20,14 @@ interface Widget {
   leadCaptureEnabled: boolean;
   leadFields: Array<{ name: string; label: string; type: string; required: boolean }>;
   _count?: { conversations: number; widgetConversations?: number };
+  // Business profile
+  mode?: string;
+  businessName?: string | null;
+  businessDescription?: string | null;
+  businessWhatsApp?: string | null;
+  businessPhone?: string | null;
+  businessEmail?: string | null;
+  businessAddress?: string | null;
 }
 
 export default function WidgetSettingsForm() {
@@ -38,6 +46,15 @@ export default function WidgetSettingsForm() {
     { name: "whatsapp", label: "WhatsApp", type: "tel", required: false },
   ]);
   const [leadCount, setLeadCount] = useState(0);
+  // Business profile state
+  const [widgetMode, setWidgetMode] = useState("knowledge_base");
+  const [businessName, setBusinessName] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [businessWhatsApp, setBusinessWhatsApp] = useState("");
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [businessEmail, setBusinessEmail] = useState("");
+  const [businessAddress, setBusinessAddress] = useState("");
+  const [profileSaved, setProfileSaved] = useState(false);
 
   useEffect(() => { fetchWidgets(); }, []);
 
@@ -83,6 +100,15 @@ export default function WidgetSettingsForm() {
     if (widget.leadFields && widget.leadFields.length > 0) {
       setLeadFields(widget.leadFields);
     }
+    // Load business profile
+    setWidgetMode(widget.mode || "knowledge_base");
+    setBusinessName(widget.businessName || "");
+    setBusinessDescription(widget.businessDescription || "");
+    setBusinessWhatsApp(widget.businessWhatsApp || "");
+    setBusinessPhone(widget.businessPhone || "");
+    setBusinessEmail(widget.businessEmail || "");
+    setBusinessAddress(widget.businessAddress || "");
+    setProfileSaved(false);
     // Fetch lead count for this widget
     fetchLeadCount(widget.id);
   }
@@ -115,6 +141,32 @@ export default function WidgetSettingsForm() {
       }
     } catch (error) {
       console.error("Failed to save lead capture settings:", error);
+    }
+  }
+
+  async function saveBusinessProfile() {
+    if (!selectedWidget) return;
+    try {
+      const res = await fetch(`/api/widgets/${selectedWidget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: widgetMode,
+          businessName,
+          businessDescription,
+          businessWhatsApp,
+          businessPhone,
+          businessEmail,
+          businessAddress,
+        }),
+      });
+      if (res.ok) {
+        setProfileSaved(true);
+        fetchWidgets();
+        setTimeout(() => setProfileSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error("Failed to save business profile:", error);
     }
   }
 
@@ -263,12 +315,116 @@ export default function WidgetSettingsForm() {
             </select>
           </div>
 
+          {/* Business Profile */}
+          <div className="border-t border-border pt-6">
+            <h4 className="text-sm font-medium text-white mb-1">Business Profile</h4>
+            <p className="text-xs text-muted-foreground mb-4">
+              Tell the AI about your business for natural, helpful responses.
+            </p>
+
+            {/* Mode Selector */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-foreground mb-2 block">Operating Mode</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "knowledge_base", label: "Knowledge Base", desc: "Citations visible, strict" },
+                  { value: "customer_service", label: "Customer Service", desc: "Natural, helpful (Recommended)" },
+                  { value: "sales_agent", label: "Sales Agent", desc: "Lead capture, conversion" },
+                ].map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setWidgetMode(m.value)}
+                    className={`p-3 rounded-lg border text-left transition-colors ${
+                      widgetMode === m.value
+                        ? "border-primary bg-primary/10 text-white"
+                        : "border-border bg-background text-muted-foreground hover:border-border/80"
+                    }`}
+                  >
+                    <span className="text-sm font-medium block">{m.label}</span>
+                    <span className="text-xs opacity-70">{m.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Business Fields */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Business Name</label>
+                <input
+                  type="text"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Toko Budi Elektronik"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">WhatsApp</label>
+                <input
+                  type="text"
+                  value={businessWhatsApp}
+                  onChange={(e) => setBusinessWhatsApp(e.target.value)}
+                  placeholder="6281234567890"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Phone</label>
+                <input
+                  type="text"
+                  value={businessPhone}
+                  onChange={(e) => setBusinessPhone(e.target.value)}
+                  placeholder="0812-3456-7890"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Email</label>
+                <input
+                  type="text"
+                  value={businessEmail}
+                  onChange={(e) => setBusinessEmail(e.target.value)}
+                  placeholder="info@tokobudi.com"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+                />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="text-sm font-medium text-foreground mb-1 block">Business Description</label>
+              <textarea
+                value={businessDescription}
+                onChange={(e) => setBusinessDescription(e.target.value)}
+                placeholder="Toko elektronik di Surabaya. Menjual TV, AC, kulkas, mesin cuci. Melayani COD dan pengiriman."
+                rows={3}
+                className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="text-sm font-medium text-foreground mb-1 block">Address</label>
+              <input
+                type="text"
+                value={businessAddress}
+                onChange={(e) => setBusinessAddress(e.target.value)}
+                placeholder="Jl. Raya Darmo 123, Surabaya"
+                className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+              />
+            </div>
+            <button
+              onClick={saveBusinessProfile}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium"
+            >
+              {profileSaved ? "✅ Profile Saved!" : "Save Business Profile"}
+            </button>
+          </div>
+
           {/* Allowed Domains */}
           <div>
             <label className="text-sm font-medium text-foreground mb-1 block">Allowed Domains (comma-separated)</label>
             <input
               type="text"
-              defaultValue={selectedWidget.allowedDomains.join(", ")}
+              defaultValue={(selectedWidget.allowedDomains ?? []).join(", ")}
               placeholder="example.com, *.example.com"
               className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
             />
@@ -377,7 +533,7 @@ export default function WidgetSettingsForm() {
             </div>
             <div className="bg-background/50 rounded-lg p-4">
               <p className="text-muted-foreground text-xs mb-1">Domains</p>
-              <p className="text-white text-2xl font-bold">{selectedWidget.allowedDomains.length || "All"}</p>
+              <p className="text-white text-2xl font-bold">{(selectedWidget.allowedDomains ?? []).length || "All"}</p>
             </div>
           </div>
         </section>

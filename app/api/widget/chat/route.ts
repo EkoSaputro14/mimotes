@@ -2,7 +2,18 @@ import { NextRequest } from "next/server";
 import { prisma, setWorkspaceContext } from "@/lib/prisma";
 import { getWidgetByPublicKey, validateWidgetOrigin, validateMessageLength, buildWidgetCorsHeaders, saveLeadData, updateLeadScore } from "@/lib/widget";
 import { generateRAGResponse } from "@/lib/rag/chain";
+import { type PromptContext } from "@/lib/rag/chain";
 import { detectIntent, calculateLeadScore, shouldAutoTrigger, getAutoTriggerPrompt } from "@/lib/lead-intent";
+import { detectLeadFromMessage, hasLeadData, mergeLeadData } from "@/lib/lead-detect";
+
+// Intent labels for summary generation
+const INTENT_LABELS: Record<string, string> = {
+  harga: "Tanya Harga",
+  beli: "Ingin Beli",
+  booking: "Booking",
+  demo: "Minta Demo",
+  hubungi: "Minta Kontak",
+};
 
 // Rate limiter: per public key + per IP (dual-layer)
 const keyRateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -136,6 +147,32 @@ export async function POST(request: NextRequest) {
       await saveLeadData(conv.id, lead);
     }
 
+    // ── Auto-detect lead info from message (before scoring) ──
+    const detectedLead = detectLeadFromMessage(message, {
+      whatsapp: conv.leadWhatsApp,
+      email: conv.leadEmail,
+      name: conv.leadName,
+    });
+    if (hasLeadData(detectedLead)) {
+      const merged = mergeLeadData(
+        { name: conv.leadName, email: conv.leadEmail, whatsapp: conv.leadWhatsApp },
+        detectedLead
+      );
+      if (merged.hasChanges) {
+        await prisma.widgetConversation.update({
+          where: { id: conv.id },
+          data: {
+            ...(merged.name ? { leadName: merged.name } : {}),
+            ...(merged.email ? { leadEmail: merged.email } : {}),
+            ...(merged.whatsapp ? { leadWhatsApp: merged.whatsapp } : {}),
+          },
+        });
+        if (merged.name) conv.leadName = merged.name;
+        if (merged.email) conv.leadEmail = merged.email;
+        if (merged.whatsapp) conv.leadWhatsApp = merged.whatsapp;
+      }
+    }
+
     // ── Intent detection & lead scoring ──
     const messageCount = await prisma.widgetMessage.count({ where: { conversationId: conv.id } });
     const intent = detectIntent(message);
@@ -180,7 +217,20 @@ export async function POST(request: NextRequest) {
 
     // ── Generate AI response via RAG pipeline ──
     await setWorkspaceContext(widget.workspaceId);
-    const ragResult = await generateRAGResponse(message, 5, widget.workspaceId);
+    const promptContext: PromptContext = {
+      mode: (widget.mode || "knowledge_base") as PromptContext["mode"],
+      businessName: widget.businessName || "",
+      businessDescription: widget.businessDescription || "",
+      contactInfo: {
+        whatsapp: widget.businessWhatsApp || undefined,
+        phone: widget.businessPhone || undefined,
+        email: widget.businessEmail || undefined,
+        address: widget.businessAddress || undefined,
+      },
+      knowledgeContext: "",
+      conversationHistory: "",
+    };
+    const ragResult = await generateRAGResponse(message, 5, widget.workspaceId, undefined, undefined, promptContext);
     const response = ragResult.answer;
     const latencyMs = Date.now() - startTime;
 
@@ -200,6 +250,46 @@ export async function POST(request: NextRequest) {
         tokensUsed: message.split(" ").length + finalResponse.split(" ").length,
       },
     });
+
+    // ── Generate lead summary (every 3 messages or on lead capture) ──
+    if ((messageCount + 1) % 3 === 0 || hasLeadData(detectedLead)) {
+      try {
+        const allMessages = await prisma.widgetMessage.findMany({
+          where: { conversationId: conv.id },
+          orderBy: { createdAt: "asc" },
+          select: { role: true, content: true },
+        });
+
+        const conversationText = allMessages.map(m => `${m.role}: ${m.content}`).join("\n");
+        const budgetMatch = conversationText.match(/(?:Rp\s*[\d.,]+[\s]*(?:juta|jt|miliar|rb|ribu)?|budget[\s:]*[\d.,]+[\s]*(?:juta|jt)?)/i);
+        const locationMatch = conversationText.match(/(?:di|lokasi|alamat|daerah|kota|kabupaten|kecamatan)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/);
+        const interestMatch = conversationText.match(/(?:mencari|ingin|butuh|cari|mau)\s+(.{10,80})/i);
+
+        const summaryParts = [];
+        if (conv.leadName) summaryParts.push(`Nama: ${conv.leadName}`);
+        if (conv.leadIntent) summaryParts.push(`Intent: ${INTENT_LABELS[conv.leadIntent] || conv.leadIntent}`);
+        if (budgetMatch) summaryParts.push(`Budget: ${budgetMatch[0].trim()}`);
+        if (locationMatch) summaryParts.push(`Lokasi: ${locationMatch[1]}`);
+        if (interestMatch) summaryParts.push(`Ketertarikan: ${interestMatch[1].substring(0, 60)}`);
+
+        const firstUserMsg = allMessages.find(m => m.role === "user");
+        if (summaryParts.length === 0 && firstUserMsg) {
+          summaryParts.push(`Pesan: ${firstUserMsg.content.substring(0, 100)}`);
+        }
+
+        await prisma.widgetConversation.update({
+          where: { id: conv.id },
+          data: {
+            leadSummary: summaryParts.join(" | ") || null,
+            businessInterest: interestMatch ? interestMatch[1].substring(0, 60) : null,
+            budget: budgetMatch ? budgetMatch[0].trim() : null,
+            location: locationMatch ? locationMatch[1] : null,
+          },
+        });
+      } catch (err) {
+        console.error("[Widget Chat] Summary generation failed:", err);
+      }
+    }
 
     // Build CORS headers with origin validation (NEVER wildcard)
     const corsHeaders = buildWidgetCorsHeaders(origin, allowedDomains);

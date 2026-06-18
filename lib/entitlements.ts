@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma, setWorkspaceContext } from "@/lib/prisma";
 import { isSubscriptionActive, isTrialExpired } from "@/lib/usage";
 
 // ============================================================
@@ -135,20 +135,25 @@ export function entitlementErrorResponse(error: unknown): Response | null {
  * - Trial has expired
  */
 async function resolvePlanName(workspaceId: string): Promise<string> {
-  const sub = await prisma.workspaceSubscription.findUnique({
-    where: { workspaceId },
-    select: { plan: { select: { name: true } }, status: true, trialEndsAt: true },
+  // Use transaction to ensure RLS context and query share the same connection
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
+
+    const sub = await tx.workspaceSubscription.findUnique({
+      where: { workspaceId },
+      select: { plan: { select: { name: true } }, status: true, trialEndsAt: true },
+    });
+
+    if (!sub?.plan) return "free";
+
+    // Check subscription status
+    if (!isSubscriptionActive(sub.status)) return "free";
+
+    // Check trial expiration
+    if (sub.status === "trial" && isTrialExpired(sub.trialEndsAt)) return "free";
+
+    return sub.plan.name;
   });
-
-  if (!sub?.plan) return "free";
-
-  // Check subscription status
-  if (!isSubscriptionActive(sub.status)) return "free";
-
-  // Check trial expiration
-  if (sub.status === "trial" && isTrialExpired(sub.trialEndsAt)) return "free";
-
-  return sub.plan.name;
 }
 
 /**

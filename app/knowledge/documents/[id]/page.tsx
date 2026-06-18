@@ -1,6 +1,6 @@
 import DashboardShell from "@/components/layout/dashboard-shell";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, resolveWorkspaceId, setWorkspaceContext } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import DocumentDetailClient from "./document-detail-client";
 
@@ -12,6 +12,9 @@ export default async function DocumentDetailPage({ params }: PageProps) {
   const { id } = await params;
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  const workspaceId = await resolveWorkspaceId(session.user.id!);
+  await setWorkspaceContext(workspaceId);
 
   const document = await prisma.document.findFirst({
     where: {

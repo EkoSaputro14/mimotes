@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import SessionSidebar from "./session-sidebar";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const MAX_MESSAGE_LENGTH = 10000;
@@ -49,6 +50,7 @@ export default function ChatWindow() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [highlightedSource, setHighlightedSource] = useState<number | null>(null);
+  const [chatMode, setChatMode] = useState<"knowledge_base" | "customer_service" | "sales_agent">("customer_service");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   /** BUG-001: AbortController ref for cancelling in-flight requests */
@@ -168,6 +170,7 @@ export default function ChatWindow() {
         body: JSON.stringify({
           message: userPrompt,
           sessionId,
+          mode: chatMode,
         }),
         signal: controller.signal,
       });
@@ -339,6 +342,7 @@ export default function ChatWindow() {
         body: JSON.stringify({
           message: userMessage.content,
           sessionId,
+          mode: chatMode,
         }),
         signal: controller.signal,
       });
@@ -514,12 +518,28 @@ export default function ChatWindow() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleNewChat}
-            className="inline-flex items-center justify-center px-4 h-[44px] text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-          >
-            Chat Baru
-          </button>
+          <div className="flex items-center gap-2">
+            <Select value={chatMode} onValueChange={(v) => setChatMode(v as typeof chatMode)}>
+              <SelectTrigger className="w-auto h-[36px] text-xs">
+                <span className="truncate">
+                  {chatMode === "knowledge_base" && "📚 Knowledge Base"}
+                  {chatMode === "customer_service" && "💬 Customer Service"}
+                  {chatMode === "sales_agent" && "🤝 Sales Agent"}
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="knowledge_base">📚 Knowledge Base</SelectItem>
+                <SelectItem value="customer_service">💬 Customer Service</SelectItem>
+                <SelectItem value="sales_agent">🤝 Sales Agent</SelectItem>
+              </SelectContent>
+            </Select>
+            <button
+              onClick={handleNewChat}
+              className="inline-flex items-center justify-center px-4 h-[44px] text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+            >
+              Chat Baru
+            </button>
+          </div>
         </div>
 
         {/* Messages — BUG-013: aria-live announces new messages to screen readers */}

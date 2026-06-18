@@ -25,6 +25,9 @@ interface QueueItem {
   status: "uploading" | "processing" | "complete" | "pending" | "failed";
   progress: number;
   fileRef?: File;
+  error?: string;
+  chunkCount?: number;
+  processingHint?: string;
 }
 
 function getFileIcon(name: string) {
@@ -146,7 +149,6 @@ export default function UploadForm() {
   // Poll document status until ready/failed
   function pollProcessing(itemId: string, docId: string | undefined) {
     if (!docId) {
-      // No docId — just mark as complete after a delay
       setTimeout(() => {
         setQueue((prev) =>
           prev.map((q) =>
@@ -158,35 +160,53 @@ export default function UploadForm() {
     }
 
     let attempts = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 150; // 5 minutes (150 × 2s)
     const interval = setInterval(async () => {
       attempts++;
       if (attempts > maxAttempts) {
         clearInterval(interval);
         setQueue((prev) =>
           prev.map((q) =>
-            q.id === itemId ? { ...q, status: "complete" as const } : q
+            q.id === itemId
+              ? { ...q, status: "failed" as const, error: "Timeout — dokumen terlalu besar atau server sibuk" }
+              : q
           )
         );
         return;
       }
       try {
-        const res = await fetch(`/api/documents/${docId}`);
+        const res = await fetch(`/api/knowledge/documents/${docId}`);
         if (res.ok) {
           const doc = await res.json();
           if (doc.status === "ready") {
             clearInterval(interval);
             setQueue((prev) =>
               prev.map((q) =>
-                q.id === itemId ? { ...q, status: "complete" as const } : q
+                q.id === itemId
+                  ? { ...q, status: "complete" as const, chunkCount: doc.chunkCount || doc._count?.chunks || 0 }
+                  : q
               )
             );
             router.refresh();
           } else if (doc.status === "failed") {
             clearInterval(interval);
+            const errorMsg = doc.errorMessage
+              ? (typeof doc.errorMessage === "string" ? JSON.parse(doc.errorMessage) : doc.errorMessage)
+              : null;
             setQueue((prev) =>
               prev.map((q) =>
-                q.id === itemId ? { ...q, status: "failed" as const } : q
+                q.id === itemId
+                  ? { ...q, status: "failed" as const, error: errorMsg?.message || "Gagal memproses dokumen" }
+                  : q
+              )
+            );
+          } else if (doc.status === "processing") {
+            // Update progress hint with chunk count if available
+            setQueue((prev) =>
+              prev.map((q) =>
+                q.id === itemId
+                  ? { ...q, processingHint: doc.chunkCount > 0 ? `${doc.chunkCount} chunks dibuat` : undefined }
+                  : q
               )
             );
           }
@@ -477,16 +497,20 @@ export default function UploadForm() {
                           {item.status === "complete" && (
                             <div className="flex items-center gap-1.5 text-emerald-500">
                               <CheckCircle2 className="size-3.5" />
-                              <span className="text-xs font-medium">Selesai</span>
+                              <span className="text-xs font-medium">
+                                Selesai{item.chunkCount ? ` • ${item.chunkCount} chunks` : ""}
+                              </span>
                             </div>
                           )}
                           {item.status === "failed" && (
-                            <button
-                              onClick={() => retryFile(item)}
-                              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                            >
-                              Coba Lagi
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => retryFile(item)}
+                                className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                              >
+                                Coba Lagi
+                              </button>
+                            </div>
                           )}
                           {!isActive && item.status !== "pending" && (
                             <button
@@ -517,7 +541,24 @@ export default function UploadForm() {
                       )}
 
                       {!isActive && item.status !== "pending" && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{item.size}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {item.size}
+                          {item.status === "complete" && item.chunkCount ? ` • ${item.chunkCount} chunks siap dicari` : ""}
+                        </p>
+                      )}
+
+                      {/* Error message */}
+                      {item.status === "failed" && item.error && (
+                        <p className="text-[11px] text-destructive mt-1 flex items-center gap-1">
+                          ⚠ {item.error}
+                        </p>
+                      )}
+
+                      {/* Processing hint */}
+                      {item.status === "processing" && item.processingHint && (
+                        <p className="text-[11px] text-primary mt-0.5">
+                          {item.processingHint}
+                        </p>
                       )}
                     </div>
                   </div>

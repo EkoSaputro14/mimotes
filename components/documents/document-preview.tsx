@@ -78,7 +78,7 @@ export default function DocumentPreview({ fileUrl, fileType, title, status }: Do
   }
 
   // Image preview
-  if (["png", "jpg", "jpeg", "webp", "gif"].includes(fileType)) {
+  if (["png", "jpg", "jpeg", "webp", "gif", "image"].includes(fileType)) {
     return (
       <div className="rounded-lg overflow-hidden border bg-muted/20 flex items-center justify-center p-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}

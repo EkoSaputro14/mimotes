@@ -93,6 +93,12 @@ COPY --from=prisma /app/node_modules/@prisma ./node_modules/@prisma
 # Copy bcryptjs for entrypoint seeding (not bundled by Next.js standalone)
 COPY --from=deps /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
+# Copy prisma CLI for runtime prisma generate (needed for DATABASE_URL regeneration)
+COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
+
+# Copy prisma schema for runtime generate
+COPY prisma ./prisma
+
 # Copy scripts (for seeding)
 COPY scripts ./scripts
 

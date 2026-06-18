@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma, setWorkspaceContext } from "@/lib/prisma";
 import { getWidgetByPublicKey, validateWidgetOrigin, validateMessageLength, buildWidgetCorsHeaders, saveLeadData, updateLeadScore } from "@/lib/widget";
 import { streamRAGResponse } from "@/lib/rag/chain";
+import { type PromptContext } from "@/lib/rag/chain";
 import { detectIntent, calculateLeadScore, shouldAutoTrigger, getAutoTriggerPrompt } from "@/lib/lead-intent";
 
 // Rate limiter: per public key + per IP (dual-layer)
@@ -148,7 +149,20 @@ export async function POST(request: NextRequest) {
 
     // ── Generate streaming RAG response ──
     await setWorkspaceContext(widget.workspaceId);
-    const result = await streamRAGResponse(message, 5, widget.workspaceId);
+    const promptContext: PromptContext = {
+      mode: (widget.mode || "knowledge_base") as PromptContext["mode"],
+      businessName: widget.businessName || "",
+      businessDescription: widget.businessDescription || "",
+      contactInfo: {
+        whatsapp: widget.businessWhatsApp || undefined,
+        phone: widget.businessPhone || undefined,
+        email: widget.businessEmail || undefined,
+        address: widget.businessAddress || undefined,
+      },
+      knowledgeContext: "",
+      conversationHistory: "",
+    };
+    const result = await streamRAGResponse(message, 5, widget.workspaceId, undefined, undefined, promptContext);
 
     const corsHeaders = buildWidgetCorsHeaders(origin, allowedDomains);
     const encoder = new TextEncoder();

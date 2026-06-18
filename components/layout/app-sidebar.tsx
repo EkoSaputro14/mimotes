@@ -14,6 +14,7 @@ import {
   LogOut,
   BookOpen,
   MessageCircle,
+  Target,
 } from "lucide-react";
 import WorkspaceSwitcher from "@/components/workspace/workspace-switcher";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ const coreNav: NavItem[] = [
   { label: "Chat", href: "/chat", icon: MessageSquare },
   { label: "Documents", href: "/knowledge/documents", icon: FileText },
   { label: "Knowledge", href: "/knowledge/search", icon: BookOpen },
+  { label: "Leads", href: "/leads", icon: Target },
   { label: "Analytics", href: "/analytics/leads", icon: BarChart3 },
   { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle },
   { label: "Settings", href: "/settings", icon: Settings },

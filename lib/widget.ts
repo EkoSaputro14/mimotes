@@ -53,7 +53,19 @@ export async function createWidget(
   workspaceId: string,
   name: string,
   slug: string,
-  theme?: Partial<WidgetTheme> & { leadCaptureEnabled?: boolean; leadFields?: any[] }
+  theme?: Partial<WidgetTheme> & {
+    leadCaptureEnabled?: boolean;
+    leadFields?: any[];
+    mode?: string;
+    businessName?: string;
+    businessType?: string;
+    businessDescription?: string;
+    businessWhatsApp?: string;
+    businessPhone?: string;
+    businessEmail?: string;
+    businessAddress?: string;
+    autoTriggerMessages?: number;
+  }
 ) {
   const { publicKey, secretKey } = generateWidgetKeys();
 
@@ -98,6 +110,13 @@ export async function getWidgetByPublicKey(publicKey: string) {
       leadCaptureEnabled: true,
       leadFields: true,
       autoTriggerMessages: true,
+      mode: true,
+      businessName: true,
+      businessDescription: true,
+      businessWhatsApp: true,
+      businessPhone: true,
+      businessEmail: true,
+      businessAddress: true,
     },
   });
 }
@@ -189,6 +208,14 @@ export async function updateWidget(
     leadCaptureEnabled: boolean;
     leadFields: any[];
     autoTriggerMessages: number;
+    // Business profile
+    mode: string;
+    businessName: string;
+    businessDescription: string;
+    businessWhatsApp: string;
+    businessPhone: string;
+    businessEmail: string;
+    businessAddress: string;
   }>
 ) {
   return prisma.widget.updateMany({

@@ -3,6 +3,11 @@ set -e
 
 echo "🤖 Mimotes - Starting..."
 
+# Regenerate Prisma Client with runtime DATABASE_URL
+# (build-time URL may differ from runtime URL in Docker)
+echo "🔄 Regenerating Prisma Client..."
+npx prisma generate 2>&1 || echo "⚠️  Prisma generate failed, using build-time client"
+
 # Seed admin user if SEED_ADMIN is set
 if [ "$SEED_ADMIN" = "true" ]; then
   echo "🌱 Seeding admin user..."

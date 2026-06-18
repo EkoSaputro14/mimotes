@@ -467,40 +467,46 @@ async function processImageDocument(
     throw error;
   }
 
-  // Step 4: Store chunks
+  // Step 4: Store chunks (use transaction with RLS context)
   try {
     const storeTimer = startTimer();
-    for (let i = 0; i < imageChunks.length; i++) {
-      const chunk = imageChunks[i];
-      const embedding = embeddings[i];
 
-      const chunkMetadata = {
-        source: "image",
-        chunk_type: chunk.chunk_type,
-        extraction_method: chunk.metadata.extraction_method,
-        vision_model: chunk.metadata.vision_model,
-        ocr_engine: chunk.metadata.ocr_engine,
-        image_width: chunk.metadata.image_width,
-        image_height: chunk.metadata.image_height,
-        text_length: chunk.metadata.text_length,
-        caption_length: chunk.metadata.caption_length,
-        processing_time_ms: chunk.metadata.processing_time_ms,
-      };
+    await prisma.$transaction(async (tx) => {
+      // Set RLS context for this transaction
+      await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
 
-      await prisma.$executeRaw`
-        INSERT INTO document_chunks (
-          id, document_id, workspace_id, tenant_id, content, embedding,
-          chunk_index, metadata, chunk_type, ocr_text, caption, image_summary, image_url, created_at
-        ) VALUES (
-          gen_random_uuid(), ${documentId}, ${workspaceId}, ${workspaceId},
-          ${chunk.content},
-          ${`[${embedding.join(",")}]`}::vector,
-          ${i}, ${JSON.stringify(chunkMetadata)}::jsonb,
-          ${chunk.chunk_type}, ${chunk.ocr_text}, ${chunk.caption}, ${chunk.image_summary}, ${chunk.image_url},
-          NOW()
-        )
-      `;
-    }
+      for (let i = 0; i < imageChunks.length; i++) {
+        const chunk = imageChunks[i];
+        const embedding = embeddings[i];
+
+        const chunkMetadata = {
+          source: "image",
+          chunk_type: chunk.chunk_type,
+          extraction_method: chunk.metadata.extraction_method,
+          vision_model: chunk.metadata.vision_model,
+          ocr_engine: chunk.metadata.ocr_engine,
+          image_width: chunk.metadata.image_width,
+          image_height: chunk.metadata.image_height,
+          text_length: chunk.metadata.text_length,
+          caption_length: chunk.metadata.caption_length,
+          processing_time_ms: chunk.metadata.processing_time_ms,
+        };
+
+        await tx.$executeRaw`
+          INSERT INTO document_chunks (
+            id, document_id, workspace_id, tenant_id, content, embedding,
+            chunk_index, metadata, chunk_type, ocr_text, caption, image_summary, image_url, created_at
+          ) VALUES (
+            gen_random_uuid(), ${documentId}, ${workspaceId}, ${workspaceId},
+            ${chunk.content},
+            ${`[${embedding.join(",")}]`}::vector,
+            ${i}, ${JSON.stringify(chunkMetadata)}::jsonb,
+            ${chunk.chunk_type}, ${chunk.ocr_text}, ${chunk.caption}, ${chunk.image_summary}, ${chunk.image_url},
+            NOW()
+          )
+        `;
+      }
+    });
     metrics.storeDurationMs = storeTimer();
     console.log(
       `[Processing] ${documentId}: stored ${imageChunks.length} image chunks in ${metrics.storeDurationMs}ms`

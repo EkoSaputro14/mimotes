@@ -119,6 +119,8 @@ services:
         condition: service_completed_successfully
       paddleocr:
         condition: service_started
+    networks:
+      - default
 
   # ==========================================
   # PaddleOCR Sidecar (Local OCR Engine)
