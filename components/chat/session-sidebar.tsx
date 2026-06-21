@@ -37,6 +37,19 @@ function formatDate(dateStr: string): string {
   }
 }
 
+function getDateGroup(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 1) return "Hari Ini";
+  if (diffDays < 2) return "Kemarin";
+  if (diffDays < 8) return "7 Hari Terakhir";
+  if (diffDays < 31) return "30 Hari Terakhir";
+  return "Lebih Lama";
+}
+
+const GROUP_ORDER = ["Hari Ini", "Kemarin", "7 Hari Terakhir", "30 Hari Terakhir", "Lebih Lama"];
+
 export default function SessionSidebar({
   currentSessionId,
   onSessionSelect,
@@ -71,6 +84,19 @@ export default function SessionSidebar({
       (s.title || "").toLowerCase().includes(q)
     );
   }, [sessions, searchQuery]);
+
+  const grouped = useMemo(() => {
+    const groups: Record<string, Session[]> = {};
+    for (const s of filteredSessions) {
+      const g = getDateGroup(s.createdAt);
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(s);
+    }
+    return GROUP_ORDER.filter((g) => groups[g]?.length).map((g) => ({
+      label: g,
+      sessions: groups[g],
+    }));
+  }, [filteredSessions]);
 
   async function fetchSessions() {
     try {
@@ -206,47 +232,56 @@ export default function SessionSidebar({
                 : "Belum ada percakapan"}
             </div>
           ) : (
-            <div className="p-2">
-              {filteredSessions.map((session) => (
-                <button
-                  key={session.id}
-                  onClick={() => {
-                    onSessionSelect(session);
-                    if (typeof window !== "undefined" && window.innerWidth < 768) onToggle();
-                  }}
-                  className={`w-full text-left p-3 rounded-lg mb-1 group transition-colors ${
-                    currentSessionId === session.id
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-muted text-foreground"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium truncate pr-2">
-                      {session.title || "Percakapan tanpa judul"}
+            <div className="p-1">
+              {grouped.map((group) => (
+                <div key={group.label} className="mb-2">
+                  <div className="px-3 py-2">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      {group.label}
                     </span>
-                    <button
-                      onClick={(e) => handleDelete(e, session.id)}
-                      className="opacity-0 group-hover:opacity-100 inline-flex items-center justify-center w-[44px] h-[44px] text-muted-foreground hover:text-destructive rounded-lg transition-all"
-                      aria-label="Hapus percakapan"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(session.createdAt)}
-                  </span>
-                </button>
+                  {group.sessions.map((session) => (
+                    <button
+                      key={session.id}
+                      onClick={() => {
+                        onSessionSelect(session);
+                        if (typeof window !== "undefined" && window.innerWidth < 768) onToggle();
+                      }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg mx-1 mb-0.5 group transition-colors ${
+                        currentSessionId === session.id
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium truncate pr-2">
+                          {session.title || "Percakapan tanpa judul"}
+                        </span>
+                        <button
+                          onClick={(e) => handleDelete(e, session.id)}
+                          className="opacity-0 group-hover:opacity-100 inline-flex items-center justify-center w-[44px] h-[44px] text-muted-foreground hover:text-destructive rounded-lg transition-all"
+                          aria-label="Hapus percakapan"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(session.createdAt)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           )}

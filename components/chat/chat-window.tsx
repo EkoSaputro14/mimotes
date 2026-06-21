@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, FileText, MessageSquare, Search, Bot } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import SessionSidebar from "./session-sidebar";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
@@ -551,34 +551,45 @@ export default function ChatWindow() {
           className="flex-1 overflow-y-auto p-6 space-y-6"
         >
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="text-6xl mb-4">🤖</div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Selamat datang di Mimotes
-              </h2>
-              <p className="text-muted-foreground max-w-md mb-6">
-                Ajukan pertanyaan dan AI akan menjawab berdasarkan dokumen yang
-                tersedia. Jawaban akan disertai referensi sumber.
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              {/* Logo mark */}
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+                <Sparkles className="h-7 w-7 text-primary" />
+              </div>
+
+              <h2 className="text-xl font-bold text-foreground mb-2">MimoNotes</h2>
+              <p className="text-sm text-muted-foreground text-center max-w-sm mb-8">
+                Tanya apa saja tentang dokumen Anda. AI akan menjawab dengan referensi sumber yang tepat.
               </p>
-              <div className="flex flex-wrap justify-center gap-2 max-w-lg">
-                {EMPTY_STATE_SUGGESTIONS.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => handleFollowUp(suggestion)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1.5",
-                      "text-xs font-medium text-muted-foreground",
-                      "bg-muted hover:bg-muted/80 rounded-full",
-                      "transition-colors duration-150",
-                      "border border-border hover:border-border/80",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                    )}
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    {suggestion}
-                  </button>
-                ))}
+
+              {/* Quick start cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg">
+                <button onClick={() => setInput('Apa saja dokumen yang tersedia?')}
+                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground mb-1">Lihat Dokumen</span>
+                  <span className="text-xs text-muted-foreground">Jelaskan isi dokumen yang tersedia</span>
+                </button>
+
+                <button onClick={() => setInput('Buatkan ringkasan dari semua dokumen')}
+                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground mb-1">Ringkas Semua</span>
+                  <span className="text-xs text-muted-foreground">Buat ringkasan dari semua dokumen</span>
+                </button>
+
+                <button onClick={() => setInput('Jelaskan isi dokumen utama')}
+                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                    <Search className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground mb-1">Cari Informasi</span>
+                  <span className="text-xs text-muted-foreground">Tanya tentang topik tertentu</span>
+                </button>
               </div>
             </div>
           )}
@@ -600,8 +611,8 @@ export default function ChatWindow() {
           {/* Loading indicator — only when waiting for first chunk */}
           {isLoading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex items-start gap-3" role="status" aria-label="AI sedang menulis">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm">
-                AI
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                <Bot className="h-4 w-4" />
               </div>
               <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
                 <div className="flex gap-1">

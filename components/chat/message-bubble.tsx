@@ -9,6 +9,7 @@ import CitationMarker from "./citation-marker";
 import SourcePreview from "./source-preview";
 import FeedbackBar from "./feedback-bar";
 import { cn } from "@/lib/utils";
+import { Bot, BookOpen } from "lucide-react";
 
 interface Source {
   documentId: string;
@@ -305,7 +306,7 @@ export default function MessageBubble({
         isUser ? "items-end" : "items-start"
       )}
       role="article"
-      aria-label={isUser ? "Anda" : "AI"}
+      aria-label={isUser ? "Anda" : "MimoNotes"}
     >
       <div
         className={cn(
@@ -316,21 +317,30 @@ export default function MessageBubble({
         {/* Avatar */}
         <div
           className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0",
-            isUser ? "bg-muted" : "bg-primary"
+            "w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0",
+            isUser
+              ? "bg-brand-100 text-brand-600 font-semibold"
+              : "bg-primary text-primary-foreground"
           )}
         >
-          {isUser ? "U" : "AI"}
+          {isUser ? "U" : <Bot className="h-4 w-4" />}
         </div>
 
         {/* Content */}
         <div className="flex flex-col gap-1 max-w-[85%] md:max-w-[80%]">
+          {/* AI header row */}
+          {!isUser && (
+            <div className="flex items-center gap-1.5 px-1 mb-0.5">
+              <span className="text-[11px] font-semibold text-muted-foreground">MimoNotes</span>
+            </div>
+          )}
+
           <div
             className={cn(
               "relative px-4 py-3",
               isUser
-                ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-                : "bg-muted text-foreground rounded-2xl rounded-tl-sm"
+                ? "bg-brand-50 text-foreground border border-brand-100 rounded-2xl rounded-tr-sm"
+                : "bg-card text-foreground border border-border/50 rounded-2xl rounded-tl-sm"
             )}
           >
             {isUser ? (
@@ -364,9 +374,9 @@ export default function MessageBubble({
             />
           )}
 
-          {/* Timestamp — BUG-015: visible on hover, always available to screen readers */}
+          {/* Timestamp — always visible, not hover-only */}
           {timestamp && (
-            <span className="text-[11px] text-muted-foreground px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[11px] text-muted-foreground px-1">
               <span className="sr-only">{fullTimestamp}</span>
               <span aria-hidden="true">{timestamp}</span>
             </span>
@@ -374,9 +384,13 @@ export default function MessageBubble({
         </div>
       </div>
 
-      {/* Sources — per-message, below the bubble */}
+      {/* Sources — per-message, below the bubble, with prominent header */}
       {!isUser && hasSourceData && (
         <div className="mt-2 ml-11 space-y-1.5 max-w-[85%] md:max-w-[80%]">
+          <div className="flex items-center gap-1.5 mt-1 mb-1.5">
+            <BookOpen className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-primary">Sumber</span>
+          </div>
           {sources.map((source, index) => (
             <SourcePreview
               key={`${message.id}-source-${index}`}
