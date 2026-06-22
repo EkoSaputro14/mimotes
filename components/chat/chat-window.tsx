@@ -491,11 +491,11 @@ export default function ChatWindow() {
       {/* Main chat area */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card space-y-3">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="inline-flex items-center justify-center w-[44px] h-[44px] text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg md:hidden"
+              className="inline-flex items-center justify-center w-[40px] h-[40px] shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg md:hidden"
               aria-label="Buka riwayat chat"
             >
               <svg
@@ -511,16 +511,16 @@ export default function ChatWindow() {
                 />
               </svg>
             </button>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Mimotes AI</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground leading-tight">Mimotes AI</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
                 Tanya apa saja berdasarkan dokumen yang tersedia
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Select value={chatMode} onValueChange={(v) => setChatMode(v as typeof chatMode)}>
-              <SelectTrigger className="w-auto h-[36px] text-xs">
+              <SelectTrigger className="w-auto h-[36px] text-xs shrink-0">
                 <span className="truncate">
                   {chatMode === "knowledge_base" && "📚 Knowledge Base"}
                   {chatMode === "customer_service" && "💬 Customer Service"}
@@ -535,7 +535,7 @@ export default function ChatWindow() {
             </Select>
             <button
               onClick={handleNewChat}
-              className="inline-flex items-center justify-center px-4 h-[44px] text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center px-4 h-[36px] text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors shrink-0"
             >
               Chat Baru
             </button>
@@ -548,7 +548,7 @@ export default function ChatWindow() {
           aria-live="polite"
           aria-relevant="additions"
           aria-label="Percakapan"
-          className="flex-1 overflow-y-auto p-6 space-y-6"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -644,7 +644,7 @@ export default function ChatWindow() {
 
         {/* Follow-up suggestions */}
         {showFollowUps && (
-          <div className="px-6 pb-2 flex flex-wrap gap-2">
+          <div className="px-4 sm:px-6 pb-2 flex flex-wrap gap-2">
             {FOLLOW_UP_SUGGESTIONS.map((suggestion) => (
               <button
                 key={suggestion}
@@ -667,7 +667,7 @@ export default function ChatWindow() {
         )}
 
         {/* Input */}
-        <div className="px-6 py-4 border-t border-border bg-card">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 border-t border-border bg-card">
           <form onSubmit={handleSubmit} className="flex gap-3">
             <textarea
               ref={textareaRef}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Widget Embed — Toko Online Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #333; }
+    .header { background: white; padding: 16px 24px; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 18px; }
+    .header p { font-size: 13px; color: #888; }
+    .hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 24px; text-align: center; }
+    .hero h2 { font-size: 28px; margin-bottom: 8px; }
+    .hero p { font-size: 16px; opacity: 0.9; }
+    .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 24px; max-width: 1000px; margin: 0 auto; }
+    .product { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .product h3 { font-size: 16px; margin-bottom: 6px; }
+    .product p { font-size: 13px; color: #666; margin-bottom: 10px; }
+    .product .price { font-size: 18px; font-weight: 700; color: #667eea; }
+    .note { text-align: center; padding: 20px; color: #999; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🛍️ Toko Online Demo</h1>
+    <p>Website ini mendemonstrasikan widget embed Mimotes</p>
+  </div>
+  <div class="hero">
+    <h2>Selamat Datang di Toko Kami!</h2>
+    <p>Temukan produk terbaik dengan harga terjangkau</p>
+  </div>
+  <div class="products">
+    <div class="product">
+      <h3>iPhone 15 Pro</h3>
+      <p>Smartphone flagship terbaru dengan chip A17 Pro</p>
+      <div class="price">Rp 19.999.000</div>
+    </div>
+    <div class="product">
+      <h3>MacBook Air M3</h3>
+      <p>Laptop tipis dan ringan dengan performa luar biasa</p>
+      <div class="price">Rp 18.499.000</div>
+    </div>
+    <div class="product">
+      <h3>AirPods Pro 2</h3>
+      <p>Earbuds dengan noise cancellation aktif</p>
+      <div class="price">Rp 3.799.000</div>
+    </div>
+  </div>
+  <div class="note">
+    ⬇️ Lihat pojok kanan bawah — ada chatbot widget yang bisa kamu klik!
+  </div>
+
+  <!-- WIDGET EMBED -->
+  <script src="http://localhost:3100/api/widget/embed" data-widget-id="82178ffe-0132-40c7-bc5a-37b08cbaa700" async></script>
+</body>
+</html>

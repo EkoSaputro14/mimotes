@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,6 +18,8 @@ import {
   MessageCircle,
   ArrowLeft,
   Globe,
+  Menu,
+  X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
@@ -111,6 +114,8 @@ const NAV_ITEMS: NavItem[] = [
 export default function SettingsNav() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) => {
     if (href === "/settings") {
@@ -118,6 +123,27 @@ export default function SettingsNav() {
     }
     return pathname.startsWith(href);
   };
+
+  // Get current active item label for mobile header
+  const activeItem = NAV_ITEMS.find((item) => isActive(item.href));
+
+  // Close menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    }
+    if (mobileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [mobileOpen]);
 
   return (
     <>
@@ -159,39 +185,73 @@ export default function SettingsNav() {
         </ul>
       </nav>
 
-      {/* Mobile tabs */}
-      <nav
-        className="lg:hidden overflow-x-auto border-b border-border bg-card px-4"
-        aria-label="Settings navigation"
-      >
-        <ul
-          className="flex gap-1 py-2 min-w-max"
-          role="tablist"
-          aria-label="Settings sections"
-        >
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <li key={item.href} role="presentation">
-                <Link
-                  href={item.href}
-                  role="tab"
-                  aria-selected={active}
-                  aria-controls="settings-content"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                    active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {item.icon}
-                  {t(item.labelKey) || item.fallback}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      {/* Mobile floating nav */}
+      <div className="lg:hidden" ref={menuRef}>
+        {/* Floating header bar */}
+        <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card/95 backdrop-blur border-b border-border">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("settings.back")}</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {/* Current page label */}
+            {activeItem && (
+              <span className="text-sm font-medium text-foreground truncate max-w-[140px]">
+                {activeItem.icon}
+                <span className="ml-1.5">{t(activeItem.labelKey) || activeItem.fallback}</span>
+              </span>
+            )}
+
+            {/* Hamburger button */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5 text-foreground" />
+              ) : (
+                <Menu className="h-5 w-5 text-foreground" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Dropdown menu */}
+        {mobileOpen && (
+          <div className="absolute inset-x-0 top-[52px] z-50 mx-3 mt-1 rounded-xl border bg-card shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="px-3 py-2 border-b border-border">
+              <p className="text-xs font-medium text-muted-foreground">Settings</p>
+            </div>
+            <ul className="p-2 max-h-[60vh] overflow-y-auto">
+              {NAV_ITEMS.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      {item.icon}
+                      {t(item.labelKey) || item.fallback}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
     </>
   );
 }

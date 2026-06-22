@@ -25,6 +25,8 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "ai": "^6.0.194",
+    "baileys": "^6.7.23",
+    "baileys-antiban": "^4.10.0",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
     "cheerio": "^1.2.0",

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: mimotes-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic auth
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: mimotes_n8n_2024
+      
+      # Webhook URL (public URL untuk Meta webhook)
+      WEBHOOK_URL: https://mimotes.ekohomelab.online/
+      
+      # Timezone
+      GENERIC_TIMEZONE: Asia/Jakarta
+      
+      # Database (optional, default SQLite)
+      DB_TYPE: sqlite
+      
+      # Security
+      N8N_SECURE_COOKIE: "false"
+      
+      # Execute workflows on webhook
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 168
+      
+      # Mimotes API config
+      MIMOTES_API_URL: http://mimotes-app-1:3000
+      MIMOTES_API_KEY: ""
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - mimotes_default
+
+  # Optional: PostgreSQL for n8n (better than SQLite for production)
+  # Uncomment if you want persistent workflow storage
+  # n8n-db:
+  #   image: postgres:16
+  #   container_name: mimotes-n8n-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: n8n
+  #     POSTGRES_PASSWORD: n8n_password
+  #     POSTGRES_DB: n8n
+  #   volumes:
+  #     - n8n_db_data:/var/lib/postgresql/data
+  #   networks:
+  #     - mimotes_default
+
+volumes:
+  n8n_data:
+  # n8n_db_data:
+
+networks:
+  mimotes_default:
+    external: true

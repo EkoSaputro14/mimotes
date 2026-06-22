@@ -110,31 +110,44 @@ export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: Top
       </Button>
 
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1 text-sm min-w-0">
+      <nav className="flex items-center gap-1 text-sm min-w-0 overflow-hidden">
         <Link
           href="/dashboard"
-          className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          className="text-muted-foreground hover:text-foreground transition-colors shrink-0 hidden sm:inline"
         >
           Dashboard
         </Link>
+        {breadcrumbs.length > 0 && (
+          <span className="hidden sm:inline">
+            <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
+          </span>
+        )}
         {breadcrumbs.length > 0 &&
           breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
+            const isFirst = index === 0;
+            // On mobile: only show last item. On desktop: show all
             return (
               <span key={crumb.href} className="flex items-center gap-1 min-w-0">
-                <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
-                {isLast ? (
-                  <span className="font-medium text-foreground truncate">
-                    {title ?? crumb.label}
+                {!isFirst && (
+                  <span className="hidden sm:inline">
+                    <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
                   </span>
-                ) : (
-                  <Link
-                    href={crumb.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors truncate"
-                  >
-                    {crumb.label}
-                  </Link>
                 )}
+                <span className={isFirst && !isLast ? "sm:hidden" : ""}>
+                  {isLast ? (
+                    <span className="font-medium text-foreground truncate max-w-[120px] sm:max-w-none inline-block">
+                      {title ?? crumb.label}
+                    </span>
+                  ) : (
+                    <Link
+                      href={crumb.href}
+                      className="text-muted-foreground hover:text-foreground transition-colors truncate hidden sm:inline"
+                    >
+                      {crumb.label}
+                    </Link>
+                  )}
+                </span>
               </span>
             );
           })}

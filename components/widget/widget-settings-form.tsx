@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Save, Copy, Check, ExternalLink, Eye, Settings, Plus, Users, BarChart3, Globe, Key, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import WidgetPreview from "./widget-preview";
 
-interface Widget {
+interface WidgetData {
   id: string;
   name: string;
   slug: string;
@@ -17,9 +22,10 @@ interface Widget {
   avatarUrl: string | null;
   welcomeMessage: string;
   position: string;
+  quickReplies: string[];
   leadCaptureEnabled: boolean;
   leadFields: Array<{ name: string; label: string; type: string; required: boolean }>;
-  _count?: { conversations: number; widgetConversations?: number };
+  _count?: { conversations: number };
   // Business profile
   mode?: string;
   businessName?: string | null;
@@ -30,22 +36,33 @@ interface Widget {
   businessAddress?: string | null;
 }
 
+const PRESET_COLORS = [
+  { name: "Blue", value: "#3B82F6" },
+  { name: "Indigo", value: "#6366F1" },
+  { name: "Green", value: "#10B981" },
+  { name: "Pink", value: "#EC4899" },
+  { name: "Orange", value: "#F97316" },
+  { name: "Purple", value: "#8B5CF6" },
+  { name: "Red", value: "#EF4444" },
+  { name: "Teal", value: "#14B8A6" },
+];
+
 export default function WidgetSettingsForm() {
-  const [widgets, setWidgets] = useState<Widget[]>([]);
-  const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
+  const [widgets, setWidgets] = useState<WidgetData[]>([]);
+  const [selectedWidget, setSelectedWidget] = useState<WidgetData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [newQuickReply, setNewQuickReply] = useState("");
+
+  // Create widget state
   const [showCreate, setShowCreate] = useState(false);
   const [newWidgetName, setNewWidgetName] = useState("");
   const [newWidgetSlug, setNewWidgetSlug] = useState("");
-  const [embedCode, setEmbedCode] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [leadCaptureEnabled, setLeadCaptureEnabled] = useState(false);
-  const [leadFields, setLeadFields] = useState([
-    { name: "name", label: "Name", type: "text", required: true },
-    { name: "email", label: "Email", type: "email", required: true },
-    { name: "whatsapp", label: "WhatsApp", type: "tel", required: false },
-  ]);
-  const [leadCount, setLeadCount] = useState(0);
+
+  // Allowed domains state
+  const [domainsInput, setDomainsInput] = useState("");
+
   // Business profile state
   const [widgetMode, setWidgetMode] = useState("knowledge_base");
   const [businessName, setBusinessName] = useState("");
@@ -54,63 +71,46 @@ export default function WidgetSettingsForm() {
   const [businessPhone, setBusinessPhone] = useState("");
   const [businessEmail, setBusinessEmail] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
-  const [profileSaved, setProfileSaved] = useState(false);
 
-  useEffect(() => { fetchWidgets(); }, []);
+  // Leads count
+  const [leadCount, setLeadCount] = useState(0);
 
-  async function fetchWidgets() {
+  // Load widgets
+  useEffect(() => {
+    loadWidgets();
+  }, []);
+
+  async function loadWidgets() {
     try {
       const res = await fetch("/api/widgets/list");
-      const data = await res.json();
-      setWidgets(data.widgets || []);
+      if (res.ok) {
+        const data = await res.json();
+        setWidgets(data.widgets || []);
+        if (data.widgets?.length > 0 && !selectedWidget) {
+          selectWidget(data.widgets[0]);
+        }
+      }
     } catch {
-      // Widgets not available yet
+      // silent
     } finally {
       setLoading(false);
     }
   }
 
-  async function createWidget() {
-    if (!newWidgetName.trim() || !newWidgetSlug.trim()) return;
-    const res = await fetch("/api/widgets/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newWidgetName, slug: newWidgetSlug }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setSelectedWidget(data.widget);
-      setShowCreate(false);
-      setNewWidgetName("");
-      setNewWidgetSlug("");
-      fetchWidgets();
-    }
-  }
-
-  function generateEmbedCode(widget: Widget) {
-    const baseUrl = window.location.origin;
-    return `<script src="${baseUrl}/widget.js" data-key="${widget.publicKey}"></script>`;
-  }
-
-  function selectWidget(widget: Widget) {
-    setSelectedWidget(widget);
-    setEmbedCode(generateEmbedCode(widget));
-    setSaved(false);
-    setLeadCaptureEnabled(widget.leadCaptureEnabled ?? false);
-    if (widget.leadFields && widget.leadFields.length > 0) {
-      setLeadFields(widget.leadFields);
-    }
+  function selectWidget(w: WidgetData) {
+    setSelectedWidget(w);
+    setDomainsInput((w.allowedDomains || []).join(", "));
+    setCopied(false);
     // Load business profile
-    setWidgetMode(widget.mode || "knowledge_base");
-    setBusinessName(widget.businessName || "");
-    setBusinessDescription(widget.businessDescription || "");
-    setBusinessWhatsApp(widget.businessWhatsApp || "");
-    setBusinessPhone(widget.businessPhone || "");
-    setBusinessEmail(widget.businessEmail || "");
-    setBusinessAddress(widget.businessAddress || "");
-    setProfileSaved(false);
-    // Fetch lead count for this widget
-    fetchLeadCount(widget.id);
+    setWidgetMode(w.mode || "knowledge_base");
+    setBusinessName(w.businessName || "");
+    setBusinessDescription(w.businessDescription || "");
+    setBusinessWhatsApp(w.businessWhatsApp || "");
+    setBusinessPhone(w.businessPhone || "");
+    setBusinessEmail(w.businessEmail || "");
+    setBusinessAddress(w.businessAddress || "");
+    // Fetch lead count
+    fetchLeadCount(w.id);
   }
 
   async function fetchLeadCount(widgetId: string) {
@@ -123,34 +123,51 @@ export default function WidgetSettingsForm() {
     }
   }
 
-  async function saveLeadCapture() {
-    if (!selectedWidget) return;
+  // Create widget
+  async function createWidget() {
+    if (!newWidgetName.trim() || !newWidgetSlug.trim()) return;
     try {
-      const res = await fetch(`/api/widgets/${selectedWidget.id}`, {
-        method: "PATCH",
+      const res = await fetch("/api/widgets/create", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leadCaptureEnabled,
-          leadFields,
-        }),
+        body: JSON.stringify({ name: newWidgetName, slug: newWidgetSlug }),
       });
       if (res.ok) {
-        setSaved(true);
-        fetchWidgets();
-        setTimeout(() => setSaved(false), 2000);
+        const data = await res.json();
+        setShowCreate(false);
+        setNewWidgetName("");
+        setNewWidgetSlug("");
+        await loadWidgets();
+        if (data.widget) selectWidget(data.widget);
       }
-    } catch (error) {
-      console.error("Failed to save lead capture settings:", error);
+    } catch {
+      // silent
     }
   }
 
-  async function saveBusinessProfile() {
+  // Save all settings
+  async function handleSave() {
     if (!selectedWidget) return;
+    setSaving(true);
     try {
-      const res = await fetch(`/api/widgets/${selectedWidget.id}`, {
-        method: "PATCH",
+      const res = await fetch("/api/widgets/update", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          widgetId: selectedWidget.id,
+          name: selectedWidget.name,
+          primaryColor: selectedWidget.primaryColor,
+          backgroundColor: selectedWidget.backgroundColor,
+          textColor: selectedWidget.textColor,
+          welcomeMessage: selectedWidget.welcomeMessage,
+          position: selectedWidget.position,
+          quickReplies: selectedWidget.quickReplies,
+          leadCaptureEnabled: selectedWidget.leadCaptureEnabled,
+          allowedDomains: domainsInput
+            .split(",")
+            .map((d) => d.trim())
+            .filter(Boolean),
+          // Business profile
           mode: widgetMode,
           businessName,
           businessDescription,
@@ -161,382 +178,558 @@ export default function WidgetSettingsForm() {
         }),
       });
       if (res.ok) {
-        setProfileSaved(true);
-        fetchWidgets();
-        setTimeout(() => setProfileSaved(false), 2000);
+        await loadWidgets();
       }
-    } catch (error) {
-      console.error("Failed to save business profile:", error);
+    } catch {
+      // silent
+    } finally {
+      setSaving(false);
     }
   }
 
+  // Copy embed code
+  function handleCopyEmbed() {
+    if (!selectedWidget) return;
+    const embedCode = `<script src="${window.location.origin}/api/widget/embed" data-public-key="${selectedWidget.publicKey}" async></script>`;
+    navigator.clipboard.writeText(embedCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  // Add quick reply
+  function addQuickReply() {
+    if (!newQuickReply.trim() || !selectedWidget) return;
+    setSelectedWidget({
+      ...selectedWidget,
+      quickReplies: [...selectedWidget.quickReplies, newQuickReply.trim()],
+    });
+    setNewQuickReply("");
+  }
+
+  // Remove quick reply
+  function removeQuickReply(index: number) {
+    if (!selectedWidget) return;
+    setSelectedWidget({
+      ...selectedWidget,
+      quickReplies: selectedWidget.quickReplies.filter((_, i) => i !== index),
+    });
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-sm text-muted-foreground">Loading widgets...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Widget List */}
-      <section>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg font-semibold text-white">Your Widgets</h2>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium"
-          >
-            + Create Widget
-          </button>
+    <div className="space-y-6">
+      {/* Widget Selector + Create */}
+      <section className="rounded-lg border bg-card p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Widget Settings</h2>
+          <Button size="sm" onClick={() => setShowCreate(!showCreate)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Create Widget
+          </Button>
         </div>
 
+        {/* Create form */}
         {showCreate && (
-          <div className="bg-card border border-border rounded-lg p-4 mb-4">
+          <div className="rounded-lg border bg-background p-4 space-y-3">
             <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
+              <Input
                 value={newWidgetName}
                 onChange={(e) => setNewWidgetName(e.target.value)}
                 placeholder="Widget name"
-                className="flex-1 bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+                className="flex-1"
               />
-              <input
-                type="text"
+              <Input
                 value={newWidgetSlug}
                 onChange={(e) => setNewWidgetSlug(e.target.value.replace(/[^a-z0-9-]/g, ""))}
                 placeholder="slug"
-                className="sm:w-40 w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm font-mono"
+                className="sm:w-40 font-mono"
               />
-              <button onClick={createWidget} className="bg-success hover:bg-success/90 text-white px-4 py-2 rounded text-sm">Create</button>
-              <button onClick={() => setShowCreate(false)} className="bg-muted hover:bg-muted/80 text-muted-foreground px-4 py-2 rounded text-sm">Cancel</button>
+              <Button size="sm" onClick={createWidget}>Create</Button>
+              <Button size="sm" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             </div>
           </div>
         )}
 
-        {loading ? (
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        ) : widgets.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No widgets yet. Create one to get started.</p>
+        {/* Widget dropdown */}
+        {widgets.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No widgets yet. Create one to get started.</p>
         ) : (
-          <div className="space-y-2">
-            {widgets.map((w) => (
-              <div
-                key={w.id}
-                onClick={() => selectWidget(w)}
-                className={`cursor-pointer p-4 rounded-lg border transition-colors ${
-                  selectedWidget?.id === w.id
-                    ? "bg-primary/10 border-primary"
-                    : "bg-card/50 border-border hover:border-border/80"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-white font-medium">{w.name}</span>
-                    <span className="text-muted-foreground text-sm ml-2 font-mono">/{w.slug}</span>
-                    {!w.isActive && <span className="text-destructive text-xs ml-2">(disabled)</span>}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="w-4 h-4 rounded" style={{ background: w.primaryColor }} />
-                    <span>{w._count?.conversations ?? 0} conversations</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium whitespace-nowrap">Widget:</label>
+            <select
+              value={selectedWidget?.id || ""}
+              onChange={(e) => {
+                const w = widgets.find((w) => w.id === e.target.value);
+                if (w) selectWidget(w);
+              }}
+              className="flex-1 h-9 rounded-md border bg-background px-3 text-sm"
+            >
+              {widgets.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} ({w._count?.conversations ?? 0} chat) {!w.isActive && "• disabled"}
+                </option>
+              ))}
+            </select>
+            {selectedWidget && (
+              <Badge variant={selectedWidget.isActive ? "default" : "secondary"}>
+                {selectedWidget.isActive ? "Active" : "Inactive"}
+              </Badge>
+            )}
           </div>
         )}
       </section>
 
       {/* Widget Config */}
       {selectedWidget && (
-        <section className="bg-card/50 border border-border rounded-lg p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-white">{selectedWidget.name} Settings</h3>
-
-          {/* Embed Code */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">Embed Code</label>
-            <div className="bg-black/40 rounded-lg p-4 font-mono text-sm text-success break-all">
-              {embedCode}
-            </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText(embedCode); setSaved(true); }}
-              className="mt-2 text-sm text-primary hover:text-primary/80"
-            >
-              {saved ? "✅ Copied!" : "📋 Copy embed code"}
-            </button>
-          </div>
-
-          {/* API Keys */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Public Key</label>
-              <code className="block bg-black/40 rounded p-2 text-xs text-foreground break-all">{selectedWidget.publicKey}</code>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Secret Key</label>
-              <code className="block bg-black/40 rounded p-2 text-xs text-foreground break-all">{selectedWidget.secretKey}</code>
-            </div>
-          </div>
-
-          {/* Theme */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Primary Color</label>
-              <div className="flex gap-2">
-                <input type="color" defaultValue={selectedWidget.primaryColor} className="w-10 h-10 rounded cursor-pointer" />
-                <span className="text-muted-foreground text-sm self-center">{selectedWidget.primaryColor}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Settings Form */}
+          <div className="space-y-6">
+            {/* Widget Info */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Widget Info
+              </h3>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Name</label>
+                <Input
+                  value={selectedWidget.name}
+                  onChange={(e) =>
+                    setSelectedWidget((prev) =>
+                      prev ? { ...prev, name: e.target.value } : null
+                    )
+                  }
+                  placeholder="Widget name"
+                />
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Background</label>
-              <div className="flex gap-2">
-                <input type="color" defaultValue={selectedWidget.backgroundColor} className="w-10 h-10 rounded cursor-pointer" />
-                <span className="text-muted-foreground text-sm self-center">{selectedWidget.backgroundColor}</span>
+
+            {/* API Keys */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Key className="h-4 w-4" />
+                API Keys
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Public Key</label>
+                  <code className="block bg-muted rounded-md px-3 py-2 text-xs break-all font-mono">
+                    {selectedWidget.publicKey}
+                  </code>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Secret Key</label>
+                  <code className="block bg-muted rounded-md px-3 py-2 text-xs break-all font-mono">
+                    {selectedWidget.secretKey}
+                  </code>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Text Color</label>
-              <div className="flex gap-2">
-                <input type="color" defaultValue={selectedWidget.textColor} className="w-10 h-10 rounded cursor-pointer" />
-                <span className="text-muted-foreground text-sm self-center">{selectedWidget.textColor}</span>
+
+            {/* Theme */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold">Theme & Colors</h3>
+
+              {/* Primary Color */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Primary Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={selectedWidget.primaryColor}
+                    onChange={(e) =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, primaryColor: e.target.value } : null
+                      )
+                    }
+                    className="h-9 w-9 rounded-md border cursor-pointer"
+                  />
+                  <Input
+                    value={selectedWidget.primaryColor}
+                    onChange={(e) =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, primaryColor: e.target.value } : null
+                      )
+                    }
+                    className="flex-1 font-mono text-sm"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() =>
+                        setSelectedWidget((prev) =>
+                          prev ? { ...prev, primaryColor: c.value } : null
+                        )
+                      }
+                      className={`w-6 h-6 rounded-full border-2 transition-all ${
+                        selectedWidget.primaryColor === c.value
+                          ? "border-foreground scale-110"
+                          : "border-transparent hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: c.value }}
+                      title={c.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Background Color */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Background Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={selectedWidget.backgroundColor}
+                    onChange={(e) =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, backgroundColor: e.target.value } : null
+                      )
+                    }
+                    className="h-9 w-9 rounded-md border cursor-pointer"
+                  />
+                  <Input
+                    value={selectedWidget.backgroundColor}
+                    onChange={(e) =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, backgroundColor: e.target.value } : null
+                      )
+                    }
+                    className="flex-1 font-mono text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Text Color */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Text Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={selectedWidget.textColor}
+                    onChange={(e) =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, textColor: e.target.value } : null
+                      )
+                    }
+                    className="h-9 w-9 rounded-md border cursor-pointer"
+                  />
+                  <Input
+                    value={selectedWidget.textColor}
+                    onChange={(e) =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, textColor: e.target.value } : null
+                      )
+                    }
+                    className="flex-1 font-mono text-sm"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Welcome Message */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Welcome Message</label>
-            <input
-              type="text"
-              defaultValue={selectedWidget.welcomeMessage}
-              className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-            />
-          </div>
-
-          {/* Position */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Position</label>
-            <select defaultValue={selectedWidget.position} className="bg-background border border-border rounded px-3 py-2 text-foreground text-sm">
-              <option value="bottom-right">Bottom Right</option>
-              <option value="bottom-left">Bottom Left</option>
-            </select>
-          </div>
-
-          {/* Business Profile */}
-          <div className="border-t border-border pt-6">
-            <h4 className="text-sm font-medium text-white mb-1">Business Profile</h4>
-            <p className="text-xs text-muted-foreground mb-4">
-              Tell the AI about your business for natural, helpful responses.
-            </p>
-
-            {/* Mode Selector */}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-foreground mb-2 block">Operating Mode</label>
-              <div className="grid grid-cols-3 gap-2">
+            {/* Position */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold">Position</h3>
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  { value: "knowledge_base", label: "Knowledge Base", desc: "Citations visible, strict" },
-                  { value: "customer_service", label: "Customer Service", desc: "Natural, helpful (Recommended)" },
-                  { value: "sales_agent", label: "Sales Agent", desc: "Lead capture, conversion" },
-                ].map((m) => (
+                  { value: "bottom-right", label: "↘ Bottom Right" },
+                  { value: "bottom-left", label: "↙ Bottom Left" },
+                  { value: "top-right", label: "↗ Top Right" },
+                  { value: "top-left", label: "↖ Top Left" },
+                ].map((pos) => (
                   <button
-                    key={m.value}
-                    type="button"
-                    onClick={() => setWidgetMode(m.value)}
-                    className={`p-3 rounded-lg border text-left transition-colors ${
-                      widgetMode === m.value
-                        ? "border-primary bg-primary/10 text-white"
-                        : "border-border bg-background text-muted-foreground hover:border-border/80"
+                    key={pos.value}
+                    onClick={() =>
+                      setSelectedWidget((prev) =>
+                        prev ? { ...prev, position: pos.value } : null
+                      )
+                    }
+                    className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                      selectedWidget.position === pos.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background hover:bg-muted border-border"
                     }`}
                   >
-                    <span className="text-sm font-medium block">{m.label}</span>
-                    <span className="text-xs opacity-70">{m.desc}</span>
+                    {pos.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Business Fields */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Business Name</label>
-                <input
-                  type="text"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="Toko Budi Elektronik"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">WhatsApp</label>
-                <input
-                  type="text"
-                  value={businessWhatsApp}
-                  onChange={(e) => setBusinessWhatsApp(e.target.value)}
-                  placeholder="6281234567890"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Phone</label>
-                <input
-                  type="text"
-                  value={businessPhone}
-                  onChange={(e) => setBusinessPhone(e.target.value)}
-                  placeholder="0812-3456-7890"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Email</label>
-                <input
-                  type="text"
-                  value={businessEmail}
-                  onChange={(e) => setBusinessEmail(e.target.value)}
-                  placeholder="info@tokobudi.com"
-                  className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-                />
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="text-sm font-medium text-foreground mb-1 block">Business Description</label>
+            {/* Welcome Message */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold">Welcome Message</h3>
               <textarea
-                value={businessDescription}
-                onChange={(e) => setBusinessDescription(e.target.value)}
-                placeholder="Toko elektronik di Surabaya. Menjual TV, AC, kulkas, mesin cuci. Melayani COD dan pengiriman."
-                rows={3}
-                className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
+                value={selectedWidget.welcomeMessage}
+                onChange={(e) =>
+                  setSelectedWidget((prev) =>
+                    prev ? { ...prev, welcomeMessage: e.target.value } : null
+                  )
+                }
+                rows={2}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Hi! How can I help you?"
               />
             </div>
-            <div className="mb-4">
-              <label className="text-sm font-medium text-foreground mb-1 block">Address</label>
-              <input
-                type="text"
-                value={businessAddress}
-                onChange={(e) => setBusinessAddress(e.target.value)}
-                placeholder="Jl. Raya Darmo 123, Surabaya"
-                className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-              />
-            </div>
-            <button
-              onClick={saveBusinessProfile}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium"
-            >
-              {profileSaved ? "✅ Profile Saved!" : "Save Business Profile"}
-            </button>
-          </div>
 
-          {/* Allowed Domains */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Allowed Domains (comma-separated)</label>
-            <input
-              type="text"
-              defaultValue={(selectedWidget.allowedDomains ?? []).join(", ")}
-              placeholder="example.com, *.example.com"
-              className="w-full bg-background border border-border rounded px-3 py-2 text-foreground text-sm"
-            />
-          </div>
-
-          {/* Lead Capture */}
-          <div className="border-t border-border pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="text-sm font-medium text-white">Lead Capture</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Collect visitor information before or during conversations.
-                </p>
-              </div>
-              <button
-                onClick={() => setLeadCaptureEnabled(!leadCaptureEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  leadCaptureEnabled ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
-                    leadCaptureEnabled ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {leadCaptureEnabled && (
-              <div className="space-y-3 bg-background/50 rounded-lg p-4">
-                <p className="text-xs text-muted-foreground mb-3">
-                  Configure which fields to collect. Toggling &quot;Required&quot; makes the field mandatory.
-                </p>
-                {leadFields.map((field, idx) => (
-                  <div
-                    key={field.name}
-                    className="flex items-center justify-between py-2 border-b border-border last:border-0"
+            {/* Quick Replies */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold">Quick Replies</h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedWidget.quickReplies.map((reply, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted text-sm"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-white font-medium">
-                        {field.label}
-                      </span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        ({field.type})
-                      </span>
-                    </div>
+                    {reply}
                     <button
-                      onClick={() => {
-                        const updated = [...leadFields];
-                        updated[idx] = { ...updated[idx], required: !updated[idx].required };
-                        setLeadFields(updated);
-                      }}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        field.required
-                          ? "bg-primary/20 text-primary border border-primary/40"
-                          : "bg-muted text-muted-foreground border border-border"
-                      }`}
+                      onClick={() => removeQuickReply(i)}
+                      className="text-muted-foreground hover:text-destructive text-xs"
                     >
-                      {field.required ? "Required" : "Optional"}
+                      ×
                     </button>
-                  </div>
+                  </span>
                 ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newQuickReply}
+                  onChange={(e) => setNewQuickReply(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addQuickReply())}
+                  placeholder="Add quick reply..."
+                  className="flex-1"
+                />
+                <Button variant="outline" size="sm" onClick={addQuickReply}>
+                  Add
+                </Button>
+              </div>
+            </div>
+
+            {/* Allowed Domains */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Allowed Domains
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Comma-separated list of domains allowed to embed this widget. Leave empty for all domains.
+              </p>
+              <Input
+                value={domainsInput}
+                onChange={(e) => setDomainsInput(e.target.value)}
+                placeholder="example.com, *.example.com"
+              />
+            </div>
+
+            {/* Lead Capture */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Lead Capture</h3>
                 <button
-                  onClick={saveLeadCapture}
-                  className="mt-3 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium"
+                  onClick={() =>
+                    setSelectedWidget((prev) =>
+                      prev
+                        ? { ...prev, leadCaptureEnabled: !prev.leadCaptureEnabled }
+                        : null
+                    )
+                  }
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    selectedWidget.leadCaptureEnabled ? "bg-primary" : "bg-muted"
+                  }`}
                 >
-                  {saved ? "✅ Saved!" : "Save Lead Capture Settings"}
+                  <span
+                    className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                      selectedWidget.leadCaptureEnabled ? "translate-x-4.5" : "translate-x-0.5"
+                    }`}
+                  />
                 </button>
               </div>
-            )}
-          </div>
-
-          {/* Leads Quick Link */}
-          <div className="border-t border-border pt-4">
-            <a
-              href="/settings/leads"
-              className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                <div>
-                  <p className="text-sm text-white font-medium">View All Leads</p>
-                  <p className="text-xs text-muted-foreground">{leadCount} leads captured</p>
-                </div>
-              </div>
-              <span className="text-muted-foreground group-hover:text-foreground transition-colors">→</span>
-            </a>
-          </div>
-        </section>
-      )}
-
-      {/* Analytics Preview */}
-      {selectedWidget && (
-        <section className="bg-card/50 border border-border rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Analytics</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-background/50 rounded-lg p-4">
-              <p className="text-muted-foreground text-xs mb-1">Total Conversations</p>
-              <p className="text-white text-2xl font-bold">{selectedWidget._count?.conversations ?? 0}</p>
-            </div>
-            <div className="bg-background/50 rounded-lg p-4">
-              <p className="text-muted-foreground text-xs mb-1">Status</p>
-              <p className={`text-2xl font-bold ${selectedWidget.isActive ? "text-success" : "text-destructive"}`}>
-                {selectedWidget.isActive ? "Active" : "Disabled"}
+              <p className="text-xs text-muted-foreground">
+                Show a form to collect name, email, and phone before chatting.
               </p>
             </div>
-            <div className="bg-background/50 rounded-lg p-4">
-              <p className="text-muted-foreground text-xs mb-1">Domains</p>
-              <p className="text-white text-2xl font-bold">{(selectedWidget.allowedDomains ?? []).length || "All"}</p>
+
+            {/* Business Profile */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Business Profile
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Configure your business details for the chatbot responses.
+              </p>
+
+              {/* Mode */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Chat Mode</label>
+                <select
+                  value={widgetMode}
+                  onChange={(e) => setWidgetMode(e.target.value)}
+                  className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                >
+                  <option value="knowledge_base">📚 Knowledge Base</option>
+                  <option value="customer_service">💬 Customer Service</option>
+                  <option value="sales_agent">🛒 Sales Agent</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Business Name</label>
+                  <Input
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="Toko Budi Elektronik"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">WhatsApp</label>
+                  <Input
+                    value={businessWhatsApp}
+                    onChange={(e) => setBusinessWhatsApp(e.target.value)}
+                    placeholder="6281234567890"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Phone</label>
+                  <Input
+                    value={businessPhone}
+                    onChange={(e) => setBusinessPhone(e.target.value)}
+                    placeholder="0812-3456-7890"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Email</label>
+                  <Input
+                    value={businessEmail}
+                    onChange={(e) => setBusinessEmail(e.target.value)}
+                    placeholder="info@tokobudi.com"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Business Description</label>
+                <textarea
+                  value={businessDescription}
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  placeholder="Toko elektronik di Surabaya. Menjual TV, AC, kulkas, mesin cuci."
+                  rows={3}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Address</label>
+                <Input
+                  value={businessAddress}
+                  onChange={(e) => setBusinessAddress(e.target.value)}
+                  placeholder="Jl. Raya Darmo 123, Surabaya"
+                />
+              </div>
+            </div>
+
+            {/* Leads Quick Link */}
+            <div className="rounded-lg border bg-card p-4">
+              <a
+                href="/settings/leads"
+                className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-white font-medium">View All Leads</p>
+                    <p className="text-xs text-muted-foreground">{leadCount} leads captured</p>
+                  </div>
+                </div>
+                <span className="text-muted-foreground group-hover:text-foreground transition-colors">→</span>
+              </a>
             </div>
           </div>
-        </section>
+
+          {/* Right: Live Preview + Embed + Analytics */}
+          <div className="space-y-6">
+            {/* Live Preview */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Eye className="h-4 w-4" />
+                <span className="text-sm font-semibold">Live Preview</span>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-6 min-h-[500px] relative overflow-hidden">
+                <WidgetPreview widget={selectedWidget} />
+              </div>
+            </div>
+
+            {/* Embed Code */}
+            <div className="rounded-lg border bg-card p-4 space-y-3">
+              <h3 className="text-sm font-semibold">Embed Code</h3>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs bg-muted rounded-md px-3 py-2 overflow-hidden text-ellipsis whitespace-nowrap">
+                  {`<script src=".../api/widget/embed" data-public-key="${selectedWidget.publicKey}" async></script>`}
+                </code>
+                <Button variant="outline" size="sm" onClick={handleCopyEmbed}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <a
+                href={`/widget/preview?id=${selectedWidget.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm" className="mt-2">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Open Preview
+                </Button>
+              </a>
+            </div>
+
+            {/* Analytics */}
+            <div className="rounded-lg border bg-card p-4 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-background/50 rounded-lg p-3 text-center">
+                  <p className="text-muted-foreground text-xs mb-1">Conversations</p>
+                  <p className="text-white text-xl font-bold">{selectedWidget._count?.conversations ?? 0}</p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-3 text-center">
+                  <p className="text-muted-foreground text-xs mb-1">Status</p>
+                  <p className={`text-xl font-bold ${selectedWidget.isActive ? "text-success" : "text-destructive"}`}>
+                    {selectedWidget.isActive ? "Active" : "Off"}
+                  </p>
+                </div>
+                <div className="bg-background/50 rounded-lg p-3 text-center">
+                  <p className="text-muted-foreground text-xs mb-1">Domains</p>
+                  <p className="text-white text-xl font-bold">{(selectedWidget.allowedDomains || []).length || "All"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Button */}
+      {selectedWidget && (
+        <div className="flex justify-end">
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>Saving...</>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );
