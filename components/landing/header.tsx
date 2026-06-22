@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { Bot, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 export default function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
 
   // Close menu on Escape
   useEffect(() => {
@@ -67,27 +70,52 @@ export default function LandingHeader() {
 
           {/* Desktop CTA */}
           <div className="hidden items-center gap-3 lg:flex">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-            >
-              Get started
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {session?.user?.name || session?.user?.email}
+                </span>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+                >
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+                >
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile: CTA only */}
-          <Link
-            href="/register"
-            className="lg:hidden inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-          >
-            Get started
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard"
+              className="lg:hidden inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/register"
+              className="lg:hidden inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+            >
+              Get started
+            </Link>
+          )}
         </div>
       </header>
 
@@ -144,20 +172,37 @@ export default function LandingHeader() {
 
               <div className="my-4 border-t border-border" />
 
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="py-3 text-base font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Get started free
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <span className="py-3 text-sm text-muted-foreground">
+                    {session?.user?.name || session?.user?.email}
+                  </span>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    Go to Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-3 text-base font-medium text-foreground hover:text-primary transition-colors"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    Get started free
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         </div>

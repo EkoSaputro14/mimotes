@@ -82,30 +82,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If the route requires protection, check for session token
-  if (isProtectedPath(pathname)) {
-    // SECURITY NOTE: This is a UX redirect layer, NOT a security boundary.
-    // Edge Runtime cannot do cryptographic JWT verification.
-    // Real auth happens in route handlers via auth() from lib/auth.ts.
-    // An attacker with a fake cookie will pass this check but be rejected
-    // by the route-level auth() which verifies the JWT signature.
+  // For protected API routes, return 401 if no session cookie.
+  // SECURITY NOTE: Edge Runtime cannot do cryptographic JWT verification.
+  // Real auth happens in route handlers via auth() from lib/auth.ts.
+  // This is a lightweight UX layer — page routes are protected by
+  // DashboardShell's auth() call which handles the actual redirect.
+  if (isProtectedPath(pathname) && pathname.startsWith("/api/")) {
     const sessionToken =
       request.cookies.get("authjs.session-token")?.value ||
       request.cookies.get("__Secure-authjs.session-token")?.value;
 
     if (!sessionToken) {
-      // For API routes, return 401
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json(
-          { error: "Unauthorized" },
-          { status: 401 }
-        );
-      }
-
-      // For page routes, redirect to login
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
   }
 
