@@ -6,6 +6,7 @@ import { FileText, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 interface Source {
   documentId: string;
+  documentTitle?: string;
   content: string;
   similarity: number;
   metadata: Record<string, unknown>;
@@ -41,6 +42,7 @@ export default function SourceCard({
   const similarityPercent = Math.round(source.similarity * 100);
 
   const title =
+    source.documentTitle ||
     (source.metadata?.title as string) ||
     (source.metadata?.filename as string) ||
     "Unknown";

@@ -121,7 +121,7 @@ export default function SourceViewer() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalChunks.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Chunks</p>
+                <p className="text-xs text-muted-foreground">Total Sections</p>
               </div>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function SourceViewer() {
           >
             <option value="references">Most Referenced</option>
             <option value="title">Title (A-Z)</option>
-            <option value="chunks">Most Chunks</option>
+            <option value="chunks">Most Sections</option>
             <option value="lastReferenced">Recently Used</option>
           </select>
         </div>

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { AsyncLocalStorage } from "async_hooks";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -7,6 +8,12 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+/**
+ * Request-scoped workspace context via AsyncLocalStorage.
+ * Each request gets its own isolated workspace ID — no cross-request leakage.
+ */
+export const workspaceContextStore = new AsyncLocalStorage<string>();
 
 /**
  * Set the workspace context for Row Level Security (RLS).
@@ -23,7 +30,9 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
  * @param workspaceId - The workspace ID for tenant isolation
  */
 export async function setWorkspaceContext(workspaceId: string): Promise<void> {
-  // Use is_local=false so the setting persists across the connection pool.
+  // Store in AsyncLocalStorage (request-scoped, connection-pool safe)
+  workspaceContextStore.enterWith(workspaceId);
+  // Also set in DB for RLS policies on the current connection
   await prisma.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
 }
 
@@ -32,6 +41,10 @@ export async function setWorkspaceContext(workspaceId: string): Promise<void> {
  * Returns the workspace_id set by setWorkspaceContext, or null if not set.
  */
 export async function getWorkspaceContext(): Promise<string | null> {
+  // First try AsyncLocalStorage (fast, connection-pool safe, request-scoped)
+  const ctx = workspaceContextStore.getStore();
+  if (ctx) return ctx;
+  // Fallback to DB (for cases where setWorkspaceContext was called before this module loaded)
   const result = await prisma.$queryRaw<Array<{ setting_value: string | null }>>`
     SELECT current_setting('app.current_workspace_id', true) as setting_value
   `;

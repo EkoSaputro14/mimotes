@@ -16,6 +16,8 @@ export async function GET() {
         id: true,
         email: true,
         name: true,
+        isSuperAdmin: true,
+        suspended: true,
         createdAt: true,
         updatedAt: true,
       },

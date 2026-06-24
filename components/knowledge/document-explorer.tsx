@@ -25,6 +25,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import ActionSheet from "@/components/documents/action-sheet";
+import { FileText, FileSpreadsheet, Globe, CheckCircle2, Clock, XCircle } from "lucide-react";
 
 interface Document {
   id: string;
@@ -56,21 +57,37 @@ const STATUS_TABS = [
   { key: "failed", label: "Failed" },
 ] as const;
 
-const FILE_TYPE_ICONS: Record<string, string> = {
-  pdf: "📕",
-  docx: "📘",
-  txt: "📄",
-  csv: "📊",
-  xlsx: "📗",
-  xls: "📗",
-  url: "🌐",
+const FILE_TYPE_ICONS: Record<string, React.ReactNode> = {
+  pdf: <FileText className="size-4 text-orange-500" />,
+  docx: <FileText className="size-4 text-blue-500" />,
+  txt: <FileText className="size-4 text-neutral-500" />,
+  csv: <FileSpreadsheet className="size-4 text-green-500" />,
+  xlsx: <FileSpreadsheet className="size-4 text-emerald-500" />,
+  xls: <FileSpreadsheet className="size-4 text-emerald-500" />,
+  url: <Globe className="size-4 text-purple-500" />,
 };
 
-const STATUS_BADGES: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: string }> = {
-  ready: { label: "Ready", variant: "default", icon: "\u2705" },
-  processing: { label: "Processing", variant: "secondary", icon: "\u23F3" },
-  failed: { label: "Failed", variant: "destructive", icon: "\u274C" },
+const STATUS_BADGES: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ReactNode }> = {
+  ready: { label: "Ready", variant: "default", icon: <CheckCircle2 className="size-3" /> },
+  processing: { label: "Processing", variant: "secondary", icon: <Clock className="size-3" /> },
+  failed: { label: "Failed", variant: "destructive", icon: <XCircle className="size-3" /> },
 };
+
+const FILE_TYPE_COLORS: Record<string, string> = {
+  pdf: "text-orange-600 bg-orange-50",
+  image: "text-orange-600 bg-orange-50",
+  csv: "text-green-600 bg-green-50",
+  xlsx: "text-green-600 bg-green-50",
+  xls: "text-green-600 bg-green-50",
+  txt: "text-blue-600 bg-blue-50",
+  md: "text-blue-600 bg-blue-50",
+  url: "text-purple-600 bg-purple-50",
+  docx: "text-indigo-600 bg-indigo-50",
+};
+
+function getFileTypeColorClasses(fileType: string): string {
+  return FILE_TYPE_COLORS[fileType.toLowerCase()] ?? "text-muted-foreground bg-muted";
+}
 
 // ============ Search History Helpers ============
 const SEARCH_HISTORY_KEY = "mimotes_recent_searches";
@@ -387,7 +404,7 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
         </div>
         <div className="bg-card border border-border/20 rounded-lg p-4">
           <div className="text-2xl font-bold">{overviewStats.totalChunks}</div>
-          <div className="text-xs text-muted-foreground mt-1">Total Chunks</div>
+          <div className="text-xs text-muted-foreground mt-1">Total Sections</div>
         </div>
         <div className="bg-card border border-border/20 rounded-lg p-4">
           <div className="text-2xl font-bold">{overviewStats.pdfRatio}%</div>
@@ -674,7 +691,7 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
                 {!isMobile && (
                   <TableHead className="w-[80px]">
                     <button onClick={() => toggleSort("chunkCount")} className="inline-flex items-center font-medium hover:text-foreground">
-                      Chunks <SortIcon field="chunkCount" />
+                      Sections <SortIcon field="chunkCount" />
                     </button>
                   </TableHead>
                 )}
@@ -707,12 +724,12 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
                       href={`/knowledge/documents/${doc.id}`}
                       className="inline-flex items-center gap-2 hover:underline"
                     >
-                      <span className="text-base">{FILE_TYPE_ICONS[doc.fileType] || "📄"}</span>
+                      <span className="text-base">{FILE_TYPE_ICONS[doc.fileType] || <FileText className="size-4 text-neutral-400" />}</span>
                       <span className="truncate font-medium">{doc.title}</span>
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className={`text-xs ${getFileTypeColorClasses(doc.fileType)}`}>
                       {doc.fileType.toUpperCase()}
                     </Badge>
                   </TableCell>
@@ -757,7 +774,7 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="size-8 p-0 text-destructive hover:text-destructive"
+                          className="size-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDelete(doc.id, doc.title)}
                           disabled={deleting === doc.id}
                         >
@@ -810,7 +827,7 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
               >
                 <div className="flex items-start justify-between">
                   <span className={cn("text-2xl", isMobile && "text-3xl")}>
-                    {FILE_TYPE_ICONS[doc.fileType] || "📄"}
+                    {FILE_TYPE_ICONS[doc.fileType] || <FileText className="size-6 text-neutral-400" />}
                   </span>
                   <StatusBadge status={doc.status} />
                 </div>
@@ -820,10 +837,10 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{doc.description}</p>
                 )}
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className={`text-xs ${getFileTypeColorClasses(doc.fileType)}`}>
                     {doc.fileType.toUpperCase()}
                   </Badge>
-                  <span>{doc.status === "processing" ? "—" : `${doc.chunkCount} chunks`}</span>
+                  <span>{doc.status === "processing" ? "—" : `${doc.chunkCount} sections`}</span>
                   <span>{formatDate(doc.createdAt)}</span>
                 </div>
               </Link>
@@ -869,7 +886,7 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
               <svg className="size-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <h3 className="font-semibold">Smart Chunking</h3>
+              <h3 className="font-semibold">Smart Sections</h3>
             </div>
             <p className="text-sm text-muted-foreground">Optimize your knowledge chunks for better retrieval</p>
           </Link>
@@ -963,7 +980,7 @@ export default function DocumentExplorer({ folderId = null }: DocumentExplorerPr
 
 function StatusBadge({ status }: { status: string }) {
   const config = STATUS_BADGES[status] || { label: status, variant: "outline" as const, icon: "" };
-  return <Badge variant={config.variant} className="gap-1">{config.icon} {config.label}</Badge>;
+  return <Badge variant={config.variant} className="gap-1.5">{config.icon} {config.label}</Badge>;
 }
 
 function EmptyState({ hasFilters, onClearFilters }: { hasFilters: boolean; onClearFilters: () => void }) {
@@ -1036,7 +1053,7 @@ function DocumentSkeleton({ viewMode }: { viewMode: ViewMode }) {
             <TableHead className="w-[300px]">Name</TableHead>
             <TableHead className="w-[80px]">Type</TableHead>
             <TableHead className="w-[100px]">Status</TableHead>
-            <TableHead className="w-[80px]">Chunks</TableHead>
+            <TableHead className="w-[80px]">Sections</TableHead>
             <TableHead className="w-[120px]">Uploaded</TableHead>
             <TableHead className="w-[100px] text-right">Actions</TableHead>
           </TableRow>

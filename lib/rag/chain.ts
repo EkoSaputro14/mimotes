@@ -201,13 +201,23 @@ ${context}`;
   const openai = await getAIProvider();
   const model = await getAIModel();
 
-  // Build messages array with conversation history for CS/Sales mode
+  // Build messages array with conversation history
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: systemPrompt },
   ];
 
-  // For CS/Sales mode, conversation history is already in the system prompt
-  // Just add the current question
+  // Add conversation history if available
+  if (promptContext?.conversationHistory) {
+    const lines = promptContext.conversationHistory.split("\n").filter(Boolean);
+    for (const line of lines) {
+      if (line.startsWith("User: ")) {
+        messages.push({ role: "user", content: line.substring(6) });
+      } else if (line.startsWith("Assistant: ")) {
+        messages.push({ role: "assistant", content: line.substring(11) });
+      }
+    }
+  }
+
   messages.push({ role: "user", content: question });
 
   const completion = await openai.chat.completions.create({
@@ -304,12 +314,29 @@ export async function streamRAGResponse(
   const openai = await getAIProvider();
   const model = await getAIModel();
 
+  // Build messages array with conversation history
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: systemPrompt },
+  ];
+
+  // Add conversation history if available
+  if (promptContext?.conversationHistory) {
+    const lines = promptContext.conversationHistory.split("\n").filter(Boolean);
+    for (const line of lines) {
+      if (line.startsWith("User: ")) {
+        messages.push({ role: "user", content: line.substring(6) });
+      } else if (line.startsWith("Assistant: ")) {
+        messages.push({ role: "assistant", content: line.substring(11) });
+      }
+    }
+  }
+
+  // Add current question
+  messages.push({ role: "user", content: question });
+
   const stream = await openai.chat.completions.create({
     model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: question },
-    ],
+    messages,
     temperature: 0.3,
     max_tokens: 1000,
     stream: true,

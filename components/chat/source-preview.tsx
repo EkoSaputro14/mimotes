@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface Source {
   documentId: string;
+  documentTitle?: string;
   content: string;
   similarity: number;
   metadata: Record<string, unknown>;
@@ -50,6 +51,7 @@ export default function SourcePreview({
   const similarityPercent = Math.round(source.similarity * 100);
 
   const title =
+    source.documentTitle ||
     (source.metadata?.title as string) ||
     (source.metadata?.filename as string) ||
     "Dokumen tidak diketahui";

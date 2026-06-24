@@ -468,6 +468,298 @@ textarea::-webkit-scrollbar-thumb {
   --info-foreground: #0F1219;
 }
 
+/* ============================================================
+   THEME: MiMo Blue (Default Original)
+   ============================================================ */
+
+.theme-blue {
+  --brand-50: #EEF1FF;
+  --brand-100: #D9E0FF;
+  --brand-200: #B3BFFF;
+  --brand-300: #8DA0FF;
+  --brand-400: #6B82FF;
+  --brand-500: #4F6BFF;
+  --brand-600: #3851DB;
+  --brand-700: #263AAC;
+  --brand-800: #1A2778;
+  --brand-900: #0F1545;
+
+  --surface-base: #F7F9FC;
+  --surface-raised: #FFFFFF;
+  --surface-overlay: #FFFFFF;
+  --surface-elevated: #FAFBFD;
+  --surface-floating: #F3F4F8;
+
+  --border-subtle: #F0F0F4;
+  --border-default: #E3E5EE;
+  --border-strong: #D1D5E4;
+
+  --background: #FAFBFD;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+  --primary: #4F6BFF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8F0FE;
+  --secondary-foreground: #1E3A5F;
+  --muted: #F0F0F4;
+  --muted-foreground: #6B7280;
+  --accent: #8B5CF6;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --border: #E3E5EE;
+  --input: #E3E5EE;
+  --ring: #4F6BFF;
+  --chart-1: #4F6BFF;
+  --chart-2: #8B5CF6;
+  --chart-3: #06B6D4;
+  --chart-4: #10B981;
+  --chart-5: #F59E0B;
+  --radius: 0.625rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #4F6BFF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E8F0FE;
+  --sidebar-accent-foreground: #1E3A5F;
+  --sidebar-border: #E3E5EE;
+  --sidebar-ring: #4F6BFF;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --success-foreground: #FFFFFF;
+  --warning-foreground: #111827;
+  --error: #EF4444;
+  --error-foreground: #FFFFFF;
+  --info: #3B82F6;
+  --info-foreground: #FFFFFF;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(79, 107, 255, 0.25);
+}
+
+.theme-blue.dark {
+  --brand-50: #0F1545;
+  --brand-100: #1A2778;
+  --brand-200: #263AAC;
+  --brand-300: #3851DB;
+  --brand-400: #5B7FFF;
+  --brand-500: #5B7FFF;
+  --brand-600: #8DA0FF;
+  --brand-700: #B3BFFF;
+  --brand-800: #D9E0FF;
+  --brand-900: #EEF1FF;
+
+  --surface-base: #0B0D12;
+  --surface-raised: #11141C;
+  --surface-overlay: #181B26;
+  --surface-elevated: #1E2230;
+  --surface-floating: #252A3B;
+
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --background: #0B0D12;
+  --foreground: #F0EEEB;
+  --card: #11141C;
+  --card-foreground: #F0EEEB;
+  --popover: #11141C;
+  --popover-foreground: #F0EEEB;
+  --primary: #5B7FFF;
+  --primary-foreground: #0B0D12;
+  --secondary: #1E293B;
+  --secondary-foreground: #F0EEEB;
+  --muted: #181B26;
+  --muted-foreground: #94A3B8;
+  --accent: #A78BFA;
+  --accent-foreground: #0B0D12;
+  --destructive: #F87171;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.10);
+  --ring: #5B7FFF;
+  --chart-1: #5B7FFF;
+  --chart-2: #A78BFA;
+  --chart-3: #22D3EE;
+  --chart-4: #34D399;
+  --chart-5: #FBBF24;
+  --sidebar: #080A0F;
+  --sidebar-foreground: #F0EEEB;
+  --sidebar-primary: #5B7FFF;
+  --sidebar-primary-foreground: #0B0D12;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F0EEEB;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #5B7FFF;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --success-foreground: #0B0D12;
+  --warning-foreground: #0B0D12;
+  --error: #F87171;
+  --error-foreground: #0B0D12;
+  --info: #60A5FA;
+  --info-foreground: #0B0D12;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(91, 127, 255, 0.35);
+}
+
+/* ============================================================
+   THEME: Sage (Earth Green)
+   ============================================================ */
+
+.theme-sage {
+  --brand-50: #F1F5EE;
+  --brand-100: #DDE6D4;
+  --brand-200: #BED0AC;
+  --brand-300: #9DB982;
+  --brand-400: #82A265;
+  --brand-500: #4A7C59;
+  --brand-600: #3D684B;
+  --brand-700: #32553E;
+  --brand-800: #26412F;
+  --brand-900: #1A2E20;
+
+  --surface-base: #F4F6F3;
+  --surface-raised: #FFFFFF;
+  --surface-overlay: #FFFFFF;
+  --surface-elevated: #F7F8F6;
+  --surface-floating: #EDF0EB;
+
+  --border-subtle: #EDF0EB;
+  --border-default: #E0E5DC;
+  --border-strong: #CDD5C6;
+
+  --background: #F5F7F3;
+  --foreground: #1A1A17;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A17;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A17;
+  --primary: #4A7C59;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8EDE4;
+  --secondary-foreground: #2D4030;
+  --muted: #E8EDE4;
+  --muted-foreground: #6B7566;
+  --accent: #D4A44A;
+  --accent-foreground: #1A1A17;
+  --destructive: #DC2626;
+  --border: #E0E5DC;
+  --input: #E0E5DC;
+  --ring: #4A7C59;
+  --chart-1: #4A7C59;
+  --chart-2: #D4A44A;
+  --chart-3: #0891B2;
+  --chart-4: #059669;
+  --chart-5: #D97706;
+  --radius: 0.625rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A1A17;
+  --sidebar-primary: #4A7C59;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E8EDE4;
+  --sidebar-accent-foreground: #2D4030;
+  --sidebar-border: #E0E5DC;
+  --sidebar-ring: #4A7C59;
+  --success: #059669;
+  --warning: #D97706;
+  --success-foreground: #FFFFFF;
+  --warning-foreground: #1A1A17;
+  --error: #DC2626;
+  --error-foreground: #FFFFFF;
+  --info: #0F766E;
+  --info-foreground: #FFFFFF;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.06), 0 4px 6px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(74, 124, 89, 0.25);
+}
+
+.theme-sage.dark {
+  --brand-50: #1A2E20;
+  --brand-100: #26412F;
+  --brand-200: #32553E;
+  --brand-300: #3D684B;
+  --brand-400: #5A9069;
+  --brand-500: #6B9E7B;
+  --brand-600: #82B090;
+  --brand-700: #9EC4A9;
+  --brand-800: #BED8C5;
+  --brand-900: #E8F0EB;
+
+  --surface-base: #0D110E;
+  --surface-raised: #131C16;
+  --surface-overlay: #1A2620;
+  --surface-elevated: #1F2D25;
+  --surface-floating: #26382E;
+
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --background: #0D110E;
+  --foreground: #E8E6E0;
+  --card: #131C16;
+  --card-foreground: #E8E6E0;
+  --popover: #131C16;
+  --popover-foreground: #E8E6E0;
+  --primary: #6B9E7B;
+  --primary-foreground: #0D110E;
+  --secondary: #1C3329;
+  --secondary-foreground: #E8E6E0;
+  --muted: #1A2620;
+  --muted-foreground: #8E9E8F;
+  --accent: #E8B860;
+  --accent-foreground: #0D110E;
+  --destructive: #FF6B6B;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.10);
+  --ring: #6B9E7B;
+  --chart-1: #6B9E7B;
+  --chart-2: #E8B860;
+  --chart-3: #22D3EE;
+  --chart-4: #34D399;
+  --chart-5: #FBBF24;
+  --sidebar: #0A0F0C;
+  --sidebar-foreground: #E8E6E0;
+  --sidebar-primary: #6B9E7B;
+  --sidebar-primary-foreground: #0D110E;
+  --sidebar-accent: #1C3329;
+  --sidebar-accent-foreground: #E8E6E0;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #6B9E7B;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --success-foreground: #0D110E;
+  --warning-foreground: #0D110E;
+  --error: #FF6B6B;
+  --error-foreground: #0D110E;
+  --info: #5EEAD4;
+  --info-foreground: #0D110E;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(107, 158, 123, 0.35);
+}
+
+/* ============================================================
+   THEME: Copper (Alias untuk :root / .dark)
+   ============================================================ */
+.theme-copper {}
+.theme-copper.dark {}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -53,6 +53,7 @@ export default function WidgetSettingsForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [newQuickReply, setNewQuickReply] = useState("");
 
   // Create widget state
@@ -196,6 +197,13 @@ export default function WidgetSettingsForm() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // Copy API key to clipboard
+  function handleCopyKey(key: string, label: string) {
+    navigator.clipboard.writeText(key);
+    setCopiedKey(label);
+    setTimeout(() => setCopiedKey(null), 2000);
+  }
+
   // Add quick reply
   function addQuickReply() {
     if (!newQuickReply.trim() || !selectedWidget) return;
@@ -320,15 +328,35 @@ export default function WidgetSettingsForm() {
               <div className="grid grid-cols-1 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Public Key</label>
-                  <code className="block bg-muted rounded-md px-3 py-2 text-xs break-all font-mono">
-                    {selectedWidget.publicKey}
-                  </code>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 block bg-muted rounded-md px-3 py-2 text-xs break-all font-mono">
+                      {selectedWidget.publicKey}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyKey(selectedWidget.publicKey, "public")}
+                      className="shrink-0 p-2 rounded-md hover:bg-muted transition-colors"
+                      title="Copy Public Key"
+                    >
+                      {copiedKey === "public" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Secret Key</label>
-                  <code className="block bg-muted rounded-md px-3 py-2 text-xs break-all font-mono">
-                    {selectedWidget.secretKey}
-                  </code>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 block bg-muted rounded-md px-3 py-2 text-xs break-all font-mono">
+                      {selectedWidget.secretKey}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyKey(selectedWidget.secretKey, "secret")}
+                      className="shrink-0 p-2 rounded-md hover:bg-muted transition-colors"
+                      title="Copy Secret Key"
+                    >
+                      {copiedKey === "secret" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

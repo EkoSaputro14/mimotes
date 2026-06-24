@@ -73,7 +73,7 @@ export default async function DashboardPage() {
         {/* Greeting */}
         <div>
           <h1 className="text-xl font-semibold">
-            {greeting}, {userName || "User"} 👋
+            {greeting}, {userName || "User"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Berikut ringkasan chatbot Anda hari ini.
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="rounded-lg border p-4">
-          <h2 className="text-sm font-semibold mb-3">⚡ Langkah Selanjutnya</h2>
+          <h2 className="text-sm font-semibold mb-3">Langkah Selanjutnya</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link
               href="/documents/upload"
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
         {/* Recent Activity Summary */}
         {totalSessions > 0 && (
           <div className="rounded-lg border p-4">
-            <h2 className="text-sm font-semibold mb-2">📊 Ringkasan</h2>
+            <h2 className="text-sm font-semibold mb-2">Ringkasan</h2>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
                 Chatbot Anda telah menjawab <strong>{totalMessages}</strong> pesan

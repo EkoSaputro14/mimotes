@@ -1,6 +1,7 @@
 import LandingHeader from "@/components/landing/header";
 import LandingHero from "@/components/landing/hero";
 import SocialProof from "@/components/landing/social-proof";
+import FormatMarquee from "@/components/landing/format-marquee";
 import ProductShowcase from "@/components/landing/product-showcase";
 import HowItWorks from "@/components/landing/how-it-works";
 import FeatureHighlights from "@/components/landing/feature-highlights";
@@ -20,6 +21,10 @@ export default function HomePage() {
 
         <ScrollFadeIn delay={0}>
           <SocialProof />
+        </ScrollFadeIn>
+
+        <ScrollFadeIn delay={0}>
+          <FormatMarquee />
         </ScrollFadeIn>
 
         <ScrollFadeIn delay={0}>

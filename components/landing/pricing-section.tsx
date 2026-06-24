@@ -16,7 +16,7 @@ const mimotesPlans = [
       "PDF, DOCX, TXT support",
       "Community support",
     ],
-    description: "Perfect for individuals trying out MimoNotes",
+    description: "Perfect for individuals trying out Mimotes",
     buttonText: "Start Free",
     href: "/register",
     isPopular: false,

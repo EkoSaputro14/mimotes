@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Plus, X, MessageSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Session {
   id: string;
@@ -18,7 +19,6 @@ interface SessionSidebarProps {
   onNewChat: () => void;
   isOpen: boolean;
   onToggle: () => void;
-  /** BUG-018: Increment to force refetch — only when new session created */
   refreshTrigger?: number;
 }
 
@@ -62,14 +62,11 @@ export default function SessionSidebar({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch on mount
   useEffect(() => {
     fetchSessions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // BUG-018: Only refetch when refreshTrigger changes (new session created),
-  // NOT when currentSessionId changes (session switch)
   useEffect(() => {
     if (refreshTrigger > 0) {
       fetchSessions();
@@ -137,106 +134,90 @@ export default function SessionSidebar({
 
   return (
     <>
-      {/* Mobile overlay — z-40 for overlay */}
+      {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-40 md:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden transition-opacity"
           onClick={onToggle}
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar — z-50 for sidebar (above overlay) */}
+      {/* Sidebar */}
       <aside
         role="complementary"
         aria-label="Riwayat percakapan"
-        className={`fixed md:relative z-50 md:z-auto top-0 left-0 h-full w-72 bg-background border-r border-border flex flex-col transition-transform duration-200 ${
+        className={cn(
+          "fixed md:relative z-50 md:z-auto top-0 left-0 h-full w-72",
+          "bg-background border-r border-border/50 flex flex-col",
+          "transition-transform duration-200 ease-out",
           isOpen
             ? "translate-x-0"
-            : "-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden"
-        }`}
+            : "-translate-x-full md:translate-x-0"
+        )}
       >
         {/* Header */}
-        <div className="p-4 border-b border-border bg-card flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">Percakapan</h2>
+        <div className="h-14 flex items-center justify-between px-4 border-b border-border/50 shrink-0">
+          <h2 className="text-sm font-medium text-foreground">Percakapan</h2>
           <div className="flex items-center gap-1">
             <button
               onClick={onNewChat}
-              className="inline-flex items-center justify-center w-[44px] h-[44px] text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              className="inline-flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
               title="Chat baru"
               aria-label="Chat baru"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <Plus className="h-4 w-4" />
             </button>
             <button
               onClick={onToggle}
-              className="inline-flex items-center justify-center w-[44px] h-[44px] text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors md:hidden"
+              className="inline-flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors md:hidden"
               aria-label="Tutup sidebar"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Search input */}
-        <div className="px-3 pt-3 pb-1">
+        {/* Search */}
+        <div className="px-3 pt-3 pb-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
             <Input
               type="text"
               placeholder="Cari percakapan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-9 text-sm"
+              className="pl-8 h-8 text-xs bg-muted/30 border-border/40"
             />
           </div>
         </div>
 
         {/* Session list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-2">
           {loading ? (
-            <div className="p-4 space-y-3">
+            <div className="p-3 space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
+                  <div className="h-3.5 bg-muted/50 rounded w-3/4 mb-1.5" />
+                  <div className="h-2.5 bg-muted/30 rounded w-1/2" />
                 </div>
               ))}
             </div>
           ) : filteredSessions.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground text-sm">
-              {searchQuery
-                ? "Tidak ada percakapan yang cocok"
-                : "Belum ada percakapan"}
+            <div className="p-4 text-center">
+              <MessageSquare className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+              <p className="text-xs text-muted-foreground/60">
+                {searchQuery
+                  ? "Tidak ada percakapan yang cocok"
+                  : "Belum ada percakapan"}
+              </p>
             </div>
           ) : (
-            <div className="p-1">
+            <div className="py-1">
               {grouped.map((group) => (
-                <div key={group.label} className="mb-2">
-                  <div className="px-3 py-2">
-                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div key={group.label} className="mb-3">
+                  <div className="px-2 py-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider">
                       {group.label}
                     </span>
                   </div>
@@ -245,38 +226,29 @@ export default function SessionSidebar({
                       key={session.id}
                       onClick={() => {
                         onSessionSelect(session);
-                        if (typeof window !== "undefined" && window.innerWidth < 768) onToggle();
+                        if (typeof window !== "undefined" && window.innerWidth < 768)
+                          onToggle();
                       }}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg mx-1 mb-0.5 group transition-colors ${
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-lg mb-0.5 group transition-colors",
                         currentSessionId === session.id
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-muted text-foreground"
-                      }`}
+                          ? "bg-primary/10 text-foreground"
+                          : "hover:bg-muted/50 text-foreground/80"
+                      )}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium truncate pr-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[13px] font-medium truncate">
                           {session.title || "Percakapan tanpa judul"}
                         </span>
                         <button
                           onClick={(e) => handleDelete(e, session.id)}
-                          className="opacity-0 group-hover:opacity-100 inline-flex items-center justify-center w-[44px] h-[44px] text-muted-foreground hover:text-destructive rounded-lg transition-all"
+                          className="opacity-0 group-hover:opacity-100 inline-flex items-center justify-center w-6 h-6 text-muted-foreground hover:text-destructive rounded transition-all shrink-0"
                           aria-label="Hapus percakapan"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground/50">
                         {formatDate(session.createdAt)}
                       </span>
                     </button>

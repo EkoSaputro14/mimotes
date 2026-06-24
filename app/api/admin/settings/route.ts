@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { getWorkspaceSettings, setWorkspaceSettings, invalidateWorkspaceSettingsCache } from "@/lib/settings";
+import { getSettings, setSettings } from "@/lib/settings";
 import { invalidateProviderCache } from "@/lib/ai-provider";
 import { resolveWorkspaceId, setWorkspaceContext } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
@@ -17,7 +17,8 @@ export async function GET() {
   const workspaceId = await resolveWorkspaceId(userId);
   await setWorkspaceContext(workspaceId);
 
-  const settings = await getWorkspaceSettings(workspaceId);
+  // Read from GLOBAL settings table
+  const settings = await getSettings();
 
   // Return settings with defaults — mask API keys for security
   const aiApiKey = settings.ai_api_key || "";
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "AI provider is required" }, { status: 400 });
     }
 
-    await setWorkspaceSettings(workspaceId, {
+    // Save to GLOBAL settings table
+    await setSettings({
       ai_provider: ai_provider || "",
       ai_api_key: ai_api_key || "",
       ai_base_url: ai_base_url || "",
@@ -61,11 +63,10 @@ export async function POST(request: NextRequest) {
       ai_embedding_model: ai_embedding_model || "",
     });
 
-    // Invalidate the cached provider client so new settings take effect
-    invalidateWorkspaceSettingsCache(workspaceId);
+    // Invalidate provider cache so new settings take effect immediately
     invalidateProviderCache();
 
-    // Audit: workspace settings updated
+    // Audit: global settings updated
     logAudit({
       workspaceId,
       actorId: userId,

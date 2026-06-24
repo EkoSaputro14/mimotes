@@ -124,7 +124,7 @@ export default function CommandPalette({
           </CommandItem>
           <CommandItem onSelect={() => navigate("/knowledge/chunks")}>
             <Layers className="size-4" />
-            Chunks
+            Sections
           </CommandItem>
           <CommandItem onSelect={() => navigate("/knowledge/search")}>
             <Search className="size-4" />

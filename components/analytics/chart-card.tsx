@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChartCardProps {
   title: string;
-  icon?: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
@@ -21,8 +21,8 @@ export function ChartCard({
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base font-semibold">
-          {icon && <span className="mr-2">{icon}</span>}
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          {icon}
           {title}
         </CardTitle>
         {action && <div className="flex items-center gap-2">{action}</div>}

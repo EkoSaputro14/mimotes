@@ -18,6 +18,10 @@ model User {
   email        String    @unique
   name         String?
   passwordHash String    @map("password_hash")
+  isSuperAdmin Boolean   @default(false) @map("is_super_admin")
+  suspended    Boolean   @default(false)
+  suspendedAt  DateTime? @map("suspended_at")
+  suspendedReason String? @map("suspended_reason") @db.VarChar(500)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 

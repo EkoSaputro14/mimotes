@@ -1,6 +1,7 @@
 import SettingsLayout from "@/components/settings/settings-layout";
 import WorkspaceSwitcher from "@/components/workspace/workspace-switcher";
 import WorkspaceSettings from "@/components/workspace/workspace-settings";
+import WorkspaceAISettings from "@/components/workspace/workspace-ai-settings";
 import PermissionMatrix from "@/components/workspace/permission-matrix";
 import MemberManagement from "@/components/workspace/member-management";
 import ActivityLog from "@/components/workspace/activity-log";
@@ -17,6 +18,7 @@ export default function WorkspaceSettingsPage() {
       </a>
       <div id="main-content" className="space-y-8" tabIndex={-1}>
         <WorkspaceSettings />
+        <WorkspaceAISettings />
 
         <div className="bg-card rounded-xl border border-border/20 p-6">
           <h2 className="text-2xl font-bold text-foreground mb-1">

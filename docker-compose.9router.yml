@@ -1,0 +1,34 @@
+# ============================================
+# 9Router - AI Gateway / Router
+# ============================================
+# Provides a single OpenAI-compatible endpoint
+# that routes to 60+ AI providers with auto-fallback.
+# 
+# All Mimotes containers can reach it via:
+#   http://9router:20128/v1
+#
+# Dashboard: http://localhost:20128
+# ============================================
+
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: mimotes-9router
+    restart: unless-stopped
+    ports:
+      - "20128:20128"
+    environment:
+      - PORT=20128
+      - HOSTNAME=0.0.0.0
+      - DATA_DIR=/app/data
+    volumes:
+      - ninerouter_data:/app/data
+    networks:
+      - mimotes_default
+
+volumes:
+  ninerouter_data:
+
+networks:
+  mimotes_default:
+    external: true

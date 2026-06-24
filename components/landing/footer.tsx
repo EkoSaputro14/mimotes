@@ -13,7 +13,7 @@ export default function LandingFooter() {
                 <Bot className="size-4" />
               </div>
               <span className="text-base font-semibold tracking-tight">
-                MimoNotes
+                Mimotes
               </span>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function LandingFooter() {
                 </li>
               <li>
                 <a
-                  href="mailto:hello@mimonotes.com"
+                  href="mailto:hello@mimotes.com"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Contact
@@ -86,7 +86,7 @@ export default function LandingFooter() {
         </div>
 
         <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} MimoNotes.
+          &copy; {new Date().getFullYear()} Mimotes.
         </div>
       </div>
     </footer>

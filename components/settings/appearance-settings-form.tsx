@@ -2,10 +2,11 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Sun, Moon, Monitor, Check, Keyboard } from "lucide-react";
+import { Sun, Moon, Monitor, Check, Keyboard, Palette } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useColorPreset } from "@/lib/use-color-preset";
 
 const themes = [
   {
@@ -32,6 +33,7 @@ type ThemeValue = "light" | "dark" | "system";
 
 export default function AppearanceSettingsForm() {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { colorPreset, setColorPreset } = useColorPreset();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -118,6 +120,76 @@ export default function AppearanceSettingsForm() {
                 <span> (mengikuti sistem)</span>
               )}
             </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Color Preset Selector */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Palet Warna
+          </CardTitle>
+          <CardDescription>Pilih warna brand aplikasi.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                value: "copper" as const,
+                label: "Copper",
+                desc: "Hangat dan elegan",
+                colors: ["#cd8c68", "#5baaad", "#FAF8F5"],
+              },
+              {
+                value: "blue" as const,
+                label: "MiMo Blue",
+                desc: "Klasik dan profesional",
+                colors: ["#4F6BFF", "#8B5CF6", "#FAFBFD"],
+              },
+              {
+                value: "sage" as const,
+                label: "Sage",
+                desc: "Alami dan menenangkan",
+                colors: ["#4A7C59", "#D4A44A", "#F5F7F3"],
+              },
+            ].map((p) => {
+              const isActive = colorPreset === p.value;
+              return (
+                <button
+                  key={p.value}
+                  onClick={() => setColorPreset(p.value)}
+                  className={cn(
+                    "relative flex flex-col gap-3 rounded-xl border-2 p-5 text-left transition-all hover:bg-muted/50",
+                    isActive
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border/80"
+                  )}
+                >
+                  {isActive && (
+                    <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="h-3 w-3" />
+                    </span>
+                  )}
+                  <div className="flex gap-2">
+                    {p.colors.map((c) => (
+                      <div
+                        key={c}
+                        className="h-8 w-8 rounded-full border shadow-sm"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className={cn("font-medium", isActive && "text-primary")}>
+                      {p.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{p.desc}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

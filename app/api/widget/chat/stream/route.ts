@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
           try {
             // Stream chunks from AI provider
             for await (const chunk of result.stream) {
-              const content = chunk.choices[0]?.delta?.content;
+              const content = chunk.choices?.[0]?.delta?.content;
               if (content) {
                 fullResponse += content;
                 sendSSE("message", { type: "chunk", content });

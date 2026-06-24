@@ -244,7 +244,7 @@ export default function SimilaritySearch({ initialQuery }: SimilaritySearchProps
 
       {/* Empty State (before search) */}
       {!hasSearched && !loading && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-16 text-center">
           <svg className="mb-4 size-12 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -317,7 +317,7 @@ export default function SimilaritySearch({ initialQuery }: SimilaritySearchProps
           </div>
 
           {results.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-12 text-center">
               <svg className="mb-4 size-10 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

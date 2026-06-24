@@ -1,5 +1,6 @@
 import OpenAI from "openai";
-import { getSettingWithFallback } from "@/lib/settings";
+import { getSettingWithFallback, getWorkspaceSetting } from "@/lib/settings";
+import { getWorkspaceContext, workspaceContextStore } from "@/lib/prisma";
 
 export type AIProviderType = "openai" | "lmstudio" | "ollama" | "openrouter" | "custom" | "mimo" | "google";
 
@@ -80,11 +81,24 @@ interface AIProviderConfig {
 }
 
 /**
- * Get provider config from database settings with environment variable fallback.
- * Settings keys: ai_provider, ai_api_key, ai_base_url, ai_model, ai_embedding_model
+ * Get provider config with workspace-aware fallback.
+ * Priority: workspace_settings > global_settings (env fallback)
  */
 async function getProviderConfig(): Promise<AIProviderConfig> {
-  const provider = (await getSettingWithFallback(
+  const workspaceId = await getWorkspaceContext();
+
+  const resolve = async (
+    key: string,
+    envKey: string,
+    defaultValue: string
+  ): Promise<string> => {
+    if (workspaceId) {
+      return getWorkspaceSetting(workspaceId, key, envKey, defaultValue);
+    }
+    return getSettingWithFallback(key, envKey, defaultValue);
+  };
+
+  const provider = (await resolve(
     "ai_provider",
     "AI_PROVIDER",
     "openai"
@@ -100,25 +114,25 @@ async function getProviderConfig(): Promise<AIProviderConfig> {
         ? "ollama"
         : "";
 
-  const apiKey = await getSettingWithFallback(
+  const apiKey = await resolve(
     "ai_api_key",
     `${preset.envKeyPrefix}_API_KEY`,
     defaultApiKey
   );
 
-  const baseURL = await getSettingWithFallback(
+  const baseURL = await resolve(
     "ai_base_url",
     `${preset.envKeyPrefix}_BASE_URL`,
     preset.defaultBaseURL
   );
 
-  const model = await getSettingWithFallback(
+  const model = await resolve(
     "ai_model",
     `${preset.envKeyPrefix}_MODEL`,
     preset.defaultModel
   );
 
-  const embeddingModel = await getSettingWithFallback(
+  const embeddingModel = await resolve(
     "ai_embedding_model",
     `${preset.envKeyPrefix}_EMBEDDING_MODEL`,
     preset.defaultEmbeddingModel
@@ -127,12 +141,19 @@ async function getProviderConfig(): Promise<AIProviderConfig> {
   return { apiKey, baseURL, model, embeddingModel };
 }
 
+// Temporary debug: log resolved config
+async function logProviderConfig(config: AIProviderConfig, source: string) {
+  console.log(`[AI Provider] source=${source}, provider_url=${config.baseURL}, model=${config.model}, apiKey=${config.apiKey ? config.apiKey.substring(0, 10) + '...' : 'EMPTY'}`);
+}
+
 // Synchronous cache for the OpenAI client (refreshed on config change)
 let cachedClient: OpenAI | null = null;
 let cachedClientKey = "";
 
 export async function getAIProvider(): Promise<OpenAI> {
   const config = await getProviderConfig();
+  const ctx = workspaceContextStore.getStore() || "NONE";
+  console.log(`[AI Provider] context=${ctx}, url=${config.baseURL}, model=${config.model}, key=${config.apiKey ? config.apiKey.substring(0, 12) + '...' : 'EMPTY'}`);
   const key = `${config.apiKey}|${config.baseURL}`;
 
   if (cachedClient && cachedClientKey === key) {
@@ -158,6 +179,13 @@ export async function getEmbeddingModel(): Promise<string> {
 }
 
 export async function getProviderType(): Promise<AIProviderType> {
+  const workspaceId = await getWorkspaceContext();
+  if (workspaceId) {
+    const wsProvider = await getWorkspaceSetting(
+      workspaceId, "ai_provider", "AI_PROVIDER", "openai"
+    );
+    if (wsProvider) return wsProvider as AIProviderType;
+  }
   return (await getSettingWithFallback(
     "ai_provider",
     "AI_PROVIDER",

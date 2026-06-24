@@ -72,6 +72,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        // Check if user is suspended
+        if (user.suspended) {
+          logAudit({
+            workspaceId: "system",
+            actorId: user.id,
+            actorType: "user",
+            action: AUDIT_ACTIONS.LOGIN_FAILED,
+            metadata: { reason: "user_suspended", suspendedAt: user.suspendedAt },
+          });
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,

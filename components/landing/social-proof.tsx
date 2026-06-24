@@ -1,13 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { FileText, MessageSquare, Globe } from "lucide-react";
 
-const logos = [
-  { name: "Acme Corp", width: 80 },
-  { name: "Globex", width: 70 },
-  { name: "Initech", width: 75 },
-  { name: "Umbrella", width: 85 },
-  { name: "Stark", width: 65 },
+const stats = [
+  { icon: FileText, value: "10+", label: "File Formats" },
+  { icon: MessageSquare, value: "24/7", label: "AI Support" },
+  { icon: Globe, value: "∞", label: "Unlimited Queries" },
 ];
 
 export default function SocialProof() {
@@ -25,22 +24,15 @@ export default function SocialProof() {
             Trusted by teams who need accurate answers
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {logos.map((logo) => (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+            {stats.map((stat) => (
               <div
-                key={logo.name}
-                className="text-muted-foreground/40 hover:text-muted-foreground/80 transition-colors duration-200"
-                style={{ width: logo.width }}
+                key={stat.label}
+                className="flex flex-col items-center gap-1 text-muted-foreground/60"
               >
-                <svg
-                  viewBox={`0 0 ${logo.width} 24`}
-                  fill="currentColor"
-                  className="h-6 w-full"
-                >
-                  <text x="0" y="18" className="text-sm font-semibold">
-                    {logo.name}
-                  </text>
-                </svg>
+                <stat.icon className="size-5" />
+                <span className="text-lg font-bold text-foreground">{stat.value}</span>
+                <span className="text-xs">{stat.label}</span>
               </div>
             ))}
           </div>

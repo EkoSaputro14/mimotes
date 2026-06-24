@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface KpiCardProps {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   value: string | number;
   previousValue?: string | number;
@@ -14,7 +14,7 @@ interface KpiCardProps {
 
 function formatTrend(current: number, previous: number): { text: string; positive: boolean } {
   if (previous === 0) {
-    return { text: current > 0 ? "+∞" : "0%", positive: current > 0 };
+    return { text: current > 0 ? "Baru" : "0%", positive: current > 0 };
   }
   const pct = ((current - previous) / previous) * 100;
   const rounded = Math.round(pct * 10) / 10;
@@ -61,7 +61,7 @@ export function KpiCard({
     <Card className="transition-colors hover:bg-accent/50">
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-center justify-between">
-          <span className="text-2xl">{icon}</span>
+          <span className="text-lg text-muted-foreground">{icon}</span>
           {trend && (
             <span
               className={`text-xs font-medium ${

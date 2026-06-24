@@ -35,7 +35,7 @@ export default function DocumentsPageClient() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Documents</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-neutral-600">
               Manage your knowledge base documents
             </p>
           </div>

@@ -491,6 +491,108 @@ Frontend:  React 19 + Next.js 16 (App Router) + Tailwind CSS 4
 Backend:   Next.js API Routes + Server Actions + Server Components
 Database:  PostgreSQL 16 + Prisma 6 (ORM) + pgvector (vector search)
 Auth:      NextAuth v5 (Credentials, JWT)
+RBAC:      Custom RBAC (owner > admin > editor > viewer)
 AI:        OpenAI SDK → Mimo Pro / OpenAI / LM Studio / Ollama / OpenRouter
+Billing:   Stripe (checkout, portal, webhook)
 Deploy:    Docker Compose (multi-stage build, 3 services)
 ```
+
+---
+
+## 🔑 Fitur Admin & Manajemen Akun
+
+> **Status: SIAP OPERASIONAL** — 34/34 fitur terhubung ke backend real
+
+### RBAC System (lib/rbac.ts)
+
+```
+Role Hierarchy:  owner (4) > admin (3) > editor (2) > viewer (1)
+
+Owner:  workspace:delete, workspace:transfer, workspace:billing
+Admin:  member:read, member:invite, member:remove, member:update_role, workspace:update, workspace:settings
+Editor: document:create/update/delete, prompt:create/update/delete, mcp:create/update/delete
+Viewer: workspace:read, document:read, chat:read/create/send, analytics:read, prompt:read, mcp:read/execute
+```
+
+### Admin Routes
+
+```
+/app/(admin)/
+├── documents/           → Document management (CRUD)
+├── documents/upload/    → File/URL upload
+├── leads/               → Lead management
+├── leads/[id]/          → Lead detail
+├── onboarding/          → Onboarding wizard
+├── settings/
+│   ├── account/         → Profile, name, timezone
+│   ├── api-keys/        → API key management
+│   ├── audit/           → Audit logs viewer
+│   ├── baileys/         → WhatsApp Baileys config
+│   ├── billing/         → Subscription & billing
+│   ├── language/        → Language selector
+│   ├── leads/           → Leads settings
+│   ├── mcp/             → MCP server config
+│   ├── notifications/   → Notification settings
+│   ├── page.tsx         → AI provider settings
+│   ├── security/        → Password, login history
+│   ├── usage/           → Usage analytics
+│   ├── whatsapp/        → WhatsApp integration
+│   ├── widget/          → Widget config
+│   └── workspace/       → Members, roles, danger zone
+└── whatsapp/            → WhatsApp conversations
+    └── conversations/[id]/
+```
+
+### Admin API Endpoints
+
+```
+/workspace/members          GET/POST/PATCH/DELETE  → Member CRUD
+/workspace/members/[id]     PATCH/DELETE           → Role change/remove
+/workspace/invitations      GET/POST               → Invite management
+/workspace/invitations/[id]/resend  POST           → Resend invite
+/workspace/invitations/[id]/revoke  POST           → Revoke invite
+/workspace/activity         GET                    → Activity log
+/workspace/api-keys         GET/POST/DELETE        → API key CRUD
+/workspace/billing          GET/POST               → Billing summary/change plan
+/workspace/delete           POST                   → Delete workspace (owner)
+/workspace/transfer         POST                   → Transfer ownership
+/workspace/switch           POST                   → Switch workspace
+/workspace/subscription     GET                    → Subscription status
+
+/admin/settings             GET/POST               → AI provider config
+/admin/models               POST                   → Auto-detect models
+
+/user/profile               GET/PATCH              → User profile
+/user/password              POST                   → Change password
+/user/sessions              GET                    → Login history
+
+/audit                      GET                    → Audit logs
+
+/billing/checkout           POST                   → Stripe checkout
+/billing/portal             POST                   → Stripe portal
+/billing/webhook            POST                   → Stripe webhook
+```
+
+### Database Tables (Admin-related)
+
+```
+Workspace              → id, name, slug, description, avatarUrl
+WorkspaceMember        → id, workspaceId, userId, role, lastActiveAt
+WorkspaceSetting       → id, workspaceId, key, value
+WorkspaceSubscription  → id, workspaceId, planId, status
+Invitation             → id, workspaceId, email, role, token, expiresAt
+AuditLog               → id, workspaceId, actorId, action, resourceType, resourceId
+ApiKey                 → id, workspaceId, name, keyPrefix, hash, isActive
+```
+
+### Audit Trail Actions
+
+```
+auth.login / auth.logout / auth.login_failed
+user.password_change
+workspace.update / workspace.delete
+member.invite / member.remove / member.role_change
+invitation.created / invitation.accepted / invitation.revoked
+```
+
+详细审计报告: `ADMIN_AUDIT_REPORT.md`

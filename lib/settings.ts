@@ -116,9 +116,10 @@ export async function getWorkspaceSettings(
   }
 
   try {
-    const rows = await prisma.workspaceSetting.findMany({
-      where: { workspaceId },
-    });
+    // Use raw query to bypass RLS — we already know the workspaceId
+    const rows = await prisma.$queryRaw<Array<{ key: string; value: string }>>`
+      SELECT key, value FROM workspace_settings WHERE workspace_id = ${workspaceId}
+    `;
     const rawSettings: Record<string, string> = {};
     for (const row of rows) {
       rawSettings[row.key] = row.value;

@@ -2,18 +2,20 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Sparkles, FileText, MessageSquare, Search, Bot } from "lucide-react";
+import {
+  FileText,
+  MessageSquare,
+  Search,
+  Bot,
+  Plus,
+  PanelLeft,
+} from "lucide-react";
 import MessageBubble from "./message-bubble";
 import SessionSidebar from "./session-sidebar";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { AnimatedAIInput } from "@/components/ui/animated-ai-input";
 
 const MAX_MESSAGE_LENGTH = 10000;
-const EMPTY_STATE_SUGGESTIONS = [
-  "Apa saja dokumen yang tersedia?",
-  "Jelaskan isi dokumen utama",
-  "Buatkan ringkasan dari semua dokumen",
-];
 
 interface Message {
   id: string;
@@ -21,21 +23,40 @@ interface Message {
   content: string;
   sources?: Array<{
     documentId: string;
+    documentTitle?: string;
     content: string;
     similarity: number;
     metadata: Record<string, unknown>;
   }>;
   createdAt: string;
-  /** BUG-023: Explicit streaming flag — never rely on content === "" */
   isStreaming?: boolean;
 }
 
 interface Source {
   documentId: string;
+  documentTitle?: string;
   content: string;
   similarity: number;
   metadata: Record<string, unknown>;
 }
+
+const SUGGESTIONS = [
+  {
+    icon: FileText,
+    label: "Lihat Dokumen",
+    prompt: "Apa saja dokumen yang tersedia?",
+  },
+  {
+    icon: MessageSquare,
+    label: "Ringkas Semua",
+    prompt: "Buatkan ringkasan dari semua dokumen",
+  },
+  {
+    icon: Search,
+    label: "Cari Informasi",
+    prompt: "Jelaskan isi dokumen utama",
+  },
+];
 
 const FOLLOW_UP_SUGGESTIONS = [
   "Jelaskan lebih detail",
@@ -49,20 +70,20 @@ export default function ChatWindow() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [highlightedSource, setHighlightedSource] = useState<number | null>(null);
-  const [chatMode, setChatMode] = useState<"knowledge_base" | "customer_service" | "sales_agent">("customer_service");
+  const [highlightedSource, setHighlightedSource] = useState<number | null>(
+    null
+  );
+  const [chatMode, setChatMode] = useState<
+    "knowledge_base" | "customer_service" | "sales_agent"
+  >("customer_service");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  /** BUG-001: AbortController ref for cancelling in-flight requests */
+
   const abortControllerRef = useRef<AbortController | null>(null);
-  /** BUG-016: Track message count to avoid scrolling on content updates */
   const prevMessageCountRef = useRef(0);
-  /** BUG-016: Debounce timer for scroll during streaming */
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** BUG-018: Track whether initial mount fetch has completed */
   const initialFetchDoneRef = useRef(false);
 
-  /** BUG-016: Smart scroll — only on new messages, debounced during streaming */
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -74,7 +95,6 @@ export default function ChatWindow() {
     }, 150);
   }, [scrollToBottom]);
 
-  /** BUG-001: Abort any in-flight request */
   const abortInFlight = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -82,7 +102,6 @@ export default function ChatWindow() {
     }
   }, []);
 
-  // Cleanup abort controller and scroll timer on unmount
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
@@ -90,14 +109,11 @@ export default function ChatWindow() {
     };
   }, []);
 
-  /** BUG-016: Only scroll when a new message is added, not on content updates */
   useEffect(() => {
     const currentCount = messages.length;
     if (currentCount > prevMessageCountRef.current) {
-      // New message added — scroll immediately
       scrollToBottom();
     } else if (currentCount === prevMessageCountRef.current && isLoading) {
-      // Content update during streaming — debounced scroll
       debouncedScrollToBottom();
     }
     prevMessageCountRef.current = currentCount;
@@ -108,20 +124,6 @@ export default function ChatWindow() {
       textareaRef.current.style.height = "auto";
     }
   }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      const form = e.currentTarget.closest("form");
-      if (form) form.requestSubmit();
-    }
-  };
 
   const handleCitationClick = useCallback((sourceIndex: number) => {
     setHighlightedSource((prev) => (prev === sourceIndex ? null : sourceIndex));
@@ -136,15 +138,14 @@ export default function ChatWindow() {
     textareaRef.current?.focus();
   }, []);
 
-  /** BUG-001: Regenerate now aborts any in-flight request first */
   const handleRegenerate = useCallback(async () => {
     if (isLoading) return;
 
-    // Find the last assistant message to get context for regeneration
-    const lastAssistantIdx = messages.findLastIndex((m) => m.role === "assistant");
+    const lastAssistantIdx = messages.findLastIndex(
+      (m) => m.role === "assistant"
+    );
     if (lastAssistantIdx === -1) return;
 
-    // Find the user message that prompted this assistant response
     const lastUserIdx = messages.findLastIndex(
       (m, i) => m.role === "user" && i < lastAssistantIdx
     );
@@ -152,10 +153,8 @@ export default function ChatWindow() {
 
     const userPrompt = messages[lastUserIdx].content;
 
-    // BUG-001: Cancel any in-flight request
     abortInFlight();
 
-    // Remove the last assistant message
     setMessages((prev) => prev.slice(0, lastAssistantIdx));
     setIsLoading(true);
     setHighlightedSource(null);
@@ -206,7 +205,7 @@ export default function ChatWindow() {
         content: "",
         sources,
         createdAt: new Date().toISOString(),
-        isStreaming: true, // BUG-023: explicit streaming flag
+        isStreaming: true,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -233,19 +232,20 @@ export default function ChatWindow() {
         }
       }
 
-      // Mark streaming as complete
       setMessages((prev) => {
         const updated = [...prev];
         const lastIndex = updated.length - 1;
         if (updated[lastIndex]?.role === "assistant") {
-          updated[lastIndex] = { ...updated[lastIndex], isStreaming: false };
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            isStreaming: false,
+          };
         }
         return updated;
       });
     } catch (error) {
       console.error("Regenerate error:", error);
       if (error instanceof Error && error.name === "AbortError") {
-        // BUG-001: Request was cancelled — don't show error toast
         return;
       }
       if (
@@ -263,7 +263,6 @@ export default function ChatWindow() {
     id: string;
     title: string | null;
   }) {
-    // BUG-001: Cancel any in-flight request before switching
     abortInFlight();
 
     setSessionId(session.id);
@@ -310,11 +309,12 @@ export default function ChatWindow() {
     if (!input.trim() || isLoading) return;
 
     if (input.length > MAX_MESSAGE_LENGTH) {
-      toast.error(`Pesan terlalu panjang. Maksimal ${MAX_MESSAGE_LENGTH} karakter.`);
+      toast.error(
+        `Pesan terlalu panjang. Maksimal ${MAX_MESSAGE_LENGTH} karakter.`
+      );
       return;
     }
 
-    // BUG-001: Cancel any in-flight request before starting new one
     abortInFlight();
 
     const userMessage: Message = {
@@ -381,7 +381,7 @@ export default function ChatWindow() {
         content: "",
         sources,
         createdAt: new Date().toISOString(),
-        isStreaming: true, // BUG-023: explicit streaming flag
+        isStreaming: true,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -408,12 +408,14 @@ export default function ChatWindow() {
         }
       }
 
-      // Mark streaming as complete
       setMessages((prev) => {
         const updated = [...prev];
         const lastIndex = updated.length - 1;
         if (updated[lastIndex]?.role === "assistant") {
-          updated[lastIndex] = { ...updated[lastIndex], isStreaming: false };
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            isStreaming: false,
+          };
         }
         return updated;
       });
@@ -426,7 +428,8 @@ export default function ChatWindow() {
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            content: "Koneksi terputus atau permintaan habis waktu. Silakan coba lagi.",
+            content:
+              "Koneksi terputus atau permintaan habis waktu. Silakan coba lagi.",
             createdAt: new Date().toISOString(),
           },
         ]);
@@ -451,26 +454,28 @@ export default function ChatWindow() {
   }
 
   function handleNewChat() {
-    // BUG-001: Cancel any in-flight request
     abortInFlight();
     setMessages([]);
     setSessionId(null);
     setHighlightedSource(null);
   }
 
-  /** BUG-018: Only refetch sessions on initial mount and after creating new session */
   const sessionsRefreshTriggerRef = useRef(0);
 
-  const lastAssistantIdx = messages.findLastIndex((m) => m.role === "assistant");
+  const lastAssistantIdx = messages.findLastIndex(
+    (m) => m.role === "assistant"
+  );
   const showFollowUps =
     !isLoading &&
     messages.length > 0 &&
     lastAssistantIdx !== -1 &&
     messages[lastAssistantIdx]?.content.length > 0;
 
+  const isEmpty = messages.length === 0;
+
   return (
-    <div className="flex h-full">
-      {/* BUG-014: Skip-to-content link for keyboard/screen-reader navigation */}
+    <div className="flex h-full bg-background">
+      {/* Skip to content */}
       <a
         href="#chat-messages"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
@@ -490,161 +495,140 @@ export default function ChatWindow() {
 
       {/* Main chat area */}
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Header */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card space-y-3">
-          <div className="flex items-center gap-3">
+        {/* Top bar — minimal, SaaS-grade */}
+        <header className="h-14 flex items-center justify-between px-4 border-b border-border/50 bg-background/80 backdrop-blur-sm shrink-0">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="inline-flex items-center justify-center w-[40px] h-[40px] shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg md:hidden"
+              className="inline-flex items-center justify-center w-9 h-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors md:hidden"
               aria-label="Buka riwayat chat"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <PanelLeft className="h-4.5 w-4.5" />
             </button>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground leading-tight">Mimotes AI</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
-                Tanya apa saja berdasarkan dokumen yang tersedia
-              </p>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Bot className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground">
+                Mimotes
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Select value={chatMode} onValueChange={(v) => setChatMode(v as typeof chatMode)}>
-              <SelectTrigger className="w-auto h-[36px] text-xs shrink-0">
-                <span className="truncate">
-                  {chatMode === "knowledge_base" && "📚 Knowledge Base"}
-                  {chatMode === "customer_service" && "💬 Customer Service"}
-                  {chatMode === "sales_agent" && "🤝 Sales Agent"}
-                </span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="knowledge_base">📚 Knowledge Base</SelectItem>
-                <SelectItem value="customer_service">💬 Customer Service</SelectItem>
-                <SelectItem value="sales_agent">🤝 Sales Agent</SelectItem>
-              </SelectContent>
-            </Select>
-            <button
-              onClick={handleNewChat}
-              className="inline-flex items-center justify-center px-4 h-[36px] text-sm bg-muted hover:bg-muted/80 rounded-lg transition-colors shrink-0"
-            >
-              Chat Baru
-            </button>
-          </div>
-        </div>
+          <button
+            onClick={handleNewChat}
+            className="inline-flex items-center gap-1.5 px-3 h-8 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Chat Baru</span>
+          </button>
+        </header>
 
-        {/* Messages — BUG-013: aria-live announces new messages to screen readers */}
+        {/* Messages */}
         <div
           id="chat-messages"
           aria-live="polite"
           aria-relevant="additions"
           aria-label="Percakapan"
-          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
+          className="flex-1 overflow-y-auto min-h-0"
         >
-          {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 px-4">
-              {/* Logo mark */}
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
-                <Sparkles className="h-7 w-7 text-primary" />
-              </div>
-
-              <h2 className="text-xl font-bold text-foreground mb-2">MimoNotes</h2>
-              <p className="text-sm text-muted-foreground text-center max-w-sm mb-8">
-                Tanya apa saja tentang dokumen Anda. AI akan menjawab dengan referensi sumber yang tepat.
-              </p>
-
-              {/* Quick start cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg">
-                <button onClick={() => setInput('Apa saja dokumen yang tersedia?')}
-                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <FileText className="h-4 w-4 text-primary" />
+          {isEmpty ? (
+            /* Empty state — clean SaaS welcome */
+            <div className="flex flex-col items-center justify-center h-full px-4 pb-8">
+              <div className="w-full max-w-lg space-y-8">
+                {/* Brand mark */}
+                <div className="text-center space-y-3">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mx-auto">
+                    <Bot className="h-7 w-7 text-primary" />
                   </div>
-                  <span className="text-sm font-medium text-foreground mb-1">Lihat Dokumen</span>
-                  <span className="text-xs text-muted-foreground">Jelaskan isi dokumen yang tersedia</span>
-                </button>
-
-                <button onClick={() => setInput('Buatkan ringkasan dari semua dokumen')}
-                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <MessageSquare className="h-4 w-4 text-primary" />
+                  <div>
+                    <h1 className="text-xl font-semibold text-foreground">
+                      Ada yang bisa saya bantu?
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Tanya apa saja tentang dokumen Anda
+                    </p>
                   </div>
-                  <span className="text-sm font-medium text-foreground mb-1">Ringkas Semua</span>
-                  <span className="text-xs text-muted-foreground">Buat ringkasan dari semua dokumen</span>
-                </button>
+                </div>
 
-                <button onClick={() => setInput('Jelaskan isi dokumen utama')}
-                  className="flex flex-col items-start p-4 rounded-xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <Search className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground mb-1">Cari Informasi</span>
-                  <span className="text-xs text-muted-foreground">Tanya tentang topik tertentu</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {messages.map((message, index) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              onCitationClick={handleCitationClick}
-              highlightedSource={highlightedSource}
-              isLastMessage={index === lastAssistantIdx && message.role === "assistant"}
-              /** BUG-023: Use explicit isStreaming flag instead of content === "" */
-              isStreaming={message.isStreaming ?? false}
-              isLoading={isLoading}
-              onRegenerate={handleRegenerate}
-            />
-          ))}
-
-          {/* Loading indicator — only when waiting for first chunk */}
-          {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex items-start gap-3" role="status" aria-label="AI sedang menulis">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                <Bot className="h-4 w-4" />
-              </div>
-              <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" />
-                  <div
-                    className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  />
+                {/* Suggestion cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s.label}
+                      onClick={() => setInput(s.prompt)}
+                      className="group flex items-center gap-3 p-4 rounded-xl border border-border/60 bg-card hover:border-primary/30 hover:bg-primary/[0.03] transition-all text-left"
+                    >
+                      <div className="w-9 h-9 shrink-0 rounded-lg bg-muted/80 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                        <s.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      <span className="text-sm font-medium text-foreground">
+                        {s.label}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-          )}
+          ) : (
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+              {messages.map((message, index) => (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  onCitationClick={handleCitationClick}
+                  highlightedSource={highlightedSource}
+                  isLastMessage={
+                    index === lastAssistantIdx && message.role === "assistant"
+                  }
+                  isStreaming={message.isStreaming ?? false}
+                  isLoading={isLoading}
+                  onRegenerate={handleRegenerate}
+                />
+              ))}
 
-          <div ref={messagesEndRef} />
+              {/* Loading indicator */}
+              {isLoading &&
+                messages[messages.length - 1]?.role === "user" && (
+                  <div
+                    className="flex items-start gap-3"
+                    role="status"
+                    aria-label="AI sedang menulis"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Bot className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="bg-muted/50 rounded-2xl rounded-tl-sm px-4 py-3">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-full animate-bounce" />
+                        <div
+                          className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        />
+                        <div
+                          className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-          {/* BUG-013: Screen-reader-only status for streaming */}
-          {isLoading && (
-            <div className="sr-only" role="status">
-              {messages[messages.length - 1]?.role === "user"
-                ? "AI sedang menulis jawaban..."
-                : "AI sedang menulis..."}
+              <div ref={messagesEndRef} />
+
+              {isLoading && (
+                <div className="sr-only" role="status">
+                  {messages[messages.length - 1]?.role === "user"
+                    ? "AI sedang menulis jawaban..."
+                    : "AI sedang menulis..."}
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Follow-up suggestions */}
         {showFollowUps && (
-          <div className="px-4 sm:px-6 pb-2 flex flex-wrap gap-2">
+          <div className="max-w-3xl mx-auto w-full px-4 pb-2 flex flex-wrap gap-2 shrink-0">
             {FOLLOW_UP_SUGGESTIONS.map((suggestion) => (
               <button
                 key={suggestion}
@@ -653,47 +637,35 @@ export default function ChatWindow() {
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-1.5",
                   "text-xs font-medium text-muted-foreground",
-                  "bg-muted hover:bg-muted/80 rounded-full",
+                  "bg-muted/50 hover:bg-muted rounded-full",
                   "transition-colors duration-150",
-                  "border border-border hover:border-border/80",
+                  "border border-border/60 hover:border-border",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 )}
               >
-                <Sparkles className="h-3 w-3" />
                 {suggestion}
               </button>
             ))}
           </div>
         )}
 
-        {/* Input */}
-        <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 border-t border-border bg-card">
-          <form onSubmit={handleSubmit} className="flex gap-3">
-            <textarea
-              ref={textareaRef}
+        {/* Input area */}
+        <div className="shrink-0 border-t border-border/50 bg-background">
+          <div className="max-w-3xl mx-auto px-4 py-3">
+            <AnimatedAIInput
               value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ketik pertanyaan Anda... (Enter untuk kirim, Shift+Enter untuk baris baru)"
-              disabled={isLoading}
-              rows={1}
-              className="flex-1 px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all disabled:opacity-50 resize-none overflow-hidden min-h-[48px] max-h-[160px]"
+              onChange={setInput}
+              onSubmit={() => {
+                if (!input.trim() || isLoading) return;
+                handleSubmit({
+                  preventDefault: () => {},
+                } as React.FormEvent);
+              }}
+              chatMode={chatMode}
+              onModeChange={setChatMode}
+              isLoading={isLoading}
             />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="inline-flex items-center justify-center w-[48px] h-[48px] bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            </button>
-          </form>
+          </div>
         </div>
       </div>
     </div>

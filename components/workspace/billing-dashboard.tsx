@@ -118,6 +118,32 @@ export default function BillingDashboard() {
               {data.subscription.status}
             </span>
           </div>
+          {data.plan.name === "free" && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/billing/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan: "pro", interval: "month" }),
+                  });
+                  if (res.ok) {
+                    const { url } = await res.json();
+                    if (url) window.location.href = url;
+                  } else {
+                    const err = await res.json();
+                    alert(err.error || "Gagal membuat checkout session");
+                  }
+                } catch {
+                  alert("Gagal menghubungi server");
+                }
+              }}
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
+            >
+              <ArrowUpRight className="size-4" />
+              Upgrade to Pro — $29/mo
+            </button>
+          )}
         </div>
 
         <div className="bg-card rounded-xl border p-6">

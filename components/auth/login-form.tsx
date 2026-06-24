@@ -9,6 +9,16 @@ import Link from "next/link";
 export default function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  function validate(email: string, password: string) {
+    const newErrors: { email?: string; password?: string } = {};
+    if (!email.trim()) newErrors.email = "Email wajib diisi";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Format email tidak valid";
+    if (!password) newErrors.password = "Password wajib diisi";
+    else if (password.length < 6) newErrors.password = "Password minimal 6 karakter";
+    return newErrors;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -17,6 +27,14 @@ export default function LoginForm() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+
+    const validationErrors = validate(email, password);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
+    setErrors({});
 
     try {
       const result = await signIn("credentials", {
@@ -58,27 +76,51 @@ export default function LoginForm() {
               id="email"
               name="email"
               type="email"
-              required
-              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+              autoComplete="email"
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${
+                errors.email
+                  ? "border-destructive focus:ring-destructive/30"
+                  : "border-border"
+              }`}
               placeholder="admin@example.com"
+              onChange={() => errors.email && setErrors((prev) => ({ ...prev, email: undefined }))}
             />
+            {errors.email && (
+              <p className="mt-1.5 text-sm text-destructive">{errors.email}</p>
+            )}
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-foreground mb-1"
-            >
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-foreground"
+              >
+                Password
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-primary hover:text-primary/80 font-medium"
+              >
+                Lupa password?
+              </Link>
+            </div>
             <input
               id="password"
               name="password"
               type="password"
-              required
-              className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+              autoComplete="current-password"
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${
+                errors.password
+                  ? "border-destructive focus:ring-destructive/30"
+                  : "border-border"
+              }`}
               placeholder="••••••••"
+              onChange={() => errors.password && setErrors((prev) => ({ ...prev, password: undefined }))}
             />
+            {errors.password && (
+              <p className="mt-1.5 text-sm text-destructive">{errors.password}</p>
+            )}
           </div>
 
           <button

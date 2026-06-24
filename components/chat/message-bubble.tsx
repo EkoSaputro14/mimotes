@@ -24,7 +24,6 @@ interface Message {
   content: string;
   sources?: Source[];
   createdAt: string;
-  /** BUG-023: Explicit streaming flag */
   isStreaming?: boolean;
 }
 
@@ -40,18 +39,10 @@ function formatTime(dateStr: string): string {
   }
 }
 
-/**
- * BUG-002: Check if text contains citation patterns like [1], [2], [1,2]
- * Uses negative lookahead (?!\() to avoid matching markdown links [text](url)
- */
 function hasCitations(text: string): boolean {
   return /\[\d+(?:,\s*\d+)*\](?!\()/g.test(text);
 }
 
-/**
- * BUG-002: Parse text with inline citation markers into segments.
- * Regex uses negative lookahead to skip markdown links like [text](url).
- */
 function parseContentWithCitations(
   text: string,
   onCitationClick: (index: number) => void,
@@ -63,12 +54,10 @@ function parseContentWithCitations(
   let match;
 
   while ((match = regex.exec(text)) !== null) {
-    // Add text before citation
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
 
-    // Parse citation numbers
     const nums = match[1].split(",").map((n) => parseInt(n.trim(), 10));
     parts.push(
       <span key={`cite-${match.index}`} className="inline-flex items-center gap-0.5 mx-0.5">
@@ -86,7 +75,6 @@ function parseContentWithCitations(
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
@@ -94,10 +82,6 @@ function parseContentWithCitations(
   return parts;
 }
 
-/**
- * BUG-002: Process children from react-markdown, handling both string and array types.
- * Applies citation parsing to all string segments.
- */
 function processMarkdownChildren(
   children: React.ReactNode,
   onCitationClick: (index: number) => void,
@@ -123,10 +107,6 @@ function processMarkdownChildren(
   return children;
 }
 
-/**
- * BUG-017: Memoized markdown components.
- * Uses a ref for activeCitation to avoid recreating components on every click.
- */
 function createMarkdownComponents(
   onCitationClick: (index: number) => void,
   activeCitationRef: React.RefObject<number | null>
@@ -136,43 +116,43 @@ function createMarkdownComponents(
 
   return {
     p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
-      <p className="mb-3 last:mb-0 leading-[1.7]" {...props}>
+      <p className="mb-3 last:mb-0 leading-[1.75]" {...props}>
         {withCitations(children)}
       </p>
     ),
     ul: ({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
-      <ul className="mb-3 ml-4 list-disc space-y-1.5 marker:text-muted-foreground/50" {...props}>
+      <ul className="mb-3 ml-4 list-disc space-y-1 marker:text-muted-foreground/40" {...props}>
         {children}
       </ul>
     ),
     ol: ({ children, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
-      <ol className="mb-3 ml-4 list-decimal space-y-1.5 marker:text-muted-foreground/50 marker:text-xs" {...props}>
+      <ol className="mb-3 ml-4 list-decimal space-y-1 marker:text-muted-foreground/40 marker:text-xs" {...props}>
         {children}
       </ol>
     ),
     li: ({ children, ...props }: React.HTMLAttributes<HTMLLIElement>) => (
-      <li className="leading-[1.6]" {...props}>
+      <li className="leading-[1.65]" {...props}>
         {withCitations(children)}
       </li>
     ),
     h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h1 className="text-lg font-bold mb-2 mt-4 first:mt-0" {...props}>
+      <h1 className="text-lg font-semibold mb-2 mt-4 first:mt-0 text-foreground" {...props}>
         {children}
       </h1>
     ),
     h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h2 className="text-base font-bold mb-2 mt-3 first:mt-0" {...props}>
+      <h2 className="text-base font-semibold mb-2 mt-3 first:mt-0 text-foreground" {...props}>
         {children}
       </h2>
     ),
     h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-      <h3 className="text-sm font-semibold mb-1.5 mt-2.5 first:mt-0" {...props}>
+      <h3 className="text-sm font-semibold mb-1.5 mt-2.5 first:mt-0 text-foreground" {...props}>
         {children}
       </h3>
     ),
     blockquote: ({ children, ...props }: React.HTMLAttributes<HTMLQuoteElement>) => (
       <blockquote
-        className="border-l-3 border-primary/30 pl-3 py-1 mb-3 text-muted-foreground italic"
+        className="border-l-2 border-primary/20 pl-3 py-1 mb-3 text-muted-foreground italic"
         {...props}
       >
         {children}
@@ -183,7 +163,7 @@ function createMarkdownComponents(
       if (isInline) {
         return (
           <code
-            className="bg-muted text-foreground px-1.5 py-0.5 rounded text-[0.85em] font-mono"
+            className="bg-muted/60 text-foreground px-1.5 py-0.5 rounded text-[0.85em] font-mono"
             {...props}
           >
             {children}
@@ -198,7 +178,7 @@ function createMarkdownComponents(
     },
     pre: ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
       <pre
-        className="bg-card border border-border rounded-lg p-4 overflow-x-auto mb-3 text-[13px] leading-[1.6]"
+        className="bg-muted/30 border border-border/50 rounded-xl p-4 overflow-x-auto mb-3 text-[13px] leading-[1.6]"
         {...props}
       >
         {children}
@@ -224,19 +204,19 @@ function createMarkdownComponents(
     ),
     th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
       <th
-        className="border border-border bg-muted px-3 py-2 text-left font-semibold text-xs"
+        className="border border-border bg-muted/40 px-3 py-2 text-left font-semibold text-xs"
         {...props}
       >
         {children}
       </th>
     ),
     td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
-      <td className="border border-border px-3 py-2" {...props}>
+      <td className="border border-border/50 px-3 py-2" {...props}>
         {children}
       </td>
     ),
     hr: (props: React.HTMLAttributes<HTMLHRElement>) => (
-      <hr className="border-border my-4" {...props} />
+      <hr className="border-border/50 my-4" {...props} />
     ),
   };
 }
@@ -261,12 +241,10 @@ export default function MessageBubble({
   const isUser = message.role === "user";
   const [activeCitation, setActiveCitation] = useState<number | null>(null);
 
-  /** BUG-017: Ref for activeCitation — components read from ref, not value */
   const activeCitationRef = useRef<number | null>(null);
   activeCitationRef.current = activeCitation;
 
   const timestamp = formatTime(message.createdAt);
-  /** BUG-015: Full datetime string for screen readers */
   const fullTimestamp = (() => {
     try {
       const d = new Date(message.createdAt);
@@ -293,7 +271,6 @@ export default function MessageBubble({
     [onCitationClick]
   );
 
-  /** BUG-017: Memoized with stable handleCitationClick — ref provides activeCitation */
   const markdownComponents = useMemo(
     () => createMarkdownComponents(handleCitationClick, activeCitationRef),
     [handleCitationClick]
@@ -306,49 +283,47 @@ export default function MessageBubble({
         isUser ? "items-end" : "items-start"
       )}
       role="article"
-      aria-label={isUser ? "Anda" : "MimoNotes"}
+      aria-label={isUser ? "Anda" : "Mimotes"}
     >
+      {/* AI label */}
+      {!isUser && (
+        <div className="flex items-center gap-2 px-1 mb-1.5 ml-1">
+          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+            <Bot className="h-3 w-3 text-primary" />
+          </div>
+          <span className="text-xs font-medium text-muted-foreground">
+            Mimotes
+          </span>
+        </div>
+      )}
+
       <div
         className={cn(
-          "flex items-start gap-3",
+          "flex items-start gap-3 w-full",
           isUser && "flex-row-reverse"
         )}
       >
-        {/* Avatar */}
+        {/* Message content */}
         <div
           className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0",
-            isUser
-              ? "bg-brand-100 text-brand-600 font-semibold"
-              : "bg-primary text-primary-foreground"
+            "flex flex-col gap-1",
+            isUser ? "max-w-[85%] md:max-w-[70%]" : "max-w-[85%] md:max-w-[80%]"
           )}
         >
-          {isUser ? "U" : <Bot className="h-4 w-4" />}
-        </div>
-
-        {/* Content */}
-        <div className="flex flex-col gap-1 max-w-[85%] md:max-w-[80%]">
-          {/* AI header row */}
-          {!isUser && (
-            <div className="flex items-center gap-1.5 px-1 mb-0.5">
-              <span className="text-[11px] font-semibold text-muted-foreground">MimoNotes</span>
-            </div>
-          )}
-
           <div
             className={cn(
               "relative px-4 py-3",
               isUser
-                ? "bg-brand-50 text-foreground border border-brand-100 rounded-2xl rounded-tr-sm"
-                : "bg-card text-foreground border border-border/50 rounded-2xl rounded-tl-sm"
+                ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-md"
+                : "bg-muted/40 text-foreground border border-border/40 rounded-2xl rounded-tl-md"
             )}
           >
             {isUser ? (
-              <div className="whitespace-pre-wrap break-words leading-[1.6]">
+              <div className="whitespace-pre-wrap break-words leading-[1.65] text-[14px]">
                 {message.content}
               </div>
             ) : (
-              <div className="markdown-body break-words">
+              <div className="markdown-body break-words text-[14px]">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
@@ -357,13 +332,13 @@ export default function MessageBubble({
                   {message.content}
                 </ReactMarkdown>
                 {isStreaming && (
-                  <span className="inline-block w-0.5 h-4 bg-primary animate-pulse ml-0.5 align-text-bottom" />
+                  <span className="inline-block w-[3px] h-4 bg-primary rounded-full animate-pulse ml-0.5 align-text-bottom" />
                 )}
               </div>
             )}
           </div>
 
-          {/* FeedbackBar — for assistant messages only */}
+          {/* FeedbackBar */}
           {!isUser && (
             <FeedbackBar
               content={message.content}
@@ -374,9 +349,9 @@ export default function MessageBubble({
             />
           )}
 
-          {/* Timestamp — always visible, not hover-only */}
+          {/* Timestamp */}
           {timestamp && (
-            <span className="text-[11px] text-muted-foreground px-1">
+            <span className="text-[11px] text-muted-foreground/60 px-1">
               <span className="sr-only">{fullTimestamp}</span>
               <span aria-hidden="true">{timestamp}</span>
             </span>
@@ -384,19 +359,22 @@ export default function MessageBubble({
         </div>
       </div>
 
-      {/* Sources — per-message, below the bubble, with prominent header */}
+      {/* Sources */}
       {!isUser && hasSourceData && (
-        <div className="mt-2 ml-11 space-y-1.5 max-w-[85%] md:max-w-[80%]">
+        <div className="mt-2 ml-9 space-y-1.5 max-w-[85%] md:max-w-[80%]">
           <div className="flex items-center gap-1.5 mt-1 mb-1.5">
-            <BookOpen className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-semibold text-primary">Sumber</span>
+            <BookOpen className="h-3.5 w-3.5 text-primary/70" />
+            <span className="text-xs font-medium text-primary/70">Sumber</span>
           </div>
           {sources.map((source, index) => (
             <SourcePreview
               key={`${message.id}-source-${index}`}
               source={source}
               index={index + 1}
-              isHighlighted={activeCitation === index + 1 || highlightedSource === index + 1}
+              isHighlighted={
+                activeCitation === index + 1 ||
+                highlightedSource === index + 1
+              }
             />
           ))}
         </div>

@@ -334,6 +334,7 @@ export default function AISettingsForm() {
               Reset
             </button>
           </div>
+          <p className="mt-1 text-xs text-muted-foreground">Endpoint API provider. Ubah hanya jika menggunakan provider custom.</p>
         </div>
 
         {/* Detect Models Button */}

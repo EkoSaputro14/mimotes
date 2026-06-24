@@ -17,6 +17,9 @@ import {
   MessageCircle,
   Eye,
   Filter,
+  Flame,
+  Star,
+  Snowflake,
 } from "lucide-react";
 import { NotificationBar } from "@/components/leads/notification-bar";
 
@@ -54,10 +57,10 @@ interface LeadsData {
   };
 }
 
-const SCORE_EMOJI: Record<string, string> = {
-  high: "🔥",
-  medium: "⭐",
-  low: "❄️",
+const SCORE_ICONS: Record<string, React.ReactNode> = {
+  high: <Flame className="size-4" />,
+  medium: <Star className="size-4" />,
+  low: <Snowflake className="size-4" />,
 };
 
 const SCORE_COLORS: Record<string, string> = {
@@ -132,7 +135,7 @@ export default function LeadsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Leads</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-neutral-600">
             {data?.stats.total || 0} leads · {data?.stats.new || 0} baru
           </p>
         </div>
@@ -155,15 +158,15 @@ export default function LeadsPage() {
         <div className="flex gap-4 text-sm">
           <span className="flex items-center gap-1">
             <span className="font-medium">{data.stats.high}</span>
-            <span className="text-red-500">🔥 Hot</span>
+            <span className="text-red-500 flex items-center gap-1"><Flame className="size-3.5" /> Hot</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="font-medium">{data.stats.medium}</span>
-            <span className="text-amber-500">⭐ Warm</span>
+            <span className="text-amber-500 flex items-center gap-1"><Star className="size-3.5" /> Warm</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="font-medium">{data.stats.low}</span>
-            <span className="text-gray-400">❄️ Cold</span>
+            <span className="text-gray-400 flex items-center gap-1"><Snowflake className="size-3.5" /> Cold</span>
           </span>
         </div>
       )}
@@ -179,28 +182,34 @@ export default function LeadsPage() {
             className="pl-9 h-9"
           />
         </div>
-        <Select value={filterSource} onValueChange={setFilterSource}>
-          <SelectTrigger className="w-[100px] h-9">
-            <Filter className="size-3 mr-1" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua</SelectItem>
-            <SelectItem value="widget">Chatbot</SelectItem>
-            <SelectItem value="whatsapp">WhatsApp</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterScore} onValueChange={setFilterScore}>
-          <SelectTrigger className="w-[100px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Skor</SelectItem>
-            <SelectItem value="high">🔥 Hot</SelectItem>
-            <SelectItem value="medium">⭐ Warm</SelectItem>
-            <SelectItem value="low">❄️ Cold</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Sumber</span>
+          <Select value={filterSource} onValueChange={setFilterSource}>
+            <SelectTrigger className="w-[100px] h-9">
+              <Filter className="size-3 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua</SelectItem>
+              <SelectItem value="widget">Chatbot</SelectItem>
+              <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Skor</span>
+          <Select value={filterScore} onValueChange={setFilterScore}>
+            <SelectTrigger className="w-[100px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Skor</SelectItem>
+              <SelectItem value="high">Hot</SelectItem>
+              <SelectItem value="medium">Warm</SelectItem>
+              <SelectItem value="low">Cold</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Lead List */}
@@ -226,7 +235,7 @@ export default function LeadsPage() {
               <span
                 className={`text-lg ${SCORE_COLORS[lead.score || "low"]} px-2 py-1 rounded-md border`}
               >
-                {SCORE_EMOJI[lead.score || "low"]}
+                {SCORE_ICONS[lead.score || "low"]}
               </span>
 
               {/* Lead Info */}
@@ -251,16 +260,20 @@ export default function LeadsPage() {
 
               {/* Actions */}
               <div className="flex items-center gap-2">
-                {lead.whatsapp && (
-                  <Button
-                    size="sm"
-                    className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => handleWhatsApp(lead)}
-                  >
-                    <MessageCircle className="size-4 mr-1" />
-                    WhatsApp
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  className={`h-8 px-3 text-white ${
+                    lead.whatsapp
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-gray-300 cursor-not-allowed"
+                  }`}
+                  onClick={() => lead.whatsapp && handleWhatsApp(lead)}
+                  disabled={!lead.whatsapp}
+                  title={lead.whatsapp ? "Chat via WhatsApp" : "Tidak ada nomor WhatsApp"}
+                >
+                  <MessageCircle className="size-4 mr-1" />
+                  WhatsApp
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"

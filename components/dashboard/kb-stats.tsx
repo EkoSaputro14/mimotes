@@ -81,7 +81,7 @@ export function KnowledgeBaseStats() {
               <p className="text-lg font-bold">
                 {data?.totalChunks?.toLocaleString() || 0}
               </p>
-              <p className="text-xs text-muted-foreground">Chunks</p>
+              <p className="text-xs text-muted-foreground">Sections</p>
             </div>
           </div>
         </div>

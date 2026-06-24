@@ -112,6 +112,9 @@ services:
       
       # Upload size limit (100MB for large PDFs)
       MAX_FILE_SIZE: "104857600"
+
+      # 9Router AI Gateway (host-based, reachable via host.docker.internal)
+      NINEROUTER_URL: "${NINEROUTER_URL:-http://host.docker.internal:20128/v1}"
     volumes:
       - uploads_data:/app/public/uploads
     deploy:

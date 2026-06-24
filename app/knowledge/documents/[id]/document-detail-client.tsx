@@ -183,7 +183,7 @@ export default function DocumentDetailClient({ document }: { document: DocumentD
                 <Badge variant={statusConfig.variant} className="text-xs">{statusConfig.icon} {statusConfig.label}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Chunks</span>
+                <span className="text-muted-foreground">Sections</span>
                 <span className="font-medium">{document.status === "processing" ? "..." : document._count.chunks}</span>
               </div>
               <div className="flex justify-between">
@@ -256,7 +256,7 @@ export default function DocumentDetailClient({ document }: { document: DocumentD
                 <svg className="mr-2 size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Cari Chunk Serupa
+                Cari Section Serupa
               </Button>
             </Link>
             <Link href="/knowledge/chunks" className="block">
@@ -264,7 +264,7 @@ export default function DocumentDetailClient({ document }: { document: DocumentD
                 <svg className="mr-2 size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                Lihat Semua Chunk
+                Lihat Semua Section
               </Button>
             </Link>
           </div>
@@ -275,7 +275,7 @@ export default function DocumentDetailClient({ document }: { document: DocumentD
               onClick={() => setShowChunks(!showChunks)}
               className="w-full flex items-center justify-between p-4 text-sm font-medium text-foreground"
             >
-              <span>Chunk ({document.status === "processing" ? "..." : document._count.chunks})</span>
+              <span>Sections ({document.status === "processing" ? "..." : document._count.chunks})</span>
               <svg className={`size-4 text-muted-foreground transition-transform ${showChunks ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -283,7 +283,7 @@ export default function DocumentDetailClient({ document }: { document: DocumentD
             {showChunks && (
               <div className="border-t p-4">
                 {document.status === "processing" ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Chunk akan muncul setelah selesai diproses</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">Section akan muncul setelah selesai diproses</p>
                 ) : document.status === "failed" ? (
                   <p className="text-sm text-destructive text-center py-4">Dokumen gagal diproses</p>
                 ) : (

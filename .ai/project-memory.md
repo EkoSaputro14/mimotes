@@ -1,43 +1,50 @@
 # Project Memory — Mimotes
 
 > Sumber kebenaran utama untuk konteks proyek. Dibaca SEBELUM setiap tugas.
-> Terakhir diperbarui: 2025-06-05
+> Terakhir diperbarui: 2026-06-24
 
 ---
 
 ## Project Overview
 
-**Mimotes** adalah chatbot AI berbasis web menggunakan teknologi RAG (Retrieval-Augmented Generation). User mengupload dokumen, sistem memproses menjadi chunks + embeddings, lalu chatbot menjawab pertanyaan berdasarkan isi dokumen tersebut.
+**Mimotes** adalah platform chatbot AI berbasis web dengan teknologi RAG (Retrieval-Augmented Generation). User mengupload dokumen, sistem memproses menjadi chunks + embeddings, lalu chatbot menjawab pertanyaan berdasarkan isi dokumen tersebut.
 
 - **Nama**: Mimotes
-- **Versi**: 0.1.0
-- **Status**: Active Development (Phase 5 selesai, Phase 6-7 pending)
-- **Repository**: `/home/ekolepi/proyek/mimotes`
+- **Versi**: 0.3.0
+- **Status**: Active — Production-capable (workspace system, billing, API platform, widget, audit, RAG hardened)
+- **Repo local**: `C:\Users\SMANSA\mimotes`
+- **Access**: Cloudflare Tunnel → `mimotes.ekohomelab.online`
+- **Port**: 3100 (Docker host) → 3000 (container)
 
 ---
 
 ## Architecture
 
-### Sistem Architecture
+### System Overview
+```
+Browser → Cloudflare Tunnel → Docker (port 3100)
+  → Next.js 16 App Router (standalone, node server.js)
+  → PostgreSQL 16 + pgvector (RLS per workspace)
+  → AI Providers (Mimo/OpenAI/Custom/etc)
+  → Embedding (API or local feature-hashing fallback)
+```
 
-```
-Browser → Next.js App Router → API Routes → RAG Pipeline → AI Provider
-                                    ↓
-                            PostgreSQL + pgvector
-                                    ↓
-                            File System (/uploads)
-```
+### Key Architecture Decisions (2026-06-24)
+1. **Workspace-aware AI settings**: Priority = Workspace Settings > Global Settings > Env
+2. **AsyncLocalStorage** for workspace context per-request (bypasses Prisma connection pool RLS)
+3. **Global settings** in `settings` table, workspace settings in `workspace_settings` table
+4. **RLS policies** use `workspace_id` for defense-in-depth
+5. **Stripe billing** with DB-level idempotency via `StripeWebhookEvent`
+6. **Entitlements** enforced on 14+ API routes (30s cache)
+7. **Audit logging** fire-and-forget, 41%+ route coverage
+8. **Conversation history** last 10 messages + summarization (>3000 chars)
+9. **Multimodal RAG** with Tesseract.js OCR + AI Vision captioning
+10. **Null safety** on streaming chunks for cross-provider compatibility
 
 ### RAG Pipeline Flow
-
-1. **Upload**: File/URL → Parse → Sanitize → Chunk → Embed → Store di pgvector
-2. **Chat**: Question → Embed query → Cosine similarity search → Build context → Stream AI response
-
-### Rendering Strategy
-
-- **Server Components**: Default untuk semua pages (auth check, data fetching)
-- **Client Components**: Untuk interaktivitas (forms, chat, state management)
-- **Route Groups**: `(auth)` dan `(admin)` tidak menambah URL segment
+1. **Upload**: File/URL/Image → Parse → Sanitize → Chunk → Embed → Store
+2. **Chat**: Question → Embed query → Cosine search (HNSW) → Build context → Stream AI
+3. **History**: Fetch last 10 messages → Summarize if >3000 chars → Pass to AI as message array
 
 ---
 
@@ -45,364 +52,473 @@ Browser → Next.js App Router → API Routes → RAG Pipeline → AI Provider
 
 | Komponen | Teknologi | Versi |
 |----------|-----------|-------|
-| Framework | Next.js (App Router, Turbopack) | 16.2.7 |
-| React | React | 19.2.4 |
+| Framework | Next.js (App Router, standalone) | 16.2.7 |
+| React | React | 19.x |
 | Language | TypeScript | ^5 |
 | Database | PostgreSQL + pgvector | 16 |
 | ORM | Prisma | 6.19.3 |
-| Auth | NextAuth v5 (beta) | 5.0.0-beta.31 |
+| Auth | NextAuth v5 (Credentials, JWT) | 5.0.0-beta.31 |
 | AI SDK | OpenAI SDK + Vercel AI SDK | 6.41.0 / 6.0.194 |
 | Styling | Tailwind CSS | v4 |
-| UI Components | shadcn/ui (base-nova) | 4.10.0 |
+| UI | shadcn/ui (base-nova) | 4.10.0 |
 | Charts | Recharts | 3.8.1 |
-| Rate Limiting | @upstash/ratelimit | 2.0.8 |
-| Deployment | Docker Compose | — |
+| Billing | Stripe (checkout, portal, webhook) | — |
+| Rate Limiting | @upstash/ratelimit + in-memory fallback | — |
+| Email | Resend + SMTP provider | — |
+| Deploy | Docker Compose (multi-stage, 5 stages) | — |
 
 ---
 
-## Directory Structure
+## Codebase Metrics (2026-06-24)
+
+| Category | Count |
+|----------|-------|
+| App files (routes/pages) | 176 |
+| Component files | 139 |
+| Lib files | 64 |
+| API routes | 110+ |
+| Admin pages | 23 |
+| Prisma models | 36 |
+| Component directories | 20 |
+
+---
+
+## Directory Structure (Current)
 
 ```
 mimotes/
-├── app/                          # Next.js App Router
+├── app/                          # Next.js App Router (176 files)
 │   ├── layout.tsx                # Root layout
 │   ├── page.tsx                  # Homepage (public)
-│   ├── globals.css               # Tailwind + shadcn CSS vars
-│   ├── (auth)/                   # Auth pages (login, register)
-│   ├── (admin)/                  # Admin pages (documents, settings)
+│   ├── (auth)/                   # Login, register
+│   ├── (admin)/                  # Admin pages (23 pages)
+│   │   ├── documents/            # Document list + upload
+│   │   ├── leads/                # Lead management
+│   │   ├── onboarding/           # Onboarding wizard
+│   │   ├── settings/             # 14 settings pages
+│   │   │   ├── account/          # Profile, name, timezone
+│   │   │   ├── api-keys/         # API key management
+│   │   │   ├── audit/            # Audit logs viewer
+│   │   │   ├── baileys/          # WhatsApp Baileys config
+│   │   │   ├── billing/          # Subscription & billing
+│   │   │   ├── invoices/         # Invoice history
+│   │   │   ├── language/         # Language selector
+│   │   │   ├── leads/            # Leads settings
+│   │   │   ├── mcp/              # MCP server config
+│   │   │   ├── notifications/    # Notification settings
+│   │   │   ├── page.tsx          # AI provider settings (GLOBAL)
+│   │   │   ├── security/         # Password, login history
+│   │   │   ├── usage/            # Usage analytics
+│   │   │   ├── whatsapp/         # WhatsApp integration
+│   │   │   ├── widget/           # Widget config
+│   │   │   └── workspace/        # Members, roles, AI per-workspace
+│   │   └── whatsapp/             # WhatsApp conversations
 │   ├── chat/                     # Public chat page
-│   ├── dashboard/                # Dashboard page
+│   ├── dashboard/                # Dashboard
 │   ├── ai/                       # AI playground & prompts
-│   ├── analytics/                # Analytics pages
-│   ├── knowledge/                # Knowledge base management
-│   └── api/                      # ~30 API routes
-├── components/                   # ~45 React components
+│   ├── analytics/                # Chat, cost, usage, leads
+│   ├── knowledge/                # KB explorer, chunks, search, images
+│   ├── developer/                # Developer portal
+│   └── api/                      # 110+ API routes
+│
+├── components/                   # 139 component files (20 dirs)
+│   ├── ai/                       # Playground, prompts, compare, params
+│   ├── analytics/                # Charts, KPIs, date range
+│   ├── audit/                    # Audit log viewer
 │   ├── auth/                     # Login & register forms
-│   ├── chat/                     # Chat window, messages, sources
-│   ├── documents/                # Document list & upload
-│   ├── settings/                 # AI settings form
-│   ├── ai/                       # Playground, prompts, compare
-│   ├── analytics/                # Charts & KPIs
-│   ├── dashboard/                # Dashboard widgets
-│   ├── knowledge/                # Document explorer, chunks, search
+│   ├── billing/                  # Billing UI
+│   ├── chat/                     # ChatWindow, MessageBubble, SourceCard
+│   ├── dashboard/                # StatCard, UsageChart, RecentChats
+│   ├── developers/               # API keys, docs, usage metrics
+│   ├── documents/                # DocumentList, UploadForm
+│   ├── knowledge/                # DocExplorer, ChunkViewer, SimSearch
+│   ├── landing/                  # Landing page components
 │   ├── layout/                   # Shell, sidebar, nav
-│   └── ui/                       # 17 shadcn/ui primitives
-├── lib/                          # Business logic
+│   ├── leads/                    # Lead management
+│   ├── onboarding/               # Onboarding wizard
+│   ├── settings/                 # AI settings form
+│   ├── ui/                       # 17 shadcn/ui primitives
+│   ├── whatsapp/                 # WhatsApp UI
+│   ├── widget/                   # Widget settings
+│   └── workspace/                # Workspace AI settings, members
+│
+├── lib/                          # 64 backend logic files
 │   ├── actions.ts                # Server actions (auth)
-│   ├── ai-provider.ts            # Multi-provider AI factory
+│   ├── ai-provider.ts            # Multi-provider AI (workspace-aware)
 │   ├── analytics.ts              # Analytics utilities
+│   ├── api-auth.ts               # Bearer token middleware
+│   ├── api-keys.ts               # Key gen, SHA-256 hash, CRUD
+│   ├── api-rate-limit.ts         # Per-workspace rate limiting
+│   ├── api-usage.ts              # Usage tracking, summaries
+│   ├── audit.ts                  # logAudit, queryLogs, export CSV
 │   ├── auth.ts                   # NextAuth config
-│   ├── prisma.ts                 # Prisma singleton
+│   ├── billing.ts                # isSubscriptionActive, reSubscribe
+│   ├── crypto.ts                 # AES-256-GCM encryption
+│   ├── entitlements.ts           # Feature gating (30s cache)
+│   ├── invitations.ts            # Invitation system
+│   ├── lead-detect.ts            # Lead detection
+│   ├── lead-intelligence.ts      # Lead intelligence
+│   ├── lead-intent.ts            # Lead intent analysis
+│   ├── leads.ts                  # Lead CRUD
+│   ├── middleware/tenant.ts       # Workspace tenant middleware
+│   ├── prisma.ts                 # Prisma singleton + workspace context
+│   ├── prompts/templates.ts      # KB/CS/Sales mode prompts
 │   ├── ratelimit.ts              # Rate limiter
-│   ├── settings.ts               # DB settings with cache
-│   ├── streaming.ts              # Streaming helpers
-│   ├── utils.ts                  # Utilities
+│   ├── rbac.ts                   # Role-based access control
+│   ├── settings.ts               # DB settings + AsyncLocalStorage
+│   ├── stripe.ts                 # Stripe lazy-init, webhook, checkout
+│   ├── usage.ts                  # Usage limits
+│   ├── widget.ts                 # Widget CRUD, key gen, origin validate
+│   ├── whatsapp/                 # WhatsApp client, processor, webhook
+│   ├── email/                    # Email providers (Resend, SMTP)
+│   ├── mcp/                      # MCP client, manager, server, tools
 │   └── rag/                      # RAG pipeline
-│       ├── chain.ts              # RAG response generation
-│       ├── chunker.ts            # Text chunking
-│       ├── embedder.ts           # Embedding generation
-│       ├── parser.ts             # File parsers
-│       └── vectorstore.ts        # pgvector operations
-├── prisma/                       # Database schema & migrations
-├── scripts/                      # Setup & seed scripts
-├── plans/                        # Architecture & implementation docs
-├── .ai/                          # AI agent context files
-├── public/                       # Static assets
+│       ├── chain.ts              # generateRAGResponse, streamRAGResponse
+│       ├── chunker.ts            # Text → chunks
+│       ├── embedder.ts           # API + local fallback
+│       ├── embedding-providers/  # Provider abstraction layer
+│       ├── image-processor.ts    # Tesseract OCR + AI Vision
+│       ├── parser.ts             # PDF, DOCX, TXT, CSV, XLSX, URL, images
+│       ├── vectorstore.ts        # pgvector + HNSW + dedup + token budget
+│       └── vision-provider.ts    # AI Vision for image captioning
+│
+├── prisma/                       # 36 models
+├── public/widget.js              # Embeddable chat widget
+├── .ai/                          # AI agent context
 ├── Dockerfile                    # 5-stage multi-stage build
-├── docker-compose.yml            # db + migrate + app
-└── package.json
+├── docker-compose.yml            # db + migrate + app (+ n8n, baileys, paddleocr)
+└── AGENTS.md                     # Agent rules
 ```
 
 ---
 
-## Database Schema
+## Database Schema (36 Models)
 
-### Models (9 tabel)
-
-| Model | Tabel | Fungsi |
-|-------|-------|--------|
-| User | `users` | Admin users dengan bcrypt password |
-| Document | `documents` | Metadata dokumen yang diupload |
-| DocumentChunk | `document_chunks` | Text chunks + vector embeddings (1536-dim) |
-| ChatSession | `chat_sessions` | Sesi percakapan |
-| ChatMessage | `chat_messages` | Pesan chat + sources |
-| Setting | `settings` | Konfigurasi AI provider (key-value) |
+### Core Models
+| Model | Table | Purpose |
+|-------|-------|---------|
+| User | `users` | Admin users (bcrypt) |
+| Document | `documents` | Uploaded file metadata |
+| DocumentChunk | `document_chunks` | Text + vector embeddings (1536-dim) + multimodal fields |
+| ChatSession | `chat_sessions` | Chat sessions (workspace-scoped) |
+| ChatMessage | `chat_messages` | Messages + sources |
+| Setting | `settings` | GLOBAL AI config (key-value) |
+| WorkspaceSetting | `workspace_settings` | Per-workspace AI config |
 | AnalyticsEvent | `analytics_events` | Event tracking |
-| PromptTemplate | `prompt_templates` | Template prompt AI |
-| PromptVersion | `prompt_versions` | Versioning untuk prompt |
+| PromptTemplate | `prompt_templates` | AI prompt templates |
+| PromptVersion | `prompt_versions` | Prompt versioning |
 
-### Relasi Penting
+### Workspace & RBAC
+| Model | Table | Purpose |
+|-------|-------|---------|
+| Workspace | `workspaces` | Multi-tenant workspaces |
+| WorkspaceMember | `workspace_members` | User-workspace roles (owner/admin/editor/viewer) |
+| Invitation | `invitations` | Workspace invitations |
 
-- `User` 1:N `Document` (cascade delete)
-- `User` 1:N `ChatSession` (set null on delete)
-- `Document` 1:N `DocumentChunk` (cascade delete)
-- `ChatSession` 1:N `ChatMessage` (cascade delete)
-- `PromptTemplate` 1:N `PromptVersion` (cascade delete)
-- `DocumentChunk.embedding` → `vector(1536)` (pgvector)
+### Billing & Subscriptions
+| Model | Table | Purpose |
+|-------|-------|---------|
+| PlanFeature | `plan_features` | Entitlements per plan (Free/Pro/Enterprise) |
+| WorkspaceSubscription | `workspace_subscriptions` | Stripe subscription + status |
+| StripeWebhookEvent | `stripe_webhook_events` | Idempotent webhook processing |
+| Invoice | `invoices` | Billing invoices |
+| Payment | `payments` | Payment records |
 
-### Indexes
+### API Platform
+| Model | Table | Purpose |
+|-------|-------|---------|
+| ApiKey | `api_keys` | API keys (SHA-256 hashed) |
+| ApiUsageLog | `api_usage_logs` | API usage tracking |
 
-- `AnalyticsEvent`: `[eventType, createdAt]`, `[createdAt]`
-- Missing indexes: `Document.userId`, `ChatSession.userId`, `DocumentChunk.documentId`
+### Widget Platform
+| Model | Table | Purpose |
+|-------|-------|---------|
+| Widget | `widgets` | Chat widgets (public + secret keys) |
+| WidgetConversation | `widget_conversations` | Widget chat sessions |
+| WidgetMessage | `widget_messages` | Widget messages |
+
+### Leads & Notifications
+| Model | Table | Purpose |
+|-------|-------|---------|
+| Lead | `leads` | Customer leads |
+| LeadEvent | `lead_events` | Lead activity tracking |
+| Notification | `notifications` | User notifications |
+| NotificationSetting | `notification_settings` | Notification preferences |
+
+### WhatsApp
+| Model | Table | Purpose |
+|-------|-------|---------|
+| WhatsAppConfig | `whatsapp_configs` | WhatsApp integration config |
+| WhatsAppConversation | `whatsapp_conversations` | WhatsApp chat sessions |
+| WhatsAppMessage | `whatsapp_messages` | WhatsApp messages |
+
+### Audit & Misc
+| Model | Table | Purpose |
+|-------|-------|---------|
+| AuditLog | `audit_logs` | Audit trail (fire-and-forget) |
+| Folder | `folders` | Document folders |
+
+### Document Chunks — Extended Fields
+| Field | Type | Purpose |
+|-------|------|---------|
+| `chunkType` | text | "text" or "image" |
+| `ocrText` | text | OCR extracted text |
+| `caption` | text | AI vision caption |
+| `imageSummary` | text | Image summary |
+| `imageUrl` | text | Original image URL |
 
 ---
 
-## Existing Features
+## API Endpoints (110+)
 
-### Phase 1 — Dashboard Shell ✅
-- Layout shell dengan sidebar navigasi
-- Responsive design (mobile + desktop)
-- shadcn/ui components setup
-
-### Phase 2 — Dashboard Widgets ✅
-- Stat cards (documents, sessions, messages)
-- Usage chart (recharts AreaChart)
-- Recent chats, top documents
-- Cost summary, KB stats, system health
-
-### Phase 3 — Knowledge Base Explorer ✅
-- Document explorer dengan pagination, search, filter, sort
-- Chunk viewer dengan similarity search
-- Source viewer dengan reference counts
-- Per-document chunk browsing
-
-### Phase 4 — Analytics ✅
-- Chat analytics (sessions, messages, sources, top questions)
-- Usage analytics (daily events, unique users)
-- Cost analytics (token estimates, daily costs)
-- CSV export, date range selector
-
-### Phase 5 — AI Management ✅
-- AI Playground (system prompt, parameters, RAG context)
-- Prompt CRUD dengan versioning
-- Prompt diff & revert
-- Model comparison (compare mode)
-- Prompt testing dengan variable replacement
-
-### Core Features ✅
-- RAG chatbot dengan streaming response
-- Multi-format file upload (PDF, DOCX, TXT, CSV, XLSX)
-- URL scraping (cheerio)
-- Multi-AI provider (Mimo, OpenAI, LM Studio, Ollama, OpenRouter, Custom)
-- Public chat dengan rate limiting (20/min/IP)
-- Admin authentication (NextAuth v5, JWT)
-- Document management (upload, list, delete)
-- AI provider settings (switch provider, auto-detect models)
-
----
-
-## API Endpoints
-
-### Public (Rate Limited)
-
-| Method | Endpoint | Fungsi |
-|--------|----------|--------|
-| POST | `/api/chat` | Chat RAG streaming |
+### Public (Rate Limited: 20/min/IP)
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/chat` | RAG streaming chat (workspace-scoped) |
 | GET | `/api/chat/sessions` | List sessions |
-| DELETE | `/api/chat/sessions` | Hapus session |
-| POST | `/api/auth/register` | Registrasi |
+| DELETE | `/api/chat/sessions` | Delete session |
+| POST | `/api/auth/register` | User registration |
 | * | `/api/auth/[...nextauth]` | NextAuth handlers |
+| POST | `/api/widget/chat` | Widget chat (public, rate limited) |
+| POST | `/api/widget/chat/stream` | Widget streaming chat |
+| GET | `/api/widget/config` | Widget config (public) |
+| GET | `/api/health` | Health check |
 
-### Auth Required
-
-| Method | Endpoint | Fungsi |
-|--------|----------|--------|
-| POST | `/api/upload` | Upload file/URL |
-| GET | `/api/documents` | List dokumen |
-| GET/DELETE | `/api/documents/[id]` | Detail/hapus dokumen |
-| GET/POST | `/api/admin/settings` | AI settings |
+### Auth Required (Session)
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/upload` | File/URL upload |
+| GET/POST | `/api/documents` | Document CRUD |
+| GET/PUT/DELETE | `/api/documents/[id]` | Single document |
+| POST | `/api/documents/bulk` | Bulk operations |
+| GET/POST | `/api/folders` | Folder management |
+| GET/POST | `/api/admin/settings` | AI settings (GLOBAL) |
 | POST | `/api/admin/models` | Auto-detect models |
 | GET/POST | `/api/ai/prompts` | Prompt CRUD |
 | GET/PUT/DELETE | `/api/ai/prompts/[id]` | Prompt detail |
-| POST | `/api/ai/prompts/[id]/revert` | Revert prompt |
-| POST | `/api/ai/prompts/[id]/test` | Test prompt |
-| GET | `/api/ai/prompts/[id]/versions` | Prompt versions |
 | POST | `/api/ai/playground` | Playground streaming |
 | POST | `/api/ai/playground/compare` | Model comparison |
-| GET | `/api/analytics/chat` | Chat analytics |
-| GET | `/api/analytics/usage` | Usage analytics |
-| GET | `/api/analytics/cost` | Cost analytics |
-| GET | `/api/analytics/export` | CSV export |
-| POST | `/api/analytics/events` | Record event |
-| GET | `/api/dashboard/stats` | Dashboard stats |
-| GET | `/api/dashboard/usage` | Dashboard usage |
-| GET | `/api/dashboard/cost` | Dashboard cost |
-| GET | `/api/dashboard/health` | System health |
-| GET | `/api/dashboard/top-documents` | Top documents |
-| GET/POST | `/api/knowledge/documents` | Knowledge docs |
-| GET | `/api/knowledge/documents/[id]/chunks` | Doc chunks |
-| GET/POST | `/api/knowledge/chunks` | Chunks CRUD |
-| GET/DELETE | `/api/knowledge/chunks/[id]` | Chunk detail |
-| GET | `/api/knowledge/chunks/[id]/similar` | Similar chunks |
-| POST | `/api/knowledge/search` | Similarity search |
-| GET | `/api/knowledge/sources` | Sources with refs |
+| GET | `/api/analytics/*` | Chat, cost, usage, leads, retrieval |
+| GET | `/api/dashboard/*` | Stats, activity, cost, health |
+| GET | `/api/knowledge/*` | Documents, chunks, search, images |
+| GET | `/api/audit` | Audit logs |
+
+### Auth Required (API Key — Bearer)
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v1/chat` | API chat |
+| POST | `/api/v1/search` | API search |
+| GET | `/api/v1/documents` | API documents |
+| GET/POST | `/api/v1/keys` | API key management |
+
+### Workspace Management
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET/PATCH | `/api/workspace` | Workspace settings |
+| GET/POST/PATCH/DELETE | `/api/workspace/members` | Member CRUD |
+| GET/POST | `/api/workspace/invitations` | Invitation management |
+| POST | `/api/workspace/billing` | Plan change |
+| POST | `/api/workspace/switch` | Switch workspace |
+| POST | `/api/workspace/delete` | Delete workspace |
+| POST | `/api/workspace/transfer` | Transfer ownership |
+
+### Billing (Stripe)
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/billing/checkout` | Create checkout session |
+| POST | `/api/billing/portal` | Customer portal |
+| POST | `/api/billing/webhook` | Stripe webhook (HMAC-SHA256) |
+
+### Widget Management
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET/POST | `/api/widgets/*` | Widget CRUD |
+| GET | `/api/widget/analytics` | Widget analytics |
+| GET | `/api/widget/leads` | Widget leads |
+
+### WhatsApp
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| * | `/api/whatsapp/*` | Baileys, config, conversations, webhook |
+
+---
+
+## Feature Inventory
+
+### ✅ Core Features
+- RAG chatbot with streaming response + conversation history (10 messages + summarization)
+- Multi-format file upload (PDF, DOCX, TXT, CSV, XLSX, images)
+- URL scraping (cheerio)
+- Multi-AI provider (Mimo, OpenAI, Google, LM Studio, Ollama, OpenRouter, Custom)
+- Public chat with rate limiting (20/min/IP)
+- Admin authentication (NextAuth v5, JWT)
+- Document management (upload, list, delete, bulk)
+- AI provider settings (7 providers, auto-detect models)
+- Workspace-aware AI settings (per-workspace, fallback to global)
+- Source citations with document titles (not "Dokumen tidak diketahui")
+
+### ✅ Workspace System
+- Multi-tenant workspaces with RBAC (owner > admin > editor > viewer)
+- Workspace member management (invite, remove, role change)
+- Workspace switching
+- Per-workspace AI provider configuration
+- Workspace-scoped documents, chats, analytics
+- Cross-tenant isolation via RLS + AsyncLocalStorage
+
+### ✅ Billing & Revenue
+- Stripe integration (checkout, portal, webhook)
+- Subscription management (Free, Pro, Enterprise)
+- Entitlements system (9 features × 3 plans, 30s cache)
+- Feature gating on 14+ API routes
+- Usage limits (chat, upload) with HTTP 429
+- Subscription lifecycle (active, trial, past_due, canceled)
+
+### ✅ API Platform
+- API key management (SHA-256 hashed, `mk_live_` prefix)
+- Bearer token authentication
+- Per-workspace rate limiting (Free=10/min, Pro=60/min, Enterprise=600/min)
+- Usage tracking and metrics
+- Developer portal (`/developer`)
+
+### ✅ Public Widget Platform
+- Embeddable chat widget (`<script src=".../widget.js" data-key="pw_pub_xxx">`)
+- Widget customization (theme, colors, greeting)
+- Dual-layer rate limiting (per-key + per-IP)
+- Visitor isolation (crypto.randomUUID)
+- XSS protection (textContent only, no innerHTML)
+- Domain allowlist validation
+
+### ✅ Audit & Compliance
+- Audit logging platform (`audit_logs` table, fire-and-forget)
+- 41%+ route coverage (Phase 1 + Phase 2)
+- 28+ action types tracked
+- Audit log viewer UI with filtering, pagination, CSV export
+
+### ✅ RAG Hardening
+- HNSW vector index (m=16, ef_construction=64)
+- Similarity threshold (0.30 default)
+- Token budget (8000 tokens, 2000 reserved for response)
+- Deduplication (removes near-duplicates)
+- Metrics tracking (`X-Retrieval-Metrics` header)
+- RLS policies using `workspace_id` (not `user_id`)
+- Knowledge search filtered by workspace
+
+### ✅ Multimodal RAG
+- Image processing pipeline (sharp → OCR + Vision → summary → embedding)
+- Tesseract.js OCR (Indonesian + English)
+- AI Vision captioning
+- Image chunks with `chunkType=image`, `ocrText`, `caption`, `imageSummary`
+- `/knowledge/images` dashboard
+
+### ✅ Analytics & Dashboard
+- Chat analytics (sessions, messages, sources, top questions)
+- Cost analytics (token estimates, daily costs)
+- Usage analytics (daily events, unique users)
+- Lead analytics and intelligence
+- Dashboard with stat cards, usage charts, recent chats, top documents
+
+### ✅ WhatsApp Integration
+- Baileys (add-on, user accepts ban risk)
+- Meta API preservation
+- WhatsApp conversations management
+- Webhook handling
+
+### ✅ Other
+- Onboarding wizard
+- Lead management (detection, intelligence, intent)
+- Email system (Resend + SMTP providers)
+- MCP (Model Context Protocol) server integration
+- Prompt management with versioning and testing
+- AI Playground (system prompt, parameters, RAG context)
+- Model comparison (compare mode)
+- Notification system
+- Document folders
+
+---
+
+## Key Files by Concern
+
+| Concern | Files |
+|---------|-------|
+| **Auth** | `lib/auth.ts`, `lib/actions.ts`, `app/api/auth/*` |
+| **Chat** | `app/api/chat/route.ts`, `components/chat/chat-window.tsx` |
+| **RAG** | `lib/rag/chain.ts`, `chunker.ts`, `embedder.ts`, `parser.ts`, `vectorstore.ts` |
+| **AI Config** | `lib/ai-provider.ts`, `lib/settings.ts`, `components/settings/ai-settings-form.tsx` |
+| **Workspace AI** | `components/workspace/workspace-ai-settings.tsx`, `app/(admin)/settings/workspace/page.tsx` |
+| **Entitlements** | `lib/entitlements.ts`, `lib/billing.ts` |
+| **Stripe** | `lib/stripe.ts`, `app/api/billing/*` |
+| **API Platform** | `lib/api-keys.ts`, `lib/api-auth.ts`, `lib/api-rate-limit.ts`, `lib/api-usage.ts` |
+| **Widget** | `lib/widget.ts`, `public/widget.js`, `app/api/widget/*` |
+| **Audit** | `lib/audit.ts`, `app/api/audit/route.ts` |
+| **RBAC** | `lib/rbac.ts`, `lib/middleware/tenant.ts` |
+| **Leads** | `lib/leads.ts`, `lib/lead-detect.ts`, `lib/lead-intelligence.ts` |
+| **WhatsApp** | `lib/whatsapp/*`, `app/api/whatsapp/*` |
+| **Email** | `lib/email/*` |
+| **MCP** | `lib/mcp/*`, `app/api/mcp/*` |
+| **Multimodal** | `lib/rag/image-processor.ts`, `lib/rag/vision-provider.ts` |
+| **Database** | `prisma/schema.prisma`, `lib/prisma.ts` |
+| **Deploy** | `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh` |
 
 ---
 
 ## Coding Standards
 
-### Naming Conventions
+### Naming
+- **Files**: kebab-case (`chat-window.tsx`)
+- **Components**: PascalCase (`ChatWindow`)
+- **Functions**: camelCase (`generateRAGResponse`)
+- **Constants**: UPPER_SNAKE_CASE (`EMBEDDING_DIMENSION`)
+- **DB tables**: snake_case (`chat_sessions`)
+- **DB columns**: snake_case (`user_id`, `created_at`)
 
-- **Files**: kebab-case (`chat-window.tsx`, `ai-provider.ts`)
-- **Components**: PascalCase (`ChatWindow`, `AISettingsForm`)
-- **Functions**: camelCase (`generateRAGResponse`, `parseFile`)
-- **Constants**: UPPER_SNAKE_CASE (`EMBEDDING_DIMENSION`, `PROVIDER_PRESETS`)
-- **Database tables**: snake_case (`chat_sessions`, `document_chunks`)
-- **Database columns**: snake_case (`user_id`, `created_at`)
-
-### Code Patterns
-
-- **Server Components**: Default, no directive needed
-- **Client Components**: `"use client"` directive di line 1
-- **API Routes**: `NextRequest` → `Response.json()`, try-catch error handling
-- **Auth Check**: `const session = await auth()` di server components dan API routes
-- **Prisma**: Singleton di `lib/prisma.ts`, raw SQL untuk vector operations
-- **Path Alias**: `@/*` → `./*`
-
-### File Organization
-
-- Pages di `app/` (route-based)
-- Components di `components/` (feature-based subfolder)
-- Business logic di `lib/`
-- Database di `prisma/`
-- Scripts di `scripts/`
+### Patterns
+- Server Components: Default (no directive)
+- Client Components: `"use client"` at line 1
+- API Routes: `NextRequest` → `Response.json()`, try-catch
+- Auth: `const session = await auth()`
+- Prisma: Singleton in `lib/prisma.ts`, raw SQL for vector ops
+- RLS: Wrap in `prisma.$transaction` with `set_config('app.current_workspace_id', ...)` 
+- Path Alias: `@/*` → `./*`
 
 ---
 
-## Important Decisions
+## Critical Context
 
-### 1. Multi-Provider via OpenAI-Compatible API
-Semua AI provider menggunakan OpenAI SDK client. Trade-off: fitur khusus provider tidak bisa digunakan.
-
-### 2. JWT Strategy (bukan Database Sessions)
-Mengurangi query DB per request. Trade-off: tidak bisa invalidate session server-side.
-
-### 3. Settings di Database dengan Env Fallback
-User bisa ganti AI provider tanpa restart. Trade-off: cache 30 detik.
-
-### 4. Background Document Processing
-Upload langsung return, processing async. Trade-off: tidak ada notifikasi jika gagal.
-
-### 5. Local Embedding Fallback (Feature Hashing)
-Mimo Pro tidak support embeddings, jadi pakai feature hashing. Trade-off: akurasi lebih rendah.
-
-### 6. Sources via HTTP Headers
-Sources dikirim di header `X-Sources`, bukan body. Trade-off: size limit ~8KB.
-
-### 7. Raw SQL untuk Vector Operations
-Prisma tidak support pgvector native. Trade-off: tidak ada type safety.
+- **Docker**: `docker compose build --no-cache app && docker compose up -d app`
+- **Container**: `mimotes-app-1` (port 3000 → host 3100), `mimotes-db-1` (PostgreSQL)
+- **DB access**: `docker exec mimotes-db-1 psql -U mimotes -d mimotes`
+- **Cloudflare Tunnel**: `mimotes.ekohomelab.online` → `localhost:3100`
+- **Login**: `admin@mimotes.com` / `admin123`
+- **Test account**: `hitlah@mail.com` / `123456`
+- **AI provider (global)**: Custom → Mimo (xiaomimimo.com), model: mimo-v2.5
+- **API key encryption**: AES-256-GCM (prefix `enc:v1:...`)
+- **RLS**: All workspace tables use RLS; must set `app.current_workspace_id` via transaction
+- **Embedding fallback**: When API embedding fails → local feature hashing (threshold 0.08)
+- **Streaming null safety**: `chunk.choices?.[0]?.delta?.content` (cross-provider compat)
+- **Settings endpoint**: `/api/admin/settings` saves to `settings` (GLOBAL), NOT `workspace_settings`
 
 ---
 
-## Known Issues
+## Known Issues & Debt
 
 ### Critical
-
-1. **SQL injection risk** — `lib/analytics.ts:83` menggunakan string interpolation untuk `eventTypes` di `$queryRawUnsafe`
-2. **API keys plaintext** — Disimpan di database tanpa enkripsi
-3. **No file size limit** — Upload route tidak punya batasan ukuran file
+- SEC-001: API key encryption at rest (partially addressed with `lib/crypto.ts`)
+- Embedding API returns 404 for some providers → falls back to local feature hashing
 
 ### High
-
-4. **Chat sessions deletable without auth** — `DELETE /api/chat/sessions` tidak verifikasi ownership
-5. **Analytics events recordable without auth** — `POST /api/analytics/events` terbuka untuk injection
-6. **Memory leak** — `InMemoryRateLimit` tidak cleanup old entries
+- Widget chat route (`/api/widget/chat/stream`) doesn't load conversation history
+- `/api/ai/playground` doesn't set workspace context (uses global only)
 
 ### Medium
-
-7. **Dashboard endpoints no auth** — Data dashboard publik terbuka
-8. **Inconsistent token estimation** — `÷4` vs `÷3.5` di file berbeda
-9. **AnalyticsEvent.userId no onDelete** — Crash saat user dihapus
-10. **No DB indexes on foreign keys** — Query lambat untuk filter by user
+- In-memory rate limiting lost on restart (no Redis in production)
+- No widget creation limit per workspace
+- Audit coverage at 41% (Phase 3+ needed)
+- Summarization is substring-based, not AI-generated
 
 ### Low
-
-11. **Duplicate registration logic** — `lib/actions.ts` vs `app/api/auth/register/route.ts`
-12. **Hardcoded system prompt** — Tidak bisa dikonfigurasi
-13. **Local embedding quality poor** — Feature hashing bukan semantic
-14. **No pagination on legacy endpoints** — `/api/documents` masih tanpa pagination
-
----
-
-## Technical Debt
-
-### Critical Priority
-- SEC-001: API keys stored in plaintext (needs encryption at rest)
-
-### High Priority
-- DEBT-002: Local embedding quality (feature hashing)
-- DEBT-006: File upload without size limit (sprint in progress)
-- PH5-001: Zero test coverage
-
-### Medium Priority
-- DEBT-001: pdf-parse v1 pinning
-- DEBT-003: In-memory rate limiter fallback
-- SEC-002: File storage on local filesystem
-
-### Low Priority
-- PH5-002: Duplicate streaming logic
-- PH5-003: No pagination on prompt list
-- PH5-004: Client-side playground history
-- PH5-005: Approximate token counting
-- PH5-006: prompt() browser dialog
-
----
-
-## Development Rules
-
-### Before Any Task
-1. Baca `AGENTS.md` untuk konvensi kode
-2. Baca `.ai/project-memory.md` (file ini) untuk konteks
-3. Baca `.ai/current-sprint.md` untuk sprint saat ini
-4. Baca `.ai/TECH_DEBT.md` untuk debt yang relevan
-
-### During Development
-1. Ikuti naming conventions yang ada
-2. Jangan tambah comments kecuali diminta
-3. Gunakan existing libraries dan patterns
-4. Pastikan `npm run build` berhasil
-5. Update memory jika menemukan informasi baru
-
-### After Task Completion
-1. Update `.ai/project-memory.md` jika ada perubahan arsitektur
-2. Update `.ai/TECH_DEBT.md` jika ada debt baru atau resolved
-3. Update `.ai/current-sprint.md` jika ada progress sprint
-4. Jalankan lint/typecheck jika tersedia
-
----
-
-## Future Roadmap
-
-### Phase 6 — Workspace System (Pending)
-- Multi-tenant workspace
-- User roles & permissions
-- Team collaboration
-- Shared knowledge bases
-
-### Phase 7 — Public Widget (Pending)
-- Embeddable chat widget
-- API for external integration
-- White-label support
-- Usage-based billing
-
----
-
-## File Reference Quick Map
-
-| Kebutuhan | File |
-|-----------|------|
-| Auth logic | `lib/auth.ts`, `lib/actions.ts` |
-| AI provider | `lib/ai-provider.ts` |
-| RAG pipeline | `lib/rag/chain.ts`, `chunker.ts`, `embedder.ts`, `parser.ts`, `vectorstore.ts` |
-| Chat UI | `components/chat/chat-window.tsx` |
-| Document upload | `components/documents/upload-form.tsx`, `app/api/upload/route.ts` |
-| Settings | `components/settings/ai-settings-form.tsx`, `app/api/admin/settings/route.ts` |
-| Database schema | `prisma/schema.prisma` |
-| Docker config | `Dockerfile`, `docker-compose.yml` |
-| Environment vars | `.env`, `.env.example` |
-| Rate limiting | `lib/ratelimit.ts` |
-| Analytics | `lib/analytics.ts` |
-| Streaming | `lib/streaming.ts` |
+- Duplicate streaming logic in some routes
+- Approximate token counting (character-based)
+- prompt() browser dialog in some UI
 
 ---
 

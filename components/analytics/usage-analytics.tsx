@@ -13,6 +13,7 @@ import {
   Legend,
 } from "recharts";
 import { formatDateSafe } from "@/lib/date-utils";
+import { FileText, MessageSquare, Users, Upload, Search, Trash2, Settings, Zap, Activity, Clock, List, BarChart3 } from "lucide-react";
 import { KpiCard } from "@/components/analytics/kpi-card";
 import { ChartCard } from "@/components/analytics/chart-card";
 import { DateRangeSelector } from "@/components/analytics/date-range-selector";
@@ -45,13 +46,13 @@ interface UsageData {
   }[];
 }
 
-const EVENT_LABELS: Record<string, string> = {
-  chat_message: "💬 Chat",
-  document_upload: "📤 Upload",
-  document_delete: "🗑 Delete",
-  search_similarity: "🔍 Search",
-  settings_update: "⚙ Settings",
-  session_create: "🆕 Session",
+const EVENT_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = {
+  chat_message: { label: "Chat", icon: <MessageSquare className="size-4" /> },
+  document_upload: { label: "Upload", icon: <Upload className="size-4" /> },
+  document_delete: { label: "Delete", icon: <Trash2 className="size-4" /> },
+  search_similarity: { label: "Search", icon: <Search className="size-4" /> },
+  settings_update: { label: "Settings", icon: <Settings className="size-4" /> },
+  session_create: { label: "Session", icon: <Zap className="size-4" /> },
 };
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -138,31 +139,31 @@ export default function UsageAnalytics() {
         ) : data ? (
           <>
             <KpiCard
-              icon="📄"
+              icon={<FileText className="size-5" />}
               label="Documents Uploaded"
               value={data.kpis.totalDocuments}
               previousValue={data.kpis.previousDocuments}
             />
             <KpiCard
-              icon="💬"
+              icon={<MessageSquare className="size-5" />}
               label="Chat Sessions"
               value={data.kpis.totalChats}
               previousValue={data.kpis.previousChats}
             />
             <KpiCard
-              icon="👥"
+              icon={<Users className="size-5" />}
               label="Active Users"
               value={data.kpis.activeUsers}
               previousValue={data.kpis.previousUsers}
             />
             <KpiCard
-              icon="📤"
+              icon={<Upload className="size-5" />}
               label="Uploads"
               value={data.kpis.uploads}
               previousValue={data.kpis.previousUploads}
             />
             <KpiCard
-              icon="🔍"
+              icon={<Search className="size-5" />}
               label="Searches"
               value={data.kpis.searches}
               previousValue={data.kpis.previousSearches}
@@ -175,7 +176,7 @@ export default function UsageAnalytics() {
       {loading ? (
         <Skeleton className="h-[350px] w-full rounded-lg" />
       ) : dailyChartData.length > 0 ? (
-        <ChartCard title="📈 Activity Over Time" icon="">
+        <ChartCard title="Activity Over Time" icon={<Activity className="size-4 text-muted-foreground" />}>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={dailyChartData}>
               <defs>
@@ -239,10 +240,10 @@ export default function UsageAnalytics() {
         {loading ? (
           <Skeleton className="h-[350px] w-full rounded-lg" />
         ) : data ? (
-          <ChartCard title="📊 Feature Adoption" icon="">
+          <ChartCard title="Feature Adoption" icon={<BarChart3 className="size-4 text-muted-foreground" />}>
             {data.featureAdoption.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <span className="text-4xl mb-3">📊</span>
+                <BarChart3 className="size-8 text-muted-foreground/40 mb-3" />
                 <p className="text-muted-foreground text-sm">No feature usage yet</p>
               </div>
             ) : (
@@ -272,7 +273,7 @@ export default function UsageAnalytics() {
         {loading ? (
           <Skeleton className="h-[350px] w-full rounded-lg" />
         ) : data ? (
-          <ChartCard title="🕐 Peak Usage Hours" icon="">
+          <ChartCard title="Peak Usage Hours" icon={<Clock className="size-4 text-muted-foreground" />}>
             <div className="space-y-1">
               {/* Hour labels */}
               <div className="flex gap-0.5 ml-10 mb-1">
@@ -326,10 +327,10 @@ export default function UsageAnalytics() {
       {loading ? (
         <Skeleton className="h-[300px] w-full rounded-lg" />
       ) : data ? (
-        <ChartCard title="📋 Recent Activity" icon="">
+        <ChartCard title="Recent Activity" icon={<List className="size-4 text-muted-foreground" />}>
           {data.recentEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <span className="text-4xl mb-3">📋</span>
+              <List className="size-8 text-muted-foreground/40 mb-3" />
               <p className="text-muted-foreground text-sm">No activity yet</p>
             </div>
           ) : (
@@ -339,15 +340,15 @@ export default function UsageAnalytics() {
                   key={event.id}
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
-                  <span className="text-lg shrink-0">
-                    {EVENT_LABELS[event.eventType]?.split(" ")[0] || "📌"}
+                  <span className="shrink-0 text-muted-foreground">
+                    {EVENT_CONFIG[event.eventType]?.icon || <Zap className="size-4" />}
                   </span>
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium">
                       {event.userName}
                     </span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      {EVENT_LABELS[event.eventType]?.split(" ").slice(1).join(" ") || event.eventType}
+                    <span className="text-sm text-muted-foreground ml-1">
+                      · {EVENT_CONFIG[event.eventType]?.label || event.eventType}
                     </span>
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground">

@@ -1,132 +1,115 @@
-# Sprint: Optimization & Debt Reduction
+# Sprint: Current State — Post All Phases
 
-> Date: 2025-06-05
-> Phase: 5 (Post-Phase 5 optimization)
-> Previous: Phase 5 AI Management — APPROVED with conditions
-> Next: Phase 6 Workspace System (Pending)
-
----
-
-## Objective
-
-Address the most impactful security, performance, and code quality issues across the codebase before Phase 6. This sprint focuses on quick wins that improve production readiness without changing architecture. Every change is backward-compatible and independently deployable.
+> Date: 2026-06-24
+> Phase: All phases complete (1-7 + hardening)
+> Status: Production-capable
 
 ---
 
-## Scope
+## What's Done (Complete)
 
-### In Scope
+### Phase 1-5 — Core App ✅
+- Dashboard shell, widgets, knowledge base explorer
+- Analytics (chat, cost, usage), AI management (playground, prompts, compare)
+- RAG chatbot with streaming, multi-format upload, multi-AI provider
 
-#### 1. Security Quick Wins (DEBT-006, SEC-003)
-- Add file size limit to upload route using MAX_FILE_SIZE env var (10MB default)
-- Add rate limiting to upload endpoint (10/min per user)
-- Fix SQL injection risk in getDailyEventCounts eventTypes interpolation
+### Phase 6 — Workspace System ✅
+- Multi-tenant workspaces with RBAC (owner > admin > editor > viewer)
+- Member management, invitations, workspace switching
+- Per-workspace AI provider configuration
+- Workspace-scoped documents, chats, analytics
 
-#### 2. Performance Optimizations (analytics)
-- Replace getUniqueActiveUsers findMany+distinct with SQL COUNT(DISTINCT)
-- Replace getCostAnalytics full-message-load with SQL-based token estimation
-- Replace getChatAnalytics source-counting full-message-load with JSONB query
-- Add pagination to /api/documents (legacy endpoint)
+### Phase 7 — Public Widget ✅
+- Embeddable chat widget with customization
+- Dual-layer rate limiting, visitor isolation, XSS protection
+- Domain allowlist, widget analytics
 
-#### 3. Code Quality (PH5-001, PH5-002)
-- Extract shared streaming helper to lib/stream-helpers.ts
-- Initialize Vitest + add unit tests for RAG chunker and parser
+### Billing & Revenue ✅
+- Stripe integration (checkout, portal, webhook)
+- Entitlements system (9 features × 3 plans)
+- Usage limits with HTTP 429
+- Subscription lifecycle management
 
-### Out of Scope (Next Sprint)
-- SEC-001: API key encryption at rest (requires design decision)
-- Phase 6: Workspace System (requires separate sprint)
-- TypeScript strict mode migration (high effort, separate sprint)
-- CI/CD pipeline (depends on tests existing first)
-- Replace prompt() browser dialog (UX, not optimization)
+### API Platform ✅
+- API key management (SHA-256 hashed)
+- Bearer token auth, per-workspace rate limiting
+- Usage tracking, developer portal
 
----
+### Audit & Compliance ✅
+- Audit logging (fire-and-forget, 41%+ coverage)
+- 28+ action types, audit viewer with CSV export
 
-## Risks
+### RAG Hardening ✅
+- HNSW index, similarity threshold, token budget
+- Dedup, metrics tracking, RLS workspace isolation
+- Knowledge search filtered by workspace
 
-| # | Risk | Severity | Likelihood | Mitigation |
-|---|------|----------|------------|------------|
-| R-01 | SQL changes in analytics could break chart rendering | Medium | Low | Test all analytics API responses before/after |
-| R-02 | File size limit could break legitimate large uploads | Low | Low | Default 10MB is generous; env-configurable |
-| R-03 | Vitest setup could conflict with Next.js build config | Low | Medium | Use vitest.config.ts separate from next.config |
+### Multimodal RAG ✅
+- Image processing (sharp → OCR + Vision → embedding)
+- Tesseract.js OCR, AI Vision captioning
+- `/knowledge/images` dashboard
 
----
+### Conversation History ✅
+- Last 10 messages loaded per session
+- Summarization when >3000 chars (substring-based)
+- History passed to AI as message array
 
-## Acceptance Criteria
-
-1. POST /api/upload rejects files > MAX_FILE_SIZE (default 10MB) with 413 error — verified by: curl upload with oversized file
-2. POST /api/upload returns 429 after 10 requests/min — verified by: rapid curl sequence
-3. GET /api/dashboard/usage returns same data structure but uses <50% memory for 1000+ messages — verified by: response shape unchanged, code review
-4. GET /api/documents supports ?page=1&limit=20 pagination — verified by: curl with page params
-5. Shared streaming helper used by both playground and test endpoints — verified by: no duplicate streaming code in routes
-6. `npx vitest run` passes with ≥3 test cases — verified by: test output
-7. `npm run build` exits with 0 errors
-
-### Build Gate
-- [ ] `npm run build` exits with 0 errors
-- [ ] No existing routes modified unless explicitly scoped above
-- [ ] All existing API routes still return correct responses
-
-### Quality Gate
-- [ ] `.ai/TECH_DEBT.md` updated (resolved items marked)
-- [ ] `.ai/REVIEWS/` updated with sprint review
-- [ ] Tests pass: `npx vitest run`
+### AI Settings Fix ✅
+- `/api/admin/settings` now saves to GLOBAL `settings` table
+- Per-workspace AI settings via `/settings/workspace`
+- Priority: Workspace > Global > Env
+- AsyncLocalStorage for workspace context (bypasses RLS connection pool)
 
 ---
 
-## Review Checklist
+## Remaining Issues
 
-Architecture
-[x] No new models or routes added
-[x] All changes are internal refactors or additive
+### High Priority
+1. Widget chat route doesn't load conversation history
+2. `/api/ai/playground` doesn't set workspace context
 
-Security
-[x] File size limit prevents DoS via large uploads
-[x] Upload rate limiting added
-[x] SQL injection in analytics fixed
+### Medium Priority
+3. In-memory rate limiting lost on restart
+4. No widget creation limit per workspace
+5. Audit coverage at 41% (Phase 3+ needed)
+6. Summarization is substring-based, not AI-generated
 
-Testing
-[x] Vitest initialized
-[x] Unit tests for chunker + parser
-
-Performance
-[x] Analytics no longer loads full message tables into memory
-[x] /api/documents paginated
+### Low Priority
+7. Duplicate streaming logic in some routes
+8. Approximate token counting
+9. prompt() browser dialog
 
 ---
 
-## Decision Log
+## Tech Debt Registry
 
-### D-01: Keep MAX_FILE_SIZE default at 10MB
-- **Context**: Env var exists but was never read. PDFs and XLSX can be large.
-- **Decision**: 10MB default, configurable via env. Matches typical SaaS limits.
-- **Alternatives considered**: 5MB (too restrictive for PDFs), unlimited (DoS risk)
-- **Consequence**: Users with larger files need env override.
-
-### D-02: Vitest over Jest
-- **Context**: No test framework exists. Next.js 16 works well with Vitest.
-- **Decision**: Use Vitest with @vitejs/plugin-react.
-- **Alternatives considered**: Jest (heavier, slower with ESM), Playwright (E2E only)
-- **Consequence**: Vitest is fast, ESM-native, minimal config.
-
-### D-03: SQL-based analytics instead of in-memory
-- **Context**: getCostAnalytics loads all messages to estimate tokens.
-- **Decision**: Use SUM(LENGTH(content))/4 for token estimation in SQL.
-- **Alternatives considered**: Keep in-memory (simpler but OOM risk), add token column (requires migration)
-- **Consequence**: Slightly less accurate (character-based), but bounded memory.
+| ID | Severity | Description | Status |
+|----|----------|-------------|--------|
+| SEC-001 | Critical | API key encryption at rest | Partial (lib/crypto.ts exists) |
+| DEBT-002 | High | Local embedding quality (feature hashing) | Active |
+| DEBT-003 | Medium | In-memory rate limiter fallback | Active |
+| DEBT-006 | Medium | File upload size limit | Active |
+| PH5-001 | Medium | Zero test coverage | Active |
+| PH5-002 | Low | Duplicate streaming logic | Active |
+| PH5-005 | Low | Approximate token counting | Active |
 
 ---
 
-## Rollback Strategy
+## Deployment
 
-If file size limit breaks uploads:
-- Set MAX_FILE_SIZE=0 to disable (add this check)
+```bash
+# Build & deploy
+cd /c/Users/SMANSA/mimotes
+docker compose build --no-cache app && docker compose up -d app
 
-If SQL analytics breaks:
-- Revert analytics.ts changes, old code still works
+# Verify
+docker exec mimotes-app-1 sh -c "grep 'feature' /app/.next/server/chunks/*.js | head -1"
 
-If Vitest conflicts with build:
-- Remove vitest.config.ts and tests/, no impact on app
+# Access
+# Local: http://localhost:3100
+# Tunnel: https://mimotes.ekohomelab.online
+```
 
 ---
 
-*This document is for management and review. See `.ai/execution-brief.md` for implementation tasks.*
+*This document reflects the current production state as of 2026-06-24.*

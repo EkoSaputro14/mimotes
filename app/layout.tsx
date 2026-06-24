@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ColorPresetInitializer } from "@/components/color-preset-initializer";
 import Providers from "@/components/providers";
 import "./globals.css";
 
@@ -33,6 +34,14 @@ export default function RootLayout({
         "--font-geist-mono": "ui-monospace, monospace",
       } as React.CSSProperties}
     >
+      <head>
+        {/* Anti-FOUC: apply color-preset class before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=localStorage.getItem('mimotes-color-preset');if(p==='blue'||p==='sage'){document.documentElement.classList.add('theme-'+p);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         {/* BUG-014: Global skip-to-content link */}
         <a
@@ -47,6 +56,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
+          <ColorPresetInitializer />
           <Providers>
             <TooltipProvider delay={300}>{children}</TooltipProvider>
           </Providers>

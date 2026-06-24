@@ -52,7 +52,7 @@ export default function LandingHeader() {
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Bot className="size-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">MimoNotes</span>
+            <span className="text-lg font-semibold tracking-tight">Mimotes</span>
           </div>
 
           {/* Desktop nav */}
@@ -135,7 +135,7 @@ export default function LandingHeader() {
                 <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <Bot className="size-5" />
                 </div>
-                <span className="text-lg font-semibold tracking-tight">MimoNotes</span>
+                <span className="text-lg font-semibold tracking-tight">Mimotes</span>
               </div>
               <button
                 type="button"

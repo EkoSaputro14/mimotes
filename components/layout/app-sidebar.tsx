@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import {
   BookOpen,
   MessageCircle,
   Target,
+  Shield,
 } from "lucide-react";
 import WorkspaceSwitcher from "@/components/workspace/workspace-switcher";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,17 @@ const coreNav: NavItem[] = [
 
 export default function AppSidebar({ user, onNavigate }: AppSidebarProps) {
   const pathname = usePathname();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Check super admin status
+  useEffect(() => {
+    fetch("/api/user/profile")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.user?.isSuperAdmin) setIsSuperAdmin(true);
+      })
+      .catch(() => {});
+  }, []);
 
   /** Check if a nav item is active (exact match or child route) */
   function isActive(href: string): boolean {
@@ -140,6 +153,25 @@ export default function AppSidebar({ user, onNavigate }: AppSidebarProps) {
           );
         })}
       </nav>
+
+      {/* Super Admin Link — only visible to super admins */}
+      {isSuperAdmin && (
+        <nav>
+          <Link
+            href="/admin/users"
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+              isActive("/admin/users")
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            <Shield className="size-4 shrink-0" />
+            Kelola Users
+          </Link>
+        </nav>
+      )}
 
       <Separator className="mx-3" />
 

@@ -34,7 +34,9 @@ const translations: Record<Lang, Record<string, string>> = {
     "settings.widget": "Widget",
     "settings.leads": "Leads",
     "settings.whatsapp": "WhatsApp",
+    "settings.baileys": "WhatsApp Baileys",
     "settings.billing": "Billing",
+    "settings.invoices": "Invoice",
     "settings.audit": "Audit Logs",
     "settings.language": "Bahasa",
     
@@ -81,7 +83,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Dashboard
     "dashboard.welcome": "Selamat datang",
     "dashboard.documents": "Dokumen",
-    "dashboard.chunks": "Chunks",
+    "dashboard.chunks": "Sections",
     "dashboard.sessions": "Sesi Chat",
     "dashboard.messages": "Pesan",
     "dashboard.leads": "Leads",
@@ -114,7 +116,9 @@ const translations: Record<Lang, Record<string, string>> = {
     "settings.widget": "Widget",
     "settings.leads": "Leads",
     "settings.whatsapp": "WhatsApp",
+    "settings.baileys": "WhatsApp Baileys",
     "settings.billing": "Billing",
+    "settings.invoices": "Invoice",
     "settings.audit": "Audit Logs",
     "settings.language": "Language",
     
@@ -161,7 +165,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Dashboard
     "dashboard.welcome": "Welcome",
     "dashboard.documents": "Documents",
-    "dashboard.chunks": "Chunks",
+    "dashboard.chunks": "Sections",
     "dashboard.sessions": "Chat Sessions",
     "dashboard.messages": "Messages",
     "dashboard.leads": "Leads",

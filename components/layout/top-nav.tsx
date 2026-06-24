@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, ChevronRight, Sun, Moon, Monitor, Check, Search } from "lucide-react";
+import { Menu, ChevronRight, Sun, Moon, Monitor, Check, Search, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Avatar,
@@ -21,6 +21,7 @@ import { useTheme } from "next-themes";
 import { logout } from "@/lib/actions";
 import { useEffect, useState } from "react";
 import { useThemeShortcut } from "@/lib/use-theme-shortcut";
+import { useColorPreset } from "@/lib/use-color-preset";
 
 interface TopNavProps {
   user: {
@@ -72,6 +73,7 @@ function generateBreadcrumbs(pathname: string) {
 export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: TopNavProps) {
   const pathname = usePathname();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { colorPreset, setColorPreset } = useColorPreset();
   const [mounted, setMounted] = useState(false);
   const breadcrumbs = generateBreadcrumbs(pathname);
 
@@ -205,6 +207,52 @@ export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: Top
             <Monitor className="mr-2 h-4 w-4" />
             <span>System</span>
             {mounted && theme === "system" && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Color Preset dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon" suppressHydrationWarning />
+          }
+        >
+          {mounted && (
+            <Palette
+              className="size-5"
+              style={{
+                color:
+                  colorPreset === "blue"
+                    ? "#4F6BFF"
+                    : colorPreset === "sage"
+                      ? "#4A7C59"
+                      : "#cd8c68",
+              }}
+            />
+          )}
+          <span className="sr-only">Pilih palet warna</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={8}>
+          <div className="px-2 py-1.5">
+            <p className="text-sm font-medium">Palet Warna</p>
+            <p className="text-xs text-muted-foreground">Pilih warna tema brand</p>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setColorPreset("copper")}>
+            <div className="mr-2 h-4 w-4 rounded-full bg-[#cd8c68] border" />
+            <span>Copper</span>
+            {mounted && colorPreset === "copper" && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setColorPreset("blue")}>
+            <div className="mr-2 h-4 w-4 rounded-full bg-[#4F6BFF] border" />
+            <span>MiMo Blue</span>
+            {mounted && colorPreset === "blue" && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setColorPreset("sage")}>
+            <div className="mr-2 h-4 w-4 rounded-full bg-[#4A7C59] border" />
+            <span>Sage</span>
+            {mounted && colorPreset === "sage" && <Check className="ml-auto h-4 w-4" />}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

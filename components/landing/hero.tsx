@@ -57,7 +57,7 @@ export default function LandingHero() {
               </span>
             </h1>
 
-            <p className="text-lg leading-relaxed tracking-tight text-muted-foreground max-w-xl text-center mx-auto">
+            <p className="text-lg leading-relaxed tracking-tight text-neutral-600 font-normal max-w-xl text-center mx-auto">
               Upload any document. Get precise answers
               — each one linked to its source.
             </p>

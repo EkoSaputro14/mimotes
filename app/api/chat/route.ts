@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { setWorkspaceContext, resolveWorkspaceId } from "@/lib/prisma";
+import { setWorkspaceContext, getWorkspaceContext, resolveWorkspaceId } from "@/lib/prisma";
 import { streamRAGResponse } from "@/lib/rag/chain";
 import { type PromptContext } from "@/lib/rag/chain";
 import { buildSystemPrompt } from "@/lib/prompts/templates";
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     // Set RLS workspace context — all subsequent queries are workspace-scoped
     const workspaceId = await resolveWorkspaceId(userId);
     await setWorkspaceContext(workspaceId);
+    console.log(`[Chat] workspaceId=${workspaceId}, context=${await getWorkspaceContext()}`);
 
     // Create or get session — verify ownership
     let session;
@@ -102,6 +103,39 @@ export async function POST(request: NextRequest) {
       messageLength: message.length,
     }, userId).catch(() => {});
 
+    // Fetch conversation history (last 10 messages) — must be inside transaction for RLS
+    const historyMessages = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
+      return tx.$queryRaw<Array<{ role: string; content: string }>>`
+        SELECT role, content FROM chat_messages
+        WHERE session_id = ${session.id}
+        ORDER BY created_at ASC
+        LIMIT 20
+      `;
+    });
+
+    // Debug: log history count
+    console.log(`[Chat] History loaded: ${historyMessages.length} messages for session ${session.id}`);
+
+    // Build conversation history string (keep last 10, summarize if too long)
+    const MAX_HISTORY_CHARS = 3000;
+    let conversationHistory = "";
+    const recentMessages = historyMessages.slice(-10); // last 10 messages
+    for (const msg of recentMessages) {
+      const prefix = msg.role === "user" ? "User" : "Assistant";
+      const entry = `${prefix}: ${msg.content}\n`;
+      if (conversationHistory.length + entry.length > MAX_HISTORY_CHARS) {
+        // Summarize remaining older messages
+        const olderMessages = historyMessages.slice(0, historyMessages.length - 10);
+        if (olderMessages.length > 0) {
+          const summary = olderMessages.map(m => m.content).join(" ").substring(0, 500);
+          conversationHistory = `[Ringkasan percakapan sebelumnya]: ${summary}\n\n${conversationHistory}`;
+        }
+        break;
+      }
+      conversationHistory += entry;
+    }
+
     // Generate RAG response — scoped to workspace's documents only
     const promptContext: PromptContext = {
       mode: (mode || "knowledge_base") as WidgetMode,
@@ -109,7 +143,7 @@ export async function POST(request: NextRequest) {
       businessDescription: "",
       contactInfo: {},
       knowledgeContext: "",
-      conversationHistory: "",
+      conversationHistory,
     };
     const result = await streamRAGResponse(message, 5, workspaceId, undefined, undefined, promptContext);
 
@@ -176,7 +210,7 @@ export async function POST(request: NextRequest) {
       async start(controller) {
         if (result.stream) {
           for await (const chunk of result.stream) {
-            const content = chunk.choices[0]?.delta?.content;
+            const content = chunk.choices?.[0]?.delta?.content;
             if (content) {
               controller.enqueue(content);
             }
@@ -211,8 +245,27 @@ export async function POST(request: NextRequest) {
         "X-Retrieval-Metrics": encodeURIComponent(JSON.stringify(result.metrics)),
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Chat API error:", error);
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorString = JSON.stringify(error);
+
+    // Detect AI provider quota/rate limit errors
+    if (
+      errorMessage.includes("429") ||
+      errorMessage.includes("quota exhausted") ||
+      errorMessage.includes("rate limit") ||
+      errorMessage.includes("limitation") ||
+      errorString.includes("\"code\":\"429\"") ||
+      errorString.includes("\"status\":429")
+    ) {
+      return Response.json(
+        { error: "Kuota AI telah habis. Silakan coba lagi nanti atau hubungi administrator." },
+        { status: 429 }
+      );
+    }
+
     return Response.json(
       { error: "Terjadi kesalahan saat memproses pesan" },
       { status: 500 }
