@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, ChevronRight, Sun, Moon, Search } from "lucide-react";
+import { Menu, ChevronRight, Sun, Moon, Monitor, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Avatar,
@@ -20,6 +20,7 @@ import { Settings, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import { logout } from "@/lib/actions";
 import { useEffect, useState } from "react";
+import { useThemeShortcut } from "@/lib/use-theme-shortcut";
 
 interface TopNavProps {
   user: {
@@ -40,7 +41,7 @@ const segmentLabels: Record<string, string> = {
   upload: "Upload",
   settings: "Settings",
   knowledge: "Knowledge Base",
-  chunks: "Chunks",
+  chunks: "Sections",
   search: "Similarity Search",
   sources: "Sources",
   analytics: "Analytics",
@@ -70,9 +71,11 @@ function generateBreadcrumbs(pathname: string) {
 
 export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: TopNavProps) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const breadcrumbs = generateBreadcrumbs(pathname);
+
+  useThemeShortcut();
 
   useEffect(() => {
     setMounted(true);
@@ -117,24 +120,16 @@ export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: Top
         >
           Dashboard
         </Link>
-        {breadcrumbs.length > 0 && (
-          <span className="hidden sm:inline">
-            <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
-          </span>
-        )}
-        {breadcrumbs.length > 0 &&
-          breadcrumbs.map((crumb, index) => {
-            const isLast = index === breadcrumbs.length - 1;
-            const isFirst = index === 0;
+        {breadcrumbs.filter((crumb, i) => !(i === 0 && crumb.label === "Dashboard")).length > 0 &&
+          breadcrumbs.filter((crumb, i) => !(i === 0 && crumb.label === "Dashboard")).map((crumb, index, filtered) => {
+            const isLast = index === filtered.length - 1;
             // On mobile: only show last item. On desktop: show all
             return (
               <span key={crumb.href} className="flex items-center gap-1 min-w-0">
-                {!isFirst && (
-                  <span className="hidden sm:inline">
-                    <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
-                  </span>
-                )}
-                <span className={isFirst && !isLast ? "sm:hidden" : ""}>
+                <span className="hidden sm:inline">
+                  <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
+                </span>
+                <span className={index === 0 && !isLast ? "sm:hidden" : ""}>
                   {isLast ? (
                     <span className="font-medium text-foreground truncate max-w-[120px] sm:max-w-none inline-block">
                       {title ?? crumb.label}
@@ -170,27 +165,51 @@ export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: Top
         </button>
       </div>
 
-      {/* All systems operational badge */}
-      <div className="hidden lg:flex items-center gap-2 mr-3 px-2.5 py-1.5 rounded-md bg-muted/50">
-        <span className="relative flex size-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-          <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-        </span>
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          All systems operational
-        </span>
-      </div>
+      {/* All systems operational badge — removed per Fix #28 */}
 
-      {/* Theme toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        suppressHydrationWarning
-      >
-        {mounted && (theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />)}
-        <span className="sr-only">Toggle theme</span>
-      </Button>
+      {/* Theme toggle dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            suppressHydrationWarning
+          >
+            {mounted && (
+              theme === "dark" ? (
+                <Moon className="size-5" />
+              ) : theme === "light" ? (
+                <Sun className="size-5" />
+              ) : (
+                <Monitor className="size-5" />
+              )
+            )}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={8}>
+          <div className="px-2 py-1.5">
+            <p className="text-sm font-medium">Tema</p>
+            <p className="text-xs text-muted-foreground">Pilih tampilan aplikasi</p>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setTheme("light")}>
+            <Sun className="mr-2 h-4 w-4" />
+            <span>Light</span>
+            {mounted && theme === "light" && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("dark")}>
+            <Moon className="mr-2 h-4 w-4" />
+            <span>Dark</span>
+            {mounted && theme === "dark" && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("system")}>
+            <Monitor className="mr-2 h-4 w-4" />
+            <span>System</span>
+            {mounted && theme === "system" && <Check className="ml-auto h-4 w-4" />}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* User menu */}
       <DropdownMenu>

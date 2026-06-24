@@ -54,6 +54,9 @@
 
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition-property: background-color, color, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 
 /* Custom scrollbar */
@@ -231,6 +234,23 @@ textarea::-webkit-scrollbar-thumb {
   overflow: hidden;
 }
 
+/* ============================================================
+   MARQUEE — Seamless infinite scroll for file format showcase
+   ============================================================ */
+
+@theme {
+  --animate-marquee: marquee var(--duration, 30s) linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap, 1rem)));
+  }
+}
+
 /* Animation for bouncing dots */
 @keyframes bounce {
   0%, 80%, 100% {
@@ -242,22 +262,23 @@ textarea::-webkit-scrollbar-thumb {
 }
 
 /* ============================================================
-   XIAOMI MiMo AI DESIGN TOKENS
-   Primary: #4F6BFF | Accent: #8B5CF6
+   MiMo NOTES DESIGN TOKENS
+   Primary: #cd8c68 (Copper) | Accent: #5baaad (Cyan)
+   Dark Secondary: #1e3a5f (Navy)
    ============================================================ */
 
 :root {
-  /* ---- Brand Scale (MiMo Blue, Hue 230°) ---- */
-  --brand-50: #EEF2FF;
-  --brand-100: #E0E7FF;
-  --brand-200: #C7D2FE;
-  --brand-300: #A5B4FC;
-  --brand-400: #818CF8;
-  --brand-500: #4F6BFF;
-  --brand-600: #4338CA;
-  --brand-700: #3730A3;
-  --brand-800: #312E81;
-  --brand-900: #1E1B4B;
+  /* ---- Brand Scale (Copper, Hue 23°) ---- */
+  --brand-50: #FDF6F0;
+  --brand-100: #F5E0D0;
+  --brand-200: #EBC4A8;
+  --brand-300: #DFA882;
+  --brand-400: #D59266;
+  --brand-500: #cd8c68;
+  --brand-600: #B87A5A;
+  --brand-700: #9C6648;
+  --brand-800: #7A4F38;
+  --brand-900: #4A3022;
 
   /* ---- Neutral Scale (Cool Gray) ---- */
   --neutral-0: #FFFFFF;
@@ -287,42 +308,42 @@ textarea::-webkit-scrollbar-thumb {
   --border-strong: #D1D5DB;
 
   /* ---- shadcn token mapping ---- */
-  --background: #F7F9FC;
-  --foreground: #111827;
+  --background: #FAF8F5;
+  --foreground: #1F1A16;
   --card: #FFFFFF;
-  --card-foreground: #111827;
+  --card-foreground: #1F1A16;
   --popover: #FFFFFF;
-  --popover-foreground: #111827;
-  --primary: #4F6BFF;
+  --popover-foreground: #1F1A16;
+  --primary: #cd8c68;
   --primary-foreground: #FFFFFF;
-  --secondary: #F3F4F6;
-  --secondary-foreground: #111827;
-  --muted: #F3F4F6;
-  --muted-foreground: #6B7280;
-  --accent: #8B5CF6;
+  --secondary: #F0EBE4;
+  --secondary-foreground: #1F1A16;
+  --muted: #F0EBE4;
+  --muted-foreground: #7A6F65;
+  --accent: #5baaad;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #E5E7EB;
-  --input: #E5E7EB;
-  --ring: #4F6BFF;
-  --chart-1: #4F6BFF;
-  --chart-2: #8B5CF6;
+  --border: #E5E0DA;
+  --input: #E5E0DA;
+  --ring: #cd8c68;
+  --chart-1: #cd8c68;
+  --chart-2: #5baaad;
   --chart-3: #06B6D4;
   --chart-4: #10B981;
   --chart-5: #F59E0B;
   --radius: 0.625rem;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #4F6BFF;
+  --sidebar-foreground: #1F1A16;
+  --sidebar-primary: #cd8c68;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F3F4F6;
-  --sidebar-accent-foreground: #111827;
-  --sidebar-border: #E5E7EB;
-  --sidebar-ring: #4F6BFF;
+  --sidebar-accent: #F0EBE4;
+  --sidebar-accent-foreground: #1F1A16;
+  --sidebar-border: #E5E0DA;
+  --sidebar-ring: #cd8c68;
   --success: #10B981;
   --warning: #F59E0B;
   --success-foreground: #FFFFFF;
-  --warning-foreground: #111827;
+  --warning-foreground: #1F1A16;
 
   /* ---- Semantic: Error ---- */
   --error: #EF4444;
@@ -399,7 +420,7 @@ textarea::-webkit-scrollbar-thumb {
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(79, 107, 255, 0.35);
+  --shadow-glow: 0 0 20px rgba(205, 140, 104, 0.35);
 
   /* ---- shadcn token mapping (Dark Mode) ---- */
   --background: #0F1219;
@@ -408,31 +429,31 @@ textarea::-webkit-scrollbar-thumb {
   --card-foreground: #F1F5F9;
   --popover: #161B26;
   --popover-foreground: #F1F5F9;
-  --primary: #6B8AFF;
+  --primary: #cd8c68;
   --primary-foreground: #0F1219;
-  --secondary: #1C2233;
+  --secondary: #1e3a5f;
   --secondary-foreground: #F1F5F9;
   --muted: #1C2233;
   --muted-foreground: #94A3B8;
-  --accent: #A78BFA;
+  --accent: #7DD3E0;
   --accent-foreground: #0F1219;
   --destructive: #F87171;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.10);
-  --ring: #6B8AFF;
-  --chart-1: #6B8AFF;
-  --chart-2: #A78BFA;
+  --ring: #cd8c68;
+  --chart-1: #cd8c68;
+  --chart-2: #7DD3E0;
   --chart-3: #22D3EE;
   --chart-4: #34D399;
   --chart-5: #FBBF24;
   --sidebar: #0C0F16;
   --sidebar-foreground: #F1F5F9;
-  --sidebar-primary: #6B8AFF;
+  --sidebar-primary: #cd8c68;
   --sidebar-primary-foreground: #0F1219;
-  --sidebar-accent: #1C2233;
+  --sidebar-accent: #1e3a5f;
   --sidebar-accent-foreground: #F1F5F9;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #6B8AFF;
+  --sidebar-ring: #cd8c68;
   --success: #34D399;
   --warning: #FBBF24;
   --success-foreground: #0F1219;

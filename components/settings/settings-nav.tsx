@@ -21,6 +21,7 @@ import {
   Globe,
   Menu,
   X,
+  FileText,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
@@ -63,6 +64,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Bell className="h-4 w-4" />,
   },
   {
+    labelKey: "settings.appearance",
+    fallback: "Tampilan",
+    href: "/settings/appearance",
+    icon: <Sun className="h-4 w-4" />,
+  },
+  {
     labelKey: "settings.api_keys",
     fallback: "API Keys",
     href: "/settings/api-keys",
@@ -94,7 +101,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     labelKey: "settings.baileys",
-    fallback: "Baileys",
+    fallback: "WhatsApp Baileys",
     href: "/settings/baileys",
     icon: <Phone className="h-4 w-4" />,
   },
@@ -103,6 +110,12 @@ const NAV_ITEMS: NavItem[] = [
     fallback: "Billing",
     href: "/settings/billing",
     icon: <CreditCard className="h-4 w-4" />,
+  },
+  {
+    labelKey: "settings.invoices",
+    fallback: "Invoice",
+    href: "/settings/invoices",
+    icon: <FileText className="h-4 w-4" />,
   },
   {
     labelKey: "settings.language",
