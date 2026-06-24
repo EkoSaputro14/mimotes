@@ -169,23 +169,21 @@ export default function TopNav({ user, onMenuToggle, onCommandOpen, title }: Top
 
       {/* Theme toggle dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            suppressHydrationWarning
-          >
-            {mounted && (
-              theme === "dark" ? (
-                <Moon className="size-5" />
-              ) : theme === "light" ? (
-                <Sun className="size-5" />
-              ) : (
-                <Monitor className="size-5" />
-              )
-            )}
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon" suppressHydrationWarning />
+          }
+        >
+          {mounted && (
+            theme === "dark" ? (
+              <Moon className="size-5" />
+            ) : theme === "light" ? (
+              <Sun className="size-5" />
+            ) : (
+              <Monitor className="size-5" />
+            )
+          )}
+          <span className="sr-only">Toggle theme</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={8}>
           <div className="px-2 py-1.5">
