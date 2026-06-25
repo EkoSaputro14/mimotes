@@ -1,0 +1,139 @@
+{
+  "name": "mimotes-search",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mimotes-search",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract search parameters\nconst body = $input.first().json.body;\nconst { query, topK = 5, threshold = 0.30, workspaceId, documentId } = body;\n\nif (!query || !workspaceId) {\n  throw new Error('query and workspaceId are required');\n}\n\nreturn [{\n  json: {\n    query,\n    topK: Math.min(20, Math.max(1, parseInt(String(topK)) || 5)),\n    threshold: Math.max(0, Math.min(1, parseFloat(String(threshold)) || 0.30)),\n    workspaceId,\n    documentId: documentId || null\n  }\n}];"
+      },
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.aiBaseUrl || 'http://localhost:11434'}}/v1/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ={{$json.aiApiKey || ''}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {{JSON.stringify($json.query)}},\n  \"model\": \"{{JSON.stringify($json.embeddingModel || 'text-embedding-3-small')}}\"\n}",
+        "options": {}
+      },
+      "name": "Generate Query Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  dc.id,\n  dc.content,\n  dc.chunk_index,\n  dc.document_id,\n  dc.metadata,\n  dc.chunk_type,\n  dc.ocr_text,\n  dc.caption,\n  dc.image_summary,\n  dc.image_url,\n  d.title as document_title,\n  1 - (dc.embedding <=> '{{JSON.stringify($json.data[0].embedding)}}'::vector) AS similarity\nFROM document_chunks dc\nJOIN documents d ON dc.document_id = d.id\nWHERE d.workspace_id = '{{$('Extract Input').item.json.workspaceId}}'\n  AND d.status = 'ready'\n  {{if($('Extract Input').item.json.documentId, `AND dc.document_id = '${$('Extract Input').item.json.documentId}'`, '')}}\n  AND 1 - (dc.embedding <=> '{{JSON.stringify($json.data[0].embedding)}}'::vector) > {{$('Extract Input').item.json.threshold}}\nORDER BY similarity DESC\nLIMIT {{$('Extract Input').item.json.topK}};",
+        "options": {}
+      },
+      "name": "Vector Search",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mimotes-db",
+          "name": "MimoNotes PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format search results\nconst results = $input.all();\nconst input = $('Extract Input').item.json;\n\nconst formattedResults = results.map(r => ({\n  id: r.json.id,\n  content: r.json.content,\n  chunkIndex: r.json.chunk_index,\n  similarity: r.json.similarity,\n  document: {\n    id: r.json.document_id,\n    title: r.json.document_title,\n    fileType: 'unknown'\n  },\n  chunkType: r.json.chunk_type || 'text',\n  ocrText: r.json.ocr_text || null,\n  caption: r.json.caption || null,\n  imageSummary: r.json.image_summary || null,\n  imageUrl: r.json.image_url || null\n}));\n\nconst topSimilarityScore = formattedResults.length > 0 ? formattedResults[0].similarity : null;\n\nreturn [{\n  json: {\n    results: formattedResults,\n    metrics: {\n      query: input.query,\n      topK: input.topK,\n      threshold: input.threshold,\n      resultCount: formattedResults.length,\n      topSimilarityScore,\n      searchMode: 'vector'\n    }\n  }\n}];"
+      },
+      "name": "Format Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input": {
+      "main": [
+        [
+          {
+            "node": "Generate Query Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Query Embedding": {
+      "main": [
+        [
+          {
+            "node": "Vector Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Search": {
+      "main": [
+        [
+          {
+            "node": "Format Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

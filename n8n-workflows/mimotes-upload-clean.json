@@ -1,0 +1,280 @@
+{
+  "name": "mimotes-upload",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mimotes-upload",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract upload data\nconst body = $input.first().json.body;\nconst { documentId, fileUrl, fileType, workspaceId, userId } = body;\n\nif (!documentId || !fileUrl) {\n  throw new Error('documentId and fileUrl are required');\n}\n\nreturn [{\n  json: {\n    documentId,\n    fileUrl,\n    fileType: fileType || 'txt',\n    workspaceId,\n    userId\n  }\n}];"
+      },
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-pdf",
+              "leftValue": "={{$json.fileType}}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "condition-docx",
+              "leftValue": "={{$json.fileType}}",
+              "rightValue": "docx",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        }
+      },
+      "name": "Check File Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.fileUrl}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "name": "Fetch Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and chunk text\nconst text = $input.first().json.data || $input.first().json.body || '';\n\n// Simple chunking: split by paragraphs, then by sentences\nconst paragraphs = text.split(/\\n\\n+/).filter(p => p.trim());\nconst chunks = [];\nlet currentChunk = '';\nconst MAX_CHUNK_SIZE = 1000;\nconst OVERLAP = 200;\n\nfor (const para of paragraphs) {\n  if (currentChunk.length + para.length > MAX_CHUNK_SIZE && currentChunk.length > 0) {\n    chunks.push(currentChunk.trim());\n    // Keep overlap\n    currentChunk = currentChunk.slice(-OVERLAP) + '\\n\\n' + para;\n  } else {\n    currentChunk += (currentChunk ? '\\n\\n' : '') + para;\n  }\n}\nif (currentChunk.trim()) {\n  chunks.push(currentChunk.trim());\n}\n\nreturn chunks.map((chunk, index) => ({\n  json: {\n    content: chunk,\n    chunkIndex: index,\n    documentId: $('Extract Input').item.json.documentId,\n    workspaceId: $('Extract Input').item.json.workspaceId\n  }\n}));"
+      },
+      "name": "Chunk Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.aiBaseUrl || 'http://localhost:11434'}}/v1/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ={{$json.aiApiKey || ''}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {{JSON.stringify($json.content)}},\n  \"model\": \"{{JSON.stringify($json.embeddingModel || 'text-embedding-3-small')}}\"\n}",
+        "options": {}
+      },
+      "name": "Generate Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO document_chunks (id, document_id, content, embedding, chunk_index, metadata, created_at)\nVALUES (\n  gen_random_uuid(),\n  '{{$('Chunk Text').item.json.documentId}}',\n  '{{$('Chunk Text').item.json.content}}',\n  '{{JSON.stringify($json.data[0].embedding)}}'::vector,\n  {{$('Chunk Text').item.json.chunkIndex}},\n  '{}',\n  NOW()\n);",
+        "options": {}
+      },
+      "name": "Store Chunk",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1560,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mimotes-db",
+          "name": "MimoNotes PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE documents SET status = 'ready', chunk_count = (\n  SELECT COUNT(*) FROM document_chunks WHERE document_id = '{{$('Extract Input').item.json.documentId}}'\n), updated_at = NOW()\nWHERE id = '{{$('Extract Input').item.json.documentId}}';",
+        "options": {}
+      },
+      "name": "Update Document Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1780,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mimotes-db",
+          "name": "MimoNotes PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return success response\nreturn [{\n  json: {\n    success: true,\n    documentId: $('Extract Input').item.json.documentId,\n    chunksProcessed: $('Chunk Text').all().length\n  }\n}];"
+      },
+      "name": "Return Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input": {
+      "main": [
+        [
+          {
+            "node": "Check File Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check File Type": {
+      "main": [
+        [
+          {
+            "node": "Fetch Document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Document": {
+      "main": [
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk Text": {
+      "main": [
+        [
+          {
+            "node": "Generate Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Embedding": {
+      "main": [
+        [
+          {
+            "node": "Store Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Chunk": {
+      "main": [
+        [
+          {
+            "node": "Update Document Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Document Status": {
+      "main": [
+        [
+          {
+            "node": "Return Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

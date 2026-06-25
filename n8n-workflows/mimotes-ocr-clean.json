@@ -1,0 +1,251 @@
+{
+  "name": "mimotes-ocr",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mimotes-ocr",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract OCR input\nconst body = $input.first().json.body;\nconst { imageUrl, documentId, workspaceId } = body;\n\nif (!imageUrl || !documentId) {\n  throw new Error('imageUrl and documentId are required');\n}\n\nreturn [{\n  json: {\n    imageUrl,\n    documentId,\n    workspaceId\n  }\n}];"
+      },
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.imageUrl}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "name": "Fetch Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://paddleocr:8090/predict",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "parameterType": "formBinaryData",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "PaddleOCR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract OCR text from PaddleOCR response\nconst ocrResult = $input.first().json;\nlet ocrText = '';\n\nif (ocrResult.texts && Array.isArray(ocrResult.texts)) {\n  ocrText = ocrResult.texts.join('\\n');\n} else if (ocrResult.result && ocrResult.result.texts) {\n  ocrText = ocrResult.result.texts.join('\\n');\n}\n\n// Clean up OCR text\nocrText = ocrText\n  .replace(/\\s+/g, ' ')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nreturn [{\n  json: {\n    ocrText,\n    textLength: ocrText.length,\n    documentId: $('Extract Input').item.json.documentId,\n    imageUrl: $('Extract Input').item.json.imageUrl\n  }\n}];"
+      },
+      "name": "Extract OCR Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.aiBaseUrl || 'http://localhost:11434'}}/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ={{$json.aiApiKey || ''}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{JSON.stringify($json.visionModel || 'gpt-4-vision-preview')}}\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Describe this image in detail. Focus on any text, diagrams, or important visual information.\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": {{JSON.stringify($json.imageUrl)}}\n          }\n        }\n      ]\n    }\n  ],\n  \"max_tokens\": 500\n}",
+        "options": {}
+      },
+      "name": "Vision Caption",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract vision caption\nconst visionResult = $input.first().json;\nlet caption = '';\n\nif (visionResult.choices && visionResult.choices[0]) {\n  caption = visionResult.choices[0].message?.content || '';\n}\n\nconst ocrData = $('Extract OCR Text').item.json;\n\nreturn [{\n  json: {\n    ocrText: ocrData.ocrText,\n    caption,\n    documentId: ocrData.documentId,\n    imageUrl: ocrData.imageUrl\n  }\n}];"
+      },
+      "name": "Extract Caption",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE document_chunks \nSET \n  ocr_text = '{{$json.ocrText.replace(/'/g, \"''\")}}',\n  caption = '{{$json.caption.replace(/'/g, \"''\")}}',\n  chunk_type = 'image',\n  metadata = jsonb_build_object(\n    'ocr_engine', 'paddleocr',\n    'text_length', {{$json.ocrText.length}},\n    'vision_model', '{{$json.visionModel || 'gpt-4-vision-preview'}}'\n  )\nWHERE document_id = '{{$json.documentId}}'\n  AND content LIKE '%{{$('Extract Input').item.json.imageUrl}}%';",
+        "options": {}
+      },
+      "name": "Store OCR Result",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1780,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mimotes-db",
+          "name": "MimoNotes PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return success response\nconst input = $('Extract Input').item.json;\nconst ocrData = $('Extract OCR Text').item.json;\n\nreturn [{\n  json: {\n    success: true,\n    documentId: input.documentId,\n    ocrTextLength: ocrData.textLength,\n    hasCaption: true\n  }\n}];"
+      },
+      "name": "Return Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input": {
+      "main": [
+        [
+          {
+            "node": "Fetch Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Image": {
+      "main": [
+        [
+          {
+            "node": "PaddleOCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PaddleOCR": {
+      "main": [
+        [
+          {
+            "node": "Extract OCR Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract OCR Text": {
+      "main": [
+        [
+          {
+            "node": "Vision Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vision Caption": {
+      "main": [
+        [
+          {
+            "node": "Extract Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Caption": {
+      "main": [
+        [
+          {
+            "node": "Store OCR Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store OCR Result": {
+      "main": [
+        [
+          {
+            "node": "Return Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
