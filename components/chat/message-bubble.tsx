@@ -312,7 +312,7 @@ export default function MessageBubble({
         >
           <div
             className={cn(
-              "relative px-4 py-3",
+              "relative px-4 py-3 pb-4",
               isUser
                 ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-md"
                 : "bg-muted/40 text-foreground border border-border/40 rounded-2xl rounded-tl-md"
@@ -332,7 +332,7 @@ export default function MessageBubble({
                   {message.content}
                 </ReactMarkdown>
                 {isStreaming && (
-                  <span className="inline-block w-[3px] h-4 bg-primary rounded-full animate-pulse ml-0.5 align-text-bottom" />
+                  <span className="inline-block w-[3px] h-4 bg-primary rounded-full animate-pulse ml-0.5 align-middle" />
                 )}
               </div>
             )}
@@ -361,7 +361,7 @@ export default function MessageBubble({
 
       {/* Sources */}
       {!isUser && hasSourceData && (
-        <div className="mt-2 ml-9 space-y-1.5 max-w-[85%] md:max-w-[80%]">
+        <div className="mt-2 pl-9 space-y-1.5 w-full max-w-full">
           <div className="flex items-center gap-1.5 mt-1 mb-1.5">
             <BookOpen className="h-3.5 w-3.5 text-primary/70" />
             <span className="text-xs font-medium text-primary/70">Sumber</span>

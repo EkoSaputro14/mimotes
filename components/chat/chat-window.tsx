@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import MessageBubble from "./message-bubble";
 import SessionSidebar from "./session-sidebar";
-import { cn } from "@/lib/utils";
 import { AnimatedAIInput } from "@/components/ui/animated-ai-input";
 
 const MAX_MESSAGE_LENGTH = 10000;
@@ -56,12 +55,6 @@ const SUGGESTIONS = [
     label: "Cari Informasi",
     prompt: "Jelaskan isi dokumen utama",
   },
-];
-
-const FOLLOW_UP_SUGGESTIONS = [
-  "Jelaskan lebih detail",
-  "Berikan contoh",
-  "Ringkas dalam 3 poin",
 ];
 
 export default function ChatWindow() {
@@ -131,11 +124,6 @@ export default function ChatWindow() {
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-  }, []);
-
-  const handleFollowUp = useCallback((suggestion: string) => {
-    setInput(suggestion);
-    textareaRef.current?.focus();
   }, []);
 
   const handleRegenerate = useCallback(async () => {
@@ -465,11 +453,6 @@ export default function ChatWindow() {
   const lastAssistantIdx = messages.findLastIndex(
     (m) => m.role === "assistant"
   );
-  const showFollowUps =
-    !isLoading &&
-    messages.length > 0 &&
-    lastAssistantIdx !== -1 &&
-    messages[lastAssistantIdx]?.content.length > 0;
 
   const isEmpty = messages.length === 0;
 
@@ -626,31 +609,8 @@ export default function ChatWindow() {
           )}
         </div>
 
-        {/* Follow-up suggestions */}
-        {showFollowUps && (
-          <div className="max-w-3xl mx-auto w-full px-4 pb-2 flex flex-wrap gap-2 shrink-0">
-            {FOLLOW_UP_SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => handleFollowUp(suggestion)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5",
-                  "text-xs font-medium text-muted-foreground",
-                  "bg-muted/50 hover:bg-muted rounded-full",
-                  "transition-colors duration-150",
-                  "border border-border/60 hover:border-border",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                )}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Input area */}
-        <div className="shrink-0 border-t border-border/50 bg-background">
+        <div className="shrink-0 border-t border-border/50 bg-background pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-3xl mx-auto px-4 py-3">
             <AnimatedAIInput
               value={input}
