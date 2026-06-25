@@ -8,6 +8,7 @@ import { createTextStreamResponse } from "ai";
 import { recordAnalyticsEvent } from "@/lib/analytics";
 import { trackChatMessage, trackAIRequest, checkLimit } from "@/lib/usage";
 import { chatWithRAG, streamChatResponse } from "@/lib/n8n-client";
+import type { WidgetMode } from "@/lib/prompts/templates";
 
 export async function POST(request: NextRequest) {
   try {
@@ -149,7 +150,6 @@ export async function POST(request: NextRequest) {
       // Import local RAG chain as fallback
       const { streamRAGResponse } = await import("@/lib/rag/chain");
       const { buildSystemPrompt } = await import("@/lib/prompts/templates");
-      const { type: PromptContext } = await import("@/lib/rag/chain");
       
       const promptContext: PromptContext = {
         mode: (mode || "knowledge_base") as WidgetMode,

@@ -20,6 +20,8 @@ import {
   formatProcessingError,
   type ProcessingMetrics,
 } from "@/lib/processing-queue";
+import { isN8nEnabled, processDocumentUpload, processImageOCR } from "@/lib/n8n-client";
+import { getWorkspaceAIConfig } from "@/lib/settings";
 
 // Max file size: 10MB default (configurable via MAX_FILE_SIZE env var)
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || "10485760", 10);
@@ -169,6 +171,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Enqueue processing job (concurrency-limited, FIFO queue with retry)
+    const n8nEnabled = isN8nEnabled();
+
     if (fileType === "image") {
       enqueueJob({
         id: document.id,
@@ -176,7 +180,30 @@ export async function POST(request: NextRequest) {
         workspaceId,
         enqueueTime: Date.now(),
         attempts: 0,
-        execute: () => processImageDocument(document.id, workspaceId, fileUrl!, file?.size ?? 0),
+        execute: async () => {
+          if (n8nEnabled) {
+            try {
+              const aiConfig = await getWorkspaceAIConfig(workspaceId);
+              const n8nResult = await processImageOCR({
+                imageUrl: fileUrl!,
+                documentId: document.id,
+                workspaceId,
+                aiBaseUrl: aiConfig.baseUrl,
+                aiApiKey: aiConfig.apiKey,
+                visionModel: aiConfig.model,
+              });
+              if (n8nResult.success) {
+                console.log(`[Upload] n8n OCR processed image ${document.id} successfully`);
+                return;
+              }
+              console.warn(`[Upload] n8n OCR failed, falling back to local: ${n8nResult.error}`);
+            } catch (err) {
+              console.warn("[Upload] n8n OCR error, falling back to local:", err);
+            }
+          }
+          // Fallback: local image processing
+          return processImageDocument(document.id, workspaceId, fileUrl!, file?.size ?? 0);
+        },
       });
     } else {
       enqueueJob({
@@ -185,7 +212,32 @@ export async function POST(request: NextRequest) {
         workspaceId,
         enqueueTime: Date.now(),
         attempts: 0,
-        execute: () => processDocument(document.id, workspaceId, rawContent, file?.size ?? 0),
+        execute: async () => {
+          if (n8nEnabled) {
+            try {
+              const aiConfig = await getWorkspaceAIConfig(workspaceId);
+              const n8nResult = await processDocumentUpload({
+                documentId: document.id,
+                fileUrl: fileUrl!,
+                fileType,
+                workspaceId,
+                userId: session.user.id! as string,
+                aiBaseUrl: aiConfig.baseUrl,
+                aiApiKey: aiConfig.apiKey,
+                embeddingModel: aiConfig.embeddingModel,
+              });
+              if (n8nResult.success) {
+                console.log(`[Upload] n8n processed document ${document.id} successfully`);
+                return;
+              }
+              console.warn(`[Upload] n8n failed, falling back to local: ${n8nResult.error}`);
+            } catch (err) {
+              console.warn("[Upload] n8n error, falling back to local:", err);
+            }
+          }
+          // Fallback: local document processing
+          return processDocument(document.id, workspaceId, rawContent, file?.size ?? 0);
+        },
       });
     }
 

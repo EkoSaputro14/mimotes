@@ -11,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { createTextStreamResponse } from "ai";
 import { recordAnalyticsEvent } from "@/lib/analytics";
 import { trackChatMessage, trackAIRequest, checkLimit } from "@/lib/usage";
+import { isN8nEnabled, chatWithRAG, streamChatResponse } from "@/lib/n8n-client";
+import { getWorkspaceAIConfig } from "@/lib/settings";
 
 export async function POST(request: NextRequest) {
   try {
@@ -137,6 +139,83 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate RAG response — scoped to workspace's documents only
+    const n8nEnabled = isN8nEnabled();
+    
+    if (n8nEnabled) {
+      // Try n8n webhook for RAG processing (with streaming)
+      try {
+        const aiConfig = await getWorkspaceAIConfig(workspaceId);
+        let n8nFullResponse = "";
+        let n8nSources: any[] = [];
+
+        await streamChatResponse(
+          {
+            message,
+            sessionId: session.id,
+            mode: mode || "knowledge_base",
+            workspaceId,
+            userId,
+            aiBaseUrl: aiConfig.baseUrl,
+            aiApiKey: aiConfig.apiKey,
+            aiModel: aiConfig.model,
+            embeddingModel: aiConfig.embeddingModel,
+          },
+          // onChunk
+          (chunk) => {
+            n8nFullResponse += chunk;
+          },
+          // onDone
+          (sources) => {
+            n8nSources = sources;
+          },
+          // onError — will fall through to local RAG
+          () => {}
+        );
+
+        if (n8nFullResponse) {
+          console.log(`[Chat] n8n response received (${n8nFullResponse.length} chars), sources: ${n8nSources.length}`);
+
+          // Save assistant message from n8n response — use transaction for RLS
+          await prisma.$transaction(async (tx) => {
+            await tx.$executeRaw`SELECT set_config('app.current_workspace_id', ${workspaceId}, false)`;
+            await tx.chatMessage.create({
+              data: {
+                sessionId: session.id,
+                role: "assistant",
+                content: n8nFullResponse,
+                sources: JSON.parse(JSON.stringify(n8nSources)),
+              },
+            });
+          });
+
+          // Track usage
+          trackChatMessage(workspaceId).catch(() => {});
+          trackAIRequest(workspaceId).catch(() => {});
+
+          // Return n8n response as a streaming-like response
+          const stream = new ReadableStream<string>({
+            start(controller) {
+              controller.enqueue(n8nFullResponse);
+              controller.close();
+            },
+          });
+
+          return createTextStreamResponse({
+            textStream: stream,
+            headers: {
+              "X-Session-Id": session.id,
+              "X-Sources": encodeURIComponent(JSON.stringify(n8nSources)),
+              "X-Retrieval-Metrics": encodeURIComponent(JSON.stringify({ viaN8n: true })),
+            },
+          });
+        }
+
+        console.log("[Chat] n8n returned empty response, falling back to local RAG");
+      } catch (n8nError) {
+        console.warn("[Chat] n8n failed, falling back to local RAG:", n8nError);
+      }
+    }
+
     const promptContext: PromptContext = {
       mode: (mode || "knowledge_base") as WidgetMode,
       businessName: "",

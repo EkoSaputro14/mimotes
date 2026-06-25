@@ -8,6 +8,14 @@
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'http://localhost:5678/webhook';
 const N8N_API_KEY = process.env.N8N_API_KEY || '';
 
+/**
+ * Check if n8n integration is enabled.
+ * Set N8N_ENABLED=true in .env to activate n8n workflows.
+ */
+export function isN8nEnabled(): boolean {
+  return process.env.N8N_ENABLED === 'true';
+}
+
 interface N8NResponse<T = any> {
   success: boolean;
   data?: T;
@@ -194,6 +202,7 @@ export async function streamChatResponse(
 }
 
 export default {
+  isN8nEnabled,
   chatWithRAG,
   processDocumentUpload,
   searchKnowledge,

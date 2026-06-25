@@ -8,6 +8,8 @@ import {
   hybridSearch,
   searchSimilarChunks,
 } from "@/lib/rag/vectorstore";
+import { isN8nEnabled, searchKnowledge } from "@/lib/n8n-client";
+import { getWorkspaceAIConfig } from "@/lib/settings";
 
 // Log retrieval request to retrieval_logs table
 async function logRetrieval(params: {
@@ -69,6 +71,74 @@ export async function POST(request: NextRequest) {
     const embedTime = Math.round(performance.now() - embedStart);
 
     const useHybrid = await isHybridSearchEnabled();
+    const n8nEnabled = isN8nEnabled();
+
+    // Try n8n webhook for search if enabled
+    if (n8nEnabled) {
+      try {
+        const aiConfig = await getWorkspaceAIConfig(workspaceId);
+        const n8nResult = await searchKnowledge({
+          query,
+          topK: k,
+          threshold: t,
+          workspaceId,
+          documentId,
+          aiBaseUrl: aiConfig.baseUrl,
+          aiApiKey: aiConfig.apiKey,
+          embeddingModel: aiConfig.embeddingModel,
+        });
+
+        if (n8nResult.success && n8nResult.data) {
+          const n8nData = n8nResult.data;
+          console.log(`[Search] n8n returned ${n8nData.results?.length || 0} results`);
+
+          // Log retrieval and analytics
+          logRetrieval({
+            workspaceId,
+            query,
+            searchMode: "n8n",
+            vectorResultsCount: n8nData.results?.length || 0,
+            bm25ResultsCount: 0,
+            rerankedResultsCount: 0,
+            searchLatencyMs: n8nData.metrics?.searchTime || 0,
+            embeddingLatencyMs: n8nData.metrics?.embedTime || 0,
+            rerankerLatencyMs: 0,
+            totalLatencyMs: n8nData.metrics?.totalTime || 0,
+            retrievedChunkIds: (n8nData.results || []).map((r: any) => r.id),
+            topRrfScore: null,
+            topSimilarityScore: n8nData.results?.[0]?.similarity ?? null,
+          }).catch(() => {});
+
+          recordAnalyticsEvent("search_similarity", {
+            queryLength: query.length,
+            topK: k,
+            resultCount: n8nData.results?.length || 0,
+            searchMode: "n8n",
+          }, session.user.id!).catch(() => {});
+
+          return Response.json({
+            results: n8nData.results || [],
+            metrics: {
+              embedTime: n8nData.metrics?.embedTime || 0,
+              searchTime: n8nData.metrics?.searchTime || 0,
+              totalTime: n8nData.metrics?.totalTime || 0,
+              query,
+              topK: k,
+              threshold: t,
+              workspaceId,
+              searchMode: "n8n",
+              bm25ResultCount: 0,
+              avgRRFScore: null,
+            },
+          });
+        }
+
+        console.warn(`[Search] n8n failed, falling back to local search: ${n8nResult.error}`);
+      } catch (err) {
+        console.warn("[Search] n8n error, falling back to local:", err);
+      }
+    }
+
     const searchStart = performance.now();
 
     let result;
