@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
                 fileUrl: fileUrl!,
                 fileType,
                 workspaceId,
-                userId: session.user.id! as string,
+                userId: session?.user?.id as string,
                 aiBaseUrl: aiConfig.baseUrl,
                 aiApiKey: aiConfig.apiKey,
                 embeddingModel: aiConfig.embeddingModel,
