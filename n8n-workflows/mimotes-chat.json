@@ -1,0 +1,211 @@
+{
+  "name": "mimotes-chat",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mimotes-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-chat",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract request body\nconst body = $input.first().json.body;\nconst { message, sessionId, mode, workspaceId, userId } = body;\n\nif (!message || !workspaceId) {\n  throw new Error('Message and workspaceId are required');\n}\n\nreturn [{\n  json: {\n    message,\n    sessionId: sessionId || null,\n    mode: mode || 'knowledge_base',\n    workspaceId,\n    userId\n  }\n}];"
+      },
+      "id": "extract-input",
+      "name": "Extract Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.aiBaseUrl || 'http://localhost:11434'}}/v1/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ={{$json.aiApiKey || ''}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": \"{{JSON.stringify($json.message)}}\",\n  \"model\": \"{{JSON.stringify($json.embeddingModel || 'text-embedding-3-small')}}\"\n}",
+        "options": {}
+      },
+      "id": "generate-embedding",
+      "name": "Generate Query Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, content, chunk_index, document_id, metadata,\n       1 - (embedding <=> '{{JSON.stringify($json.data[0].embedding)}}'::vector) AS similarity\nFROM document_chunks\nWHERE document_id IN (\n  SELECT id FROM documents WHERE workspace_id = '{{ $('Extract Input').item.json.workspaceId }}' AND status = 'ready'\n)\nAND 1 - (embedding <=> '{{JSON.stringify($json.data[0].embedding)}}'::vector) > 0.30\nORDER BY similarity DESC\nLIMIT 5;",
+        "options": {}
+      },
+      "id": "vector-search",
+      "name": "Vector Search",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 300],
+      "credentials": {
+        "postgres": {
+          "id": "mimotes-db",
+          "name": "MimoNotes PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build context from retrieved chunks\nconst chunks = $input.all();\nconst input = $('Extract Input').item.json;\n\nlet context = '';\nconst sources = [];\n\nfor (const chunk of chunks) {\n  const c = chunk.json;\n  context += `[Chunk ${c.chunk_index}] ${c.content}\\n\\n`;\n  sources.push({\n    id: c.id,\n    content: c.content.substring(0, 200),\n    similarity: c.similarity,\n    documentId: c.document_id\n  });\n}\n\n// Build system prompt\nconst systemPrompt = `Kamu adalah asisten AI yang membantu menjawab pertanyaan berdasarkan dokumen yang tersedia.\n\nKonteks dari dokumen:\\n${context}\\n\nJawablah pertanyaan user berdasarkan konteks di atas. Jika tidak ada informasi yang relevan, katakan bahwa kamu tidak menemukan jawaban yang sesuai.`;\n\nreturn [{\n  json: {\n    ...input,\n    systemPrompt,\n    context,\n    sources\n  }\n}];"
+      },
+      "id": "build-context",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.aiBaseUrl || 'http://localhost:11434'}}/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ={{$json.aiApiKey || ''}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{JSON.stringify($json.aiModel || 'gpt-3.5-turbo')}}\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": {{JSON.stringify($json.systemPrompt)}}},\n    {\"role\": \"user\", \"content\": {{JSON.stringify($json.message)}}}\n  ],\n  \"stream\": true\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "ai-chat",
+      "name": "AI Chat Stream",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.body}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "X-Sources",
+                "value": "={{encodeURIComponent(JSON.stringify($('Build Context').item.json.sources))}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "text/event-stream"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input": {
+      "main": [
+        [
+          {
+            "node": "Generate Query Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Query Embedding": {
+      "main": [
+        [
+          {
+            "node": "Vector Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Search": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Context": {
+      "main": [
+        [
+          {
+            "node": "AI Chat Stream",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Chat Stream": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "mimotes"
+    }
+  ]
+}
