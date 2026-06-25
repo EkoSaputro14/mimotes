@@ -512,7 +512,7 @@ export default function ChatWindow() {
           aria-live="polite"
           aria-relevant="additions"
           aria-label="Percakapan"
-          className="flex-1 overflow-y-auto min-h-0"
+          className="flex-1 overflow-y-auto min-h-0 overscroll-y-contain touch-pan-y"
         >
           {isEmpty ? (
             /* Empty state — clean SaaS welcome */
