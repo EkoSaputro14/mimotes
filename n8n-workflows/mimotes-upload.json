@@ -8,21 +8,25 @@
         "responseMode": "lastNode",
         "options": {}
       },
-      "id": "webhook-upload",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
         "jsCode": "// Extract upload data\nconst body = $input.first().json.body;\nconst { documentId, fileUrl, fileType, workspaceId, userId } = body;\n\nif (!documentId || !fileUrl) {\n  throw new Error('documentId and fileUrl are required');\n}\n\nreturn [{\n  json: {\n    documentId,\n    fileUrl,\n    fileType: fileType || 'txt',\n    workspaceId,\n    userId\n  }\n}];"
       },
-      "id": "extract-upload-input",
       "name": "Extract Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -55,11 +59,13 @@
           "combinator": "or"
         }
       },
-      "id": "check-file-type",
       "name": "Check File Type",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -72,21 +78,25 @@
           }
         }
       },
-      "id": "fetch-document",
       "name": "Fetch Document",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [900, 200]
+      "position": [
+        900,
+        200
+      ]
     },
     {
       "parameters": {
         "jsCode": "// Parse and chunk text\nconst text = $input.first().json.data || $input.first().json.body || '';\n\n// Simple chunking: split by paragraphs, then by sentences\nconst paragraphs = text.split(/\\n\\n+/).filter(p => p.trim());\nconst chunks = [];\nlet currentChunk = '';\nconst MAX_CHUNK_SIZE = 1000;\nconst OVERLAP = 200;\n\nfor (const para of paragraphs) {\n  if (currentChunk.length + para.length > MAX_CHUNK_SIZE && currentChunk.length > 0) {\n    chunks.push(currentChunk.trim());\n    // Keep overlap\n    currentChunk = currentChunk.slice(-OVERLAP) + '\\n\\n' + para;\n  } else {\n    currentChunk += (currentChunk ? '\\n\\n' : '') + para;\n  }\n}\nif (currentChunk.trim()) {\n  chunks.push(currentChunk.trim());\n}\n\nreturn chunks.map((chunk, index) => ({\n  json: {\n    content: chunk,\n    chunkIndex: index,\n    documentId: $('Extract Input').item.json.documentId,\n    workspaceId: $('Extract Input').item.json.workspaceId\n  }\n}));"
       },
-      "id": "chunk-text",
       "name": "Chunk Text",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 200]
+      "position": [
+        1120,
+        200
+      ]
     },
     {
       "parameters": {
@@ -97,20 +107,22 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer ={{$json.aiApiKey || ''}}"
+              "value": "=Bearer {{$json.aiApiKey || ''}}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"input\": {{JSON.stringify($json.content)}},\n  \"model\": \"{{JSON.stringify($json.embeddingModel || 'text-embedding-3-small')}}\"\n}",
+        "jsonBody": "={{ JSON.stringify({ input: $json.message, model: $json.embeddingModel || \"text-embedding-3-small\" }) }}",
         "options": {}
       },
-      "id": "generate-embedding",
       "name": "Generate Embedding",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1340, 200]
+      "position": [
+        1340,
+        200
+      ]
     },
     {
       "parameters": {
@@ -118,11 +130,13 @@
         "query": "INSERT INTO document_chunks (id, document_id, content, embedding, chunk_index, metadata, created_at)\nVALUES (\n  gen_random_uuid(),\n  '{{$('Chunk Text').item.json.documentId}}',\n  '{{$('Chunk Text').item.json.content}}',\n  '{{JSON.stringify($json.data[0].embedding)}}'::vector,\n  {{$('Chunk Text').item.json.chunkIndex}},\n  '{}',\n  NOW()\n);",
         "options": {}
       },
-      "id": "store-chunk",
       "name": "Store Chunk",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1560, 200],
+      "position": [
+        1560,
+        200
+      ],
       "credentials": {
         "postgres": {
           "id": "mimotes-db",
@@ -136,11 +150,13 @@
         "query": "UPDATE documents SET status = 'ready', chunk_count = (\n  SELECT COUNT(*) FROM document_chunks WHERE document_id = '{{$('Extract Input').item.json.documentId}}'\n), updated_at = NOW()\nWHERE id = '{{$('Extract Input').item.json.documentId}}';",
         "options": {}
       },
-      "id": "update-document-status",
       "name": "Update Document Status",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1780, 200],
+      "position": [
+        1780,
+        200
+      ],
       "credentials": {
         "postgres": {
           "id": "mimotes-db",
@@ -152,11 +168,13 @@
       "parameters": {
         "jsCode": "// Return success response\nreturn [{\n  json: {\n    success: true,\n    documentId: $('Extract Input').item.json.documentId,\n    chunksProcessed: $('Chunk Text').all().length\n  }\n}];"
       },
-      "id": "return-success",
       "name": "Return Success",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 200]
+      "position": [
+        2000,
+        200
+      ]
     }
   ],
   "connections": {
@@ -258,10 +276,5 @@
   },
   "settings": {
     "executionOrder": "v1"
-  },
-  "tags": [
-    {
-      "name": "mimotes"
-    }
-  ]
+  }
 }
